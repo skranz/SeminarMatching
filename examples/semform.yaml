@@ -1,0 +1,58 @@
+fields:
+  title:
+    lang_de:
+      label: Titel des Seminars
+      help: Geben Sie den Seminartitel ein
+    lang_en:
+      label: Seminar Title
+      help: Please enter the title of the seminar
+  teacher:
+    lang_de:
+      label: Family name, first name or title
+      help: 'Example: Mustermann, Prof. Dr.'
+    lang_en:
+      label: Family name, first name or title
+      help: 'Example: Mustermann, Prof. Dr.'
+  semBAMA:
+    lang_de:
+      label: Niveau (Bachelor / Master) des Seminars
+    lang_en:
+      label: Level of Seminar
+    choice_set: semBAMA
+  area:
+    lang_de:
+      label: Bereich
+      help: Wählen Sie alle Bereiche aus zu denen das Seminar thematisch passt.
+    lang_en:
+      label: Area
+      help: Please choose all WiWi fields of specialiaziations, to which the seminar topics belong
+    choice_set: [area]
+    multiple: TRUE
+  numSlots:
+    lang_de:
+      label: Anzahl der Seminarplätze
+      help: Geben Sie die Anzahl der Seminarplätze ein.
+    lang_en:
+      label: Number of Slots
+      help: Please enter the number of seminar slots
+    numeric: TRUE
+  weblink:
+    lang_de:
+      label: Link zur Seminarwebseite
+    lang_en:
+      label: Weblink to Seminar
+  descr:
+    lang_de:
+      label: Kurzbeschreibung (Optional)
+    lang_en:
+      label: Short description (optional)
+    input: ace
+    height: 100
+  choiceDescr:
+    lang_de:
+      label: Freitext der Auswahlkriterien erklärt
+      help:
+    lang_en:
+      label: Freitext der Auswahlkriterien erklärt
+      help:
+

@@ -1,0 +1,77 @@
+fields:
+  name:
+    lang_de:
+      label: Name
+      help: Bitte geben Sie hier ihren Vor- und Nachnamen ein
+    lang_en:
+      label: Name
+      help: Please enter your first name and family name
+  email:
+    lang_de:
+      label: Email
+      help: |
+        Bitte geben Sie hier ihre Uni Ulm Emailadresse ein.
+        Nur Emailadressen mit Endung '@uni-ulm.de'
+        sind gültig.
+    lang_en:
+      label: Email
+      help: |
+        Please enter your Ulm University email.
+        Only email adresses that end with '@uni-ulm.de'
+        are valid
+    test: |
+      str.ends.with(email,'@uni-ulm.de')
+  studBAMA:
+    lang_de:
+      label: Studium
+      help: Sind Sie im Semester in dem das Seminar stattfindet Master oder Bachelorstudent?
+    lang_en:
+      label: Degree
+      help: Are you a Bachelor or Master student in the semester the seminar is offered?
+    choice_set: studBAMA
+  studSubject:
+    lang_de:
+      label: Studienfach
+      help: Bitte geben Sie ihr erstes Studienfach an
+    lang_en:
+      label: Subject
+      help: Please enter the subject you study
+    choice_set: subjects
+  studSubject2:
+    lang_de:
+      label: Zweites Studienfach
+      help: Bitte geben Sie ggf. ihr zweites Studienfach an
+    choice_set: subjects2
+  studSpecBA:
+    lang_de:
+      label: Schwerpunkt (WiWi-Bachelor)
+      help: Falls Sie bereits einen Schwerpunkt im Bachelorstudium gewählt haben, geben Sie ihn bitte an
+    lang_en:
+      label: Specialisation (WiWi-Bachelor)
+      help: Your specialisation (if you are a WiWi Bachelor student)
+    choice_set: specBA
+    showif: |
+      studSubject == "WiWi" | studSubject2 == "WiWi"
+
+  studFieldMA:
+    lang_de:
+      label: Schwerpunkt (WiWi-Master)
+      help: Falls Sie bereits einen Schwerpunkt im Master gewählt haben, geben Sie ihn bitte an
+    lang_en:
+      label: Specialisation (WiWi-Master)
+      help: Your specialisation (if you are a WiWi Master student)
+    choice_set: specMA
+    showif: |
+      studSubject == "WiWi" | studSubject2 == "WiWi"
+    value: '---'
+  studFieldMA2:
+    lang_de:
+      label: Zweiter Schwerpunkt (Master)
+      help: Falls Sie bereits einen zweiten Schwerpunkt im Masterstudium gewählt haben, geben Sie ihn bitte an
+    lang_en:
+      label: '2nd Specialisation (WiWi-Master)'
+      help: Your 2nd specialisation (if you are a WiWi Master student)
+    choice_set: specMA
+    showif: |
+      studSubject == "WiWi" | studSubject2 == "WiWi"
+    value: '---'

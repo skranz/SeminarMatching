@@ -1,0 +1,41 @@
+area:
+ - '---'
+ - 'Econ'
+ - 'Finance'
+ - 'Informatik'
+ - 'RW & WP'
+ - 'TPM'
+ - 'Versicherung'
+ - 'Insurance'
+ - 'Management'
+ - 'Controlling'
+ - 'Nachhaltigkeit'
+
+specBA:
+ - '---'
+ - 'Economics (BA)'
+ - 'Finanz- und Versicherungswirtschaft (BA)'
+ - 'Informatik (BA)'
+ - 'Rechnungswesen und Wirtschaftsprüfung (BA)'
+ - 'Technologie und Prozessmanagement (BA)'
+ - 'Unternehmensführung und Controlling (BA)'
+
+specMA:
+ - '---'
+ - 'Economics (MA)'
+ - 'Finanzwirtschaft (MA)'
+ - 'Informatik (MA)'
+ - 'Rechnungswesen und Wirtschaftsprüfung (MA)'
+ - 'Technologie und Prozessmanagement (MA)'
+ - 'Versicherungswirtschaft (MA)'
+ - 'Unternehmensführung und Controlling (MA)'
+
+semBAMA: ['Bachelor','Master','Bachelor & Master']
+studBAMA: ['Bachelor','Master']
+
+subjects:
+  ['WiWi','WiMa','Finance','Wi-Physik',
+   'Wi-Chemie','Nachhaltige UF', 'anderes / other']
+subjects2:
+  ['---', 'WiWi','WiMa','Finance','Wi-Physik',
+   'Wi-Chemie','Nachhaltige UF','anderes / other']
