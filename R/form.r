@@ -21,6 +21,7 @@ examples.appForm = function() {
   }
   form$lang = "de"
   form$sets = sets
+  form$widget.as.character=FALSE
 
 
   set.form(form)
@@ -106,13 +107,18 @@ form.ui = function(form, params=form$params, add_handlers=FALSE,  success_fun=fo
   ui
 }
 
-form.ui.simple = function(form, fields=form$fields, submitBtn=NULL, submitLabel="Submit",lang=form[["lang"]], ...) {
+form.ui.simple = function(form, fields=form$fields, submitBtn=NULL, submitLabel="Submit",add.submit=TRUE,lang=form[["lang"]], ...) {
   restore.point("form.ui.simple")
 
 
   li = lapply(names(fields), function(name) {
-    HTML(paste0(fieldInput(name=name,form=form, lang=lang),"<hr>"))
+    list(
+      fieldInput(name=name,form=form, lang=lang, widget.as.character=FALSE),
+      hr()
+    )
   })
+  if (!add.submit) return(li)
+
 
   if (is.null(submitBtn)) {
     id = paste0(form$prefix,"submitBtn",form$postfix)
@@ -262,9 +268,11 @@ get.lang.field = function(field, lang=NULL) {
   field
 }
 
-fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$help, value=first.none.null(form$params[[name]],lang.field$value, field$value), type=field$type, min=field$min, max=field$max, step=field$step, maxchar=field$maxchar, choices=field$choices, prefix=form$prefix, postfix=form$postfix, field=fields[[name]], fields=form$fields, field_alert = !is.false(opts$field_alert), opts=form$opts, lang=form[["lang"]], lang.field = get.lang.field(field, lang), sets = form$sets, form=get.form()) {
+fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$help, value=first.none.null(form$params[[name]],lang.field$value, field$value), type=field$type, min=field$min, max=field$max, step=field$step, maxchar=field$maxchar, choices=first.none.null(lang.field$choices,field$choices),choice_set = first.none.null(lang.field$choice_set,field$choice_set),  prefix=form$prefix, postfix=form$postfix, field=fields[[name]], fields=form$fields, field_alert = !is.false(opts$field_alert), opts=form$opts, lang=form[["lang"]], lang.field = get.lang.field(field, lang), sets = form$sets, widget.as.character = !is.false(form$widget.as.character), form=get.form()) {
 
   restore.point("fieldInput")
+
+  res = vector("list",3)
 
   if (isTRUE(opts$name_as_label) & is.null(label)) {
     label=name
@@ -274,7 +282,7 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
   input = field[["input"]]
 
   if (is.null(input)) {
-    if (is.null(field[["choices"]]) & is.null(field[["choice_set"]])) {
+    if (is.null(choices) & is.null(choice_set)) {
       input = "text"
     } else {
       input = "selectize"
@@ -283,19 +291,24 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
 
   if (input == "text") {
     if (is.null(value)) value = ""
-    ret = textInputVector(id, label=label, value=value)
+    if (widget.as.character) {
+      res[[1]] = textInputVector(id, label=label, value=value)
+    } else {
+      res[[1]] = textInput(id, label, value)
+    }
   } else if (input == "selectize") {
     # choices come from a specified set
     restore.point("fieldInput.selectize")
 
 
-    if (!is.null(field[["choice_set"]])) {
-      for (set in sets[field$choice_set])
+    if (!is.null(choice_set)) {
+      for (set in sets[choice_set])
         choices = c(choices, set)
     }
     li = as.list(choices)
     multiple = isTRUE(field[["multiple"]])
-    ret = as.character(selectizeInput(id, label,choices=choices, selected=value, multiple=multiple))
+    res[[1]] = selectizeInput(id, label,choices=choices, selected=value, multiple=multiple)
+
   } else if (input == "ace") {
     library(shinyAce)
     if (is.null(value)) value = ""
@@ -303,21 +316,33 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
     mode = first.none.null(field[["mode"]], "text")
 
     widget = aceEditor(outputId = id, value = value,mode = mode,height=height, showLineNumbers = FALSE)
-    ret = as.character(widget)
+
+    if (!is.null(label)) {
+      res[[1]] = list(
+        HTML(paste0('<label for="',id,'">',label,'</label>')),
+        widget
+      )
+    } else {
+      res[[1]] = widget
+    }
+
   }
 
+  ind = 2
   if (field_alert) {
     alert_id = paste0(id,"__Alert")
-    alert = as.character(uiOutput(alert_id))
-    ret = paste0(ret,"\n", alert)
+    res[[ind]] = uiOutput(alert_id)
+    ind = ind+1
   }
   if (!is.null(help)) {
-    help.txt = as.character(helpText(help))
-    #ret = paste0(help.txt,"\n", ret)
-    ret = paste0( ret,"\n",help.txt)
+    res[[ind]] = helpText(help)
   }
 
-  ret = paste0(ret,"\n\n")
-  return(ret)
-  return(HTML(ret))
+  if (widget.as.character) {
+    ret = paste0(lapply(res[1:ind],as.character),"\n", collapse="\n")
+    return(ret)
+  } else {
+    return(res)
+  }
+
 }
