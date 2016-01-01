@@ -131,33 +131,6 @@ show.edit.sem.main = function(userid, yaml.dir=app$glob$yaml.dir, db=app$glob$se
   setUI("mainUI", ui)
 }
 
-#' Creates an example row from a database schema table
-#' using provided column values and default values specified in schema
-empty.row.from.schema = function(.schema, ..., .use.defaults = TRUE) {
-  restore.point("schema.value.list")
-
-  table = .schema$table
-  vals = replicate(length(table),NA, simplify=FALSE)
-  names(vals) = names(table)
-  if (.use.defaults & !is.null(.schema$defaults)) {
-    vals[names(.schema$defaults)] = .schema$defaults
-  }
-  args = list(...)
-  vals[names(args)] = args
-  vals
-}
-
-#' Creates an example data frame from a database schema table
-#' using provided column values and default values specified in schema
-empty.df.from.schema = function(.schema,.nrows=1, ..., .use.defaults = TRUE) {
-  restore.point("empty.df.from.schema")
-  li = empty.row.from.schema(.schema, ..., .use.defaults=.use.defaults)
-  if (.nrows==1) return(as.data.frame(li))
-
-  df = as.data.frame(lapply(li, function(col) rep(col,length.out = .nrows)))
-  df
-}
-
 
 edit.seminar.table = function(df = se$seminars, se=app$se, app=getApp()) {
   restore.point("edit.seminar.table")
