@@ -13,6 +13,7 @@ examples.appForm = function() {
 
   yaml = paste0(readLines("studform.yaml"), collapse="\n")
   yaml = paste0(readLines("semform.yaml"), collapse="\n")
+  yaml = paste0(readLines("sempointsform.yaml"), collapse="\n")
 
 
   form = read.yaml(text=yaml,utf8 = TRUE)
@@ -89,7 +90,6 @@ formSubmitButton = function(label="Ok", form=get.form()) {
 add.form.handlers = function(form, success.handler=form$success.handler,...) {
   restore.point("add.form.handlers")
 
-
   id = paste0(form$prefix,"submitBtn",form$postfix)
   buttonHandler(id,formSubmitClick, form=form, success.handler=success.handler,...)
 }
@@ -107,13 +107,13 @@ form.ui = function(form, params=form$params, add_handlers=FALSE,  success_fun=fo
   ui
 }
 
-form.ui.simple = function(form, fields=form$fields, submitBtn=NULL, submitLabel="Submit",add.submit=TRUE,lang=form[["lang"]], ...) {
+form.ui.simple = function(form, fields=form$fields, values=NULL, submitBtn=NULL, submitLabel="Submit",add.submit=TRUE,lang=form[["lang"]], postfix = form$postfix, prefix = form$prefix, ...) {
   restore.point("form.ui.simple")
 
 
   li = lapply(names(fields), function(name) {
     list(
-      fieldInput(name=name,form=form, lang=lang, widget.as.character=FALSE),
+      fieldInput(name=name,form=form, value = values[[name]], lang=lang, widget.as.character=FALSE, postfix=postfix, prefix=prefix),
       hr()
     )
   })
@@ -150,6 +150,8 @@ formSubmitClick = function(form, success.handler = NULL,app=getApp(),id=NULL,ses
     success.handler(values=res$values, form=form,...)
   }
 }
+
+
 
 get.form.values = function(form=get.form(),fields=form$fields,field.names=names(fields), prefix=form$prefix, postfix=form$postfix, show.alerts=TRUE) {
   restore.point("get.form.values")
@@ -268,7 +270,7 @@ get.lang.field = function(field, lang=NULL) {
   field
 }
 
-fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$help, value=first.none.null(form$params[[name]],lang.field$value, field$value), type=field$type, min=field$min, max=field$max, step=field$step, maxchar=field$maxchar, choices=first.none.null(lang.field$choices,field$choices),choice_set = first.none.null(lang.field$choice_set,field$choice_set),  prefix=form$prefix, postfix=form$postfix, field=fields[[name]], fields=form$fields, field_alert = !is.false(opts$field_alert), opts=form$opts, lang=form[["lang"]], lang.field = get.lang.field(field, lang), sets = form$sets, widget.as.character = !is.false(form$widget.as.character), form=get.form()) {
+fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$help, value=first.none.null(form$params[[name]],lang.field$value, field$value), type=field$type, min=field$min, max=field$max, step=field$step, maxchar=field$maxchar, choices=first.none.null(lang.field$choices,field$choices),choice_set = first.none.null(lang.field$choice_set,field$choice_set),  prefix=form$prefix, postfix=form$postfix, field=fields[[name]], fields=form$fields, field_alert = !is.false(opts$field_alert), opts=form$opts, lang=form[["lang"]], lang.field = get.lang.field(field, lang), sets = form$sets, widget.as.character = !is.false(form$widget.as.character), form=get.form(), na.is.empty=TRUE) {
 
   restore.point("fieldInput")
 
@@ -291,6 +293,7 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
 
   if (input == "text") {
     if (is.null(value)) value = ""
+    if (is.na(value) & na.is.empty(value)) value= ""
     if (widget.as.character) {
       res[[1]] = textInputVector(id, label=label, value=value)
     } else {
@@ -345,4 +348,36 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
     return(res)
   }
 
+}
+
+form.default.values = function(form, values = NULL, sets=NULL, boolean.correction=TRUE) {
+  vals = lapply(form$fields, function(field) field.default.values(form=form, field=field,sets=sets))
+
+  replace = intersect(names(vals), names(values))
+
+  if (length(replace)>0) {
+    if (boolean.correction)
+      boolean = sapply(vals[replace], function(val) is.logical(val) & !is.na(val))
+    vals[replace] = values[replace]
+    if (boolean.correction)
+      vals[replace][boolean] =  lapply(vals[replace][boolean], as.logical)
+  }
+  vals
+}
+
+field.default.values = function(form, field, sets = NULL) {
+  if (!is.null(field[["value"]])) field$value
+
+  if (isTRUE(field$numeric)) return(NA_real_)
+
+  choices = field$choices
+  if (length(choices)>0) return(choices[[1]])
+
+  choice_set = field$choice_set
+  if (!is.null(choice_set)) {
+    for (set in sets[choice_set]) {
+      if (length(set)>0) return(set[[1]])
+    }
+  }
+  return("")
 }

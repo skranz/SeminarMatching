@@ -30,6 +30,7 @@ examples.rankingPart = function() {
   sem.df$selected = FALSE
   sem.df$row = 1:NROW(sem.df)
   sem.df$pos = NA
+  sem.df$star = FALSE
 
   #app$ui = fluidPage(dataTableOutput("selTable"))
   app$ui = fluidPage(
@@ -48,6 +49,7 @@ examples.rankingPart = function() {
   sel.rows = sample(1:NROW(sem.df),2)
   sel.df = sem.df[sel.rows,]
   sel.df$pos = 1:NROW(sel.df)
+  sel.df$star = TRUE
   update.selTable(sel.df)
   update.semTable(sem.df, sel.rows=sel.rows)
 
@@ -66,9 +68,12 @@ update.selTable = function(sel.df, sel.row=NULL, app=getApp()) {
     setUI("selSemUI",p("---"))
     return()
   }
+#  cat("\nsel.df: \n\n")
+#  print(sel.df)
 
   widget.df = sel.widgets.df(sel.df)
   html = hwrite.selTable(widget.df,sel.row=sel.row)
+#  cat("selTable html: \n\n", html)
   setUI("selSemUI",HTML(html))
 
 }
@@ -86,13 +91,21 @@ sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
   upBtnId = paste0("upBtn_",rows)
   downBtnId = paste0("downBtn_",rows)
   removeBtnId = paste0("removeBtn_",rows)
+  starBtnId = paste0("starBtn_",rows)
 
   upBtns = extraSmallButtonVector(id=upBtnId,label="",icon=icon("arrow-up",lib = "glyphicon"))
   downBtns = extraSmallButtonVector(id=downBtnId, label="",icon=icon("arrow-down",lib="glyphicon"))
   removeBtns = extraSmallButtonVector(id=removeBtnId, label="",icon=icon("remove",lib = "glyphicon"))
+  starBtns = extraSmallButtonVector(id=starBtnId, label="",icon=icon("star-empty",lib = "glyphicon"))
+
+  srows = which(df$star)
+  if (length(srows)>0) {
+    starBtns[srows] = extraSmallButtonVector(id=starBtnId[srows], label="",icon=icon("star",lib = "glyphicon"))
+  }
+
 
   btns = paste0(upBtns,downBtns,removeBtns)
-  data.frame(Rank=rows,btns,df[,cols])
+  data.frame(Rank=rows,Star =starBtns, btns,df[,cols])
 }
 
 
@@ -127,15 +140,6 @@ sem.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
 }
 
 
-update.selTable.DT = function(sel.df, app=getApp()) {
-  restore.point("update.selTable")
-
-  app$sel.df = sel.df
-  table = sel.widgets.df(sel.df)
-  setWidgetTable('selTable',table,colnames=rep("", NCOL(table)), options=list(searching =FALSE,  ordering = FALSE, paging = FALSE, info=FALSE, serverSide=FALSE))
-
-}
-
 
 add.seminar.choice.handlers = function(num.sems) {
   rows = 1:num.sems
@@ -144,12 +148,15 @@ add.seminar.choice.handlers = function(num.sems) {
   downBtnId = paste0("downBtn_",rows)
   removeBtnId = paste0("removeBtn_",rows)
   addBtnId = paste0("addBtn_",rows)
+  starBtnId =  paste0("starBtn_",rows)
+
 
   for (row in rows) {
     buttonHandler(upBtnId[row],updown.click, row=row,up=TRUE)
     buttonHandler(downBtnId[row],updown.click, row=row,up=FALSE)
     buttonHandler(addBtnId[row],add.seminar.click, row=row)
     buttonHandler(removeBtnId[row],remove.seminar.click, pos=row)
+    buttonHandler(starBtnId[row],star.seminar.click, pos=row)
   }
 
 }
@@ -198,4 +205,21 @@ remove.seminar.click = function(pos,app,...) {
   sem.df$selected[row] = FALSE
   update.selTable(sel.df,sel.row = NULL)
   update.semTable(sem.df)
+}
+
+
+star.seminar.click = function(pos,app,...) {
+  sel.df = app$sel.df
+  restore.point("star.seminar.click")
+
+  if (sel.df$star[pos]) {
+    sel.df$star[pos] = FALSE
+  } else {
+    sel.df$star = FALSE
+    sel.df$star[pos] = TRUE
+  }
+#  cat("\nsel.df: \n\n")
+#  print(sel.df)
+
+  update.selTable(sel.df=sel.df,sel.row = NULL)
 }
