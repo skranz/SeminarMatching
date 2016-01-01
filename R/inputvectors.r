@@ -1,8 +1,8 @@
-textInputVector = function(inputId, label=NULL, value="") {
+textInputVector = function(inputId, label="", value="", readonly = rep(FALSE, length(inputid)) ){
   code = paste0('
 <div class="form-group shiny-input-container">
   <label for="',inputId,'">',label,'</label>
-  <input id="',inputId,'" type="text" class="form-control" value="',value,'"/>
+  <input id="',inputId,'" type="text" class="form-control" value="',value,'"', ifelse(readonly,' readonly',''),'/>
 </div>
   ')
   code

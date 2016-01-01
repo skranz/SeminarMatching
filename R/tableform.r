@@ -28,7 +28,7 @@ examples.vecForm = function() {
     email = c('','')
   )
 
-  ui = form.ui.multi.handsome(form=form, data=data)
+  ui = form.ui.handsone.table(form=form, data=data)
 
   add.form.handlers(form)
   app$ui = fluidPage(ui)
@@ -37,8 +37,9 @@ examples.vecForm = function() {
 }
 
 
-form.ui.multi.handsome = function(id="multiHandsomeUI", form, data, fields=form$fields, submitBtn=NULL, submitLabel="Submit",add.submit=TRUE,lang=form[["lang"]], addLabel="",addIcon=icon(name = icon("plus",lib = "glyphicon")), inner.fun = form.ui.multi.simple.inner, width=first.none.null(form$width,"100%"), height=first.none.null(form$height), stretchH='all', ...) {
-  restore.point("form.ui.multi")
+form.ui.handsone.table = function(id="handsoneTableFormUI", form, data, fields=form$fields, label=first.none.null(lang.form[["label"]],form[["label"]]), help_html=lang.form[["help_html"]],note_html=lang.form[["note_html"]],note_title=first.none.null(lang.form[["note_title"]],"Info"), sets = form[["sets"]],
+  submitBtn=NULL, submitLabel="Submit",add.submit=TRUE,lang=form[["lang"]], addLabel="",addIcon=icon(name = icon("plus",lib = "glyphicon")), width=first.none.null(form$width,"100%"), height=first.none.null(form$height), stretchH='all', lang.form = get.lang.form(form, lang), ...) {
+  restore.point("form.ui.handsone.table")
 
   library(rhandsontable)
 
@@ -52,11 +53,11 @@ form.ui.multi.handsome = function(id="multiHandsomeUI", form, data, fields=form$
   })
   names(labels) = NULL
 
-  help = sapply(fields,function(field) {
-    if (is.null(field$help)) return(NA)
-    field$help
-  })
-  help = matrix(help, nrow=NROW(df), ncol=ncol(df), byrow=TRUE)
+  #fhelp = sapply(fields,function(field) {
+  #  if (is.null(field$help)) return(NA)
+  #  field$help
+  #})
+  #fhelp = matrix(fhelp, nrow=NROW(df), ncol=ncol(df), byrow=TRUE)
 
   hot = rhandsontable(data=df, colHeaders=labels, rowHeaders=NULL, useTypes = TRUE, readOnly = FALSE, selectCallback = FALSE,stretchH=stretchH)
 
@@ -88,6 +89,36 @@ form.ui.multi.handsome = function(id="multiHandsomeUI", form, data, fields=form$
 
   setRHandsontable(id, hot)
 
+  alert_id = paste0(id,"__Alert")
+  ui = list(ui,uiOutput(alert_id))
+  if (!is.null(label)) {
+    ui = c(list(h4(label)),ui)
+  }
+  if (!is.null(help_html)) {
+    ui = c(ui,list(HTML(help_html)))
+  }
+  if (!is.null(note_html)) {
+    ui =c(ui, list(bsCollapse(bsCollapsePanel(title=note_title,HTML(note_html)))))
+  }
   ui
 }
 
+
+table.form.default.values = function(form, data = NULL, nrow=max(NROW(data),1), sets=NULL, boolean.correction=TRUE) {
+  restore.point("table.form.default.values")
+
+  df = data
+  vals = lapply(form$fields, function(field) {
+    rep(field.default.values(form=form, field=field,sets=sets),nrow)
+  })
+  replace = intersect(names(vals), names(df))
+
+  if (length(replace)>0) {
+    if (boolean.correction)
+      boolean = sapply(vals[replace], function(val) any(is.logical(val) & !is.na(val)))
+    vals[replace] = df[replace]
+    if (boolean.correction)
+      vals[replace][boolean] =  lapply(vals[replace][boolean], as.logical)
+  }
+  as.data.frame(vals)
+}

@@ -12,7 +12,7 @@ examples.EditSeminarApp = function() {
   #semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
   #dbCreateSchemaTables(semdb, schema.file=schema.file)
 
-  app = EditSeminarsApp(db.dir = db.dir, init.userid = "test", init.password="test")
+  app = EditSeminarsApp(db.dir = db.dir, init.userid = "test", init.password="test", lang="de")
 
   runEventsApp(app, launch.browser = rstudio::viewer)
 
@@ -38,14 +38,17 @@ EditSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
   glob$db.dir = db.dir
 
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
-  form = read.yaml(file =paste0(yaml.dir,"/semform.yaml"),utf8 = TRUE)
+
+  form = load.and.init.form(file=paste0(yaml.dir,"/semform.yaml"))
   form$lang = lang
   form$widget.as.character=FALSE
+  form$sets = glob$sets
   glob$semform = form
 
-  form = read.yaml(file =paste0(yaml.dir,"/semcritform.yaml"),utf8 = TRUE)
+  form = load.and.init.form(file =paste0(yaml.dir,"/semcritform.yaml"))
   form$lang = lang
   form$widget.as.character=FALSE
+  form$sets = glob$sets
   glob$semcritform = form
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
@@ -120,11 +123,11 @@ show.edit.sem.main = function(userid, yaml.dir=app$glob$yaml.dir, db=app$glob$se
 
 
   buttonHandler("createSeminarBtn",create.seminar.click)
-  ui = fluidRow(width=10, offset=1,
+  ui = fluidRow(column(width=10, offset=1,
     HTML(table),
     br(),
     actionButton("createSeminarBtn","Create Seminar")
-  )
+  ))
   setUI("mainUI", ui)
 }
 
@@ -177,7 +180,7 @@ edit.seminar.table = function(df = se$seminars, se=app$se, app=getApp()) {
 create.seminar.click=function(se = app$se, app=getApp(),...) {
   restore.point("create.seminar.click")
 
-  se$seminar = empty.row.from.schema(app$glob$schemas$seminars, groupid=se$groupid, semester=se$semester)
+  se$seminar = empty.row.from.schema(app$glob$schemas$seminars, groupid=se$groupid, semester=se$semester, semester=se$semester)
 
   se$semcrit = empty.df.from.schema(app$glob$schemas$semcrit, 10)
 
@@ -186,27 +189,34 @@ create.seminar.click=function(se = app$se, app=getApp(),...) {
 
 }
 
-edit.seminar.ui = function(se, app=getApp()) {
+show.edit.seminar.ui = function(se, app=getApp()) {
   restore.point("show.edit.seminar.ui")
 
   glob = app$glob
   seminar = se$seminar
 
-  vals1 = form.default.values(glob$semform,values = seminar)
-  ui1 = form.ui.simple(glob$semform, values=vals1,submitBtn = FALSE)
+  se$semcritId = "semcritHandsoneTableUI"
+
+  form.vals = form.default.values(glob$semform,values = seminar)
+  form.ui = form.ui.simple(glob$semform, values=form.vals,add.submit = FALSE)
+
+  crit.df = table.form.default.values(glob$semcritform, data=se$semcrit)
+  crit.ui = form.ui.handsone.table(id=se$semcritId,form = glob$semcritform,data = crit.df)
 
 
+  ui = fluidRow(column(width=10, offset=1,
+    form.ui,
+    crit.ui,
+    br(),
+    actionButton("saveSemBtn","Save"),
+    actionButton("cancelEditSemBtn","Cancel")
+  ))
 
+  setUI("mainUI",ui)
 
+#  form$success.handler = function(...) {
+#    cat("\nGreat you inserted valid numbers!")
+#  }
 
-  form$success.handler = function(...) {
-    cat("\nGreat you inserted valid numbers!")
-  }
-
-  set.form(form)
-  ui = form.ui.simple(form)
-
-  add.form.handlers(form)
-  app$ui = fluidPage(ui)
-  runEventsApp(app, launch.browser = rstudio::viewer)
+#  add.form.handlers(form)
 }

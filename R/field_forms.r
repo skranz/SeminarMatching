@@ -12,7 +12,6 @@ examples.field.ui = function() {
 
 }
 
-
 make.field.ui = function(fields, lang="de") {
 
   lapply(names(fields), function(name) {

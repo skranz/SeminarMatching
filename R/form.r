@@ -34,17 +34,54 @@ examples.appForm = function() {
 
 }
 
-init.form = function(form) {
+load.and.init.form = function(file=NULL, text=NULL, utf8 = TRUE) {
+  form = read.yaml(file=file, text=text,utf8 = utf8)
+  init.form(form)
+}
+
+init.form = function(form, compile.markdown.help=TRUE) {
   restore.point("init.form")
 
   if (is.null(form$type))
     form$type = infer.form.type(form)
 
+  if (compile.markdown.help) {
+    form = compile.form.markdown.tags(form=form, tags=c("help","note"))
+  }
+
   if (!identical(form$type,"simple")) {
     init.form.fun = paste0("init.form.",form$type)
-    form = do.call(init.form.fun, list(form=form))
+    if (exists(init.form.fun,mode = "function"))
+      form = do.call(init.form.fun, list(form=form))
   }
   form
+}
+
+compile.form.markdown.tags = function(form, values=NULL,  tags = c("help","note")
+) {
+  restore.point("compile.form.markdown.tags")
+
+  inner.compile = function(obj, tags, values, use.lang = TRUE) {
+    restore.point("inner.compile")
+
+    for (tag in tags) {
+      if (!is.null(obj[[tag]])) {
+        obj[[paste0(tag,"_html")]] = compile.markdown(obj[[tag]], values=values)
+      }
+    }
+    if (use.lang) {
+      lang.tags = names(obj)[str.starts.with(names(obj),"lang_")]
+      for (lang.tag in lang.tags) {
+        obj[[lang.tag]] = inner.compile(obj[[lang.tag]], tags=tags, use.lang=FALSE,values=values)
+      }
+    }
+    obj
+  }
+
+  form = inner.compile(form,tags=tags, values=values)
+  form$fields = lapply(form$fields, inner.compile, tags=tags, values=values)
+  form
+
 }
 
 infer.form.type = function(form) {
@@ -270,7 +307,18 @@ get.lang.field = function(field, lang=NULL) {
   field
 }
 
-fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$help, value=first.none.null(form$params[[name]],lang.field$value, field$value), type=field$type, min=field$min, max=field$max, step=field$step, maxchar=field$maxchar, choices=first.none.null(lang.field$choices,field$choices),choice_set = first.none.null(lang.field$choice_set,field$choice_set),  prefix=form$prefix, postfix=form$postfix, field=fields[[name]], fields=form$fields, field_alert = !is.false(opts$field_alert), opts=form$opts, lang=form[["lang"]], lang.field = get.lang.field(field, lang), sets = form$sets, widget.as.character = !is.false(form$widget.as.character), form=get.form(), na.is.empty=TRUE) {
+
+get.lang.form = function(form, lang=NULL) {
+  restore.point("get.lang.form")
+
+  if (is.null(lang)) return(form)
+  name = paste0("lang_",lang)
+  if (!is.null(form[[name]])) return(form[[name]])
+  form
+}
+
+
+fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$help, help_html = lang.field$help_html, note_html=lang.field$note_html, note_title = lang.field$note_title, value=first.none.null(form$params[[name]],lang.field$value, field$value), type=field$type, readonly = isTRUE(field$readonly), min=field$min, max=field$max, step=field$step, maxchar=field$maxchar, choices=first.none.null(lang.field$choices,field$choices),choice_set = first.none.null(lang.field$choice_set,field$choice_set),  prefix=form$prefix, postfix=form$postfix, field=fields[[name]], fields=form$fields, field_alert = !is.false(opts$field_alert), opts=form$opts, lang=form[["lang"]], lang.field = get.lang.field(field, lang), sets = form$sets, widget.as.character = !is.false(form$widget.as.character), form=get.form(), na.is.empty=TRUE) {
 
   restore.point("fieldInput")
 
@@ -291,18 +339,29 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
     }
   }
 
+  if (readonly) {
+    input = "text"
+    if (is.null(value)) value = ""
+    if (is.na(value)) value = ""
+    #choices = list(value)
+    #names(choices) = as.character(value)
+    #choice_set = NULL
+  }
+
+
   if (input == "text") {
     if (is.null(value)) value = ""
-    if (is.na(value) & na.is.empty(value)) value= ""
-    if (widget.as.character) {
-      res[[1]] = textInputVector(id, label=label, value=value)
+    if (is.na(value) & na.is.empty) value= ""
+    if (widget.as.character | readonly) {
+      res[[1]] = textInputVector(id, label=label, value=value, readonly=readonly)
+      if (!widget.as.character)
+        res[[1]] = HTML(res[[1]])
     } else {
       res[[1]] = textInput(id, label, value)
     }
   } else if (input == "selectize") {
     # choices come from a specified set
     restore.point("fieldInput.selectize")
-
 
     if (!is.null(choice_set)) {
       for (set in sets[choice_set])
@@ -337,9 +396,22 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
     res[[ind]] = uiOutput(alert_id)
     ind = ind+1
   }
-  if (!is.null(help)) {
+
+  if (!is.null(help_html)) {
+    #span(class = "help-block", ...)
+    res[[ind]] = span(class = "help-block",HTML(help_html))
+    ind = ind+1
+  } else if (!is.null(help)) {
     res[[ind]] = helpText(help)
+    ind = ind+1
   }
+
+  if (!is.null(note_html)) {
+    res[[ind]] = bsCollapse(bsCollapsePanel(title=note_title,HTML(note_html)))
+  } else if (!is.null(note)) {
+    res[[ind]] = bsCollapse(bsCollapsePanel(title=note_title,helpText(note)))
+  }
+
 
   if (widget.as.character) {
     ret = paste0(lapply(res[1:ind],as.character),"\n", collapse="\n")
@@ -350,7 +422,7 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
 
 }
 
-form.default.values = function(form, values = NULL, sets=NULL, boolean.correction=TRUE) {
+form.default.values = function(form, values = NULL, sets=form[["sets"]], boolean.correction=TRUE) {
   vals = lapply(form$fields, function(field) field.default.values(form=form, field=field,sets=sets))
 
   replace = intersect(names(vals), names(values))
