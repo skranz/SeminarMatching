@@ -219,10 +219,10 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
   dbBegin(se$db)
   # insert new seminar
   if (is.na(se$seminar$semid)) {
-    res = try(dbInsert(se$db,"seminars",se$seminar,mode = "insert",schema=glob$schemas$seminar,get.key=TRUE))
+    res = try(dbInsert(se$db,"seminars",se$seminar,mode = "insert",schema=glob$schemas$seminars,get.key=TRUE))
   # update existing seminar
   } else {
-    res = try(dbInsert(se$db,"seminars",se$seminar,mode = "replace"))
+    res = try(dbInsert(se$db,"seminars",se$seminar,mode = "replace", schema=glob$schemas$seminars))
   }
 
   if (is(res,"try-error")) {
@@ -233,14 +233,14 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
   }
   se$seminar = res$values
 
-  sem.id = se$seminar.sem.id
+  semid = se$seminar$semid
 
   crit.df$pos = 1:NROW(crit.df)
-  crit.df$sem.id = se$seminar$sem.id
+  crit.df$semid = semid
 
 
   #Rewrite criterion table
-  res = try(dbDelete(se$db,"semcrit", list(sem.id=sem.id)))
+  res = try(dbDelete(se$db,"semcrit", list(semid=semid)))
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when updating database:<br> ",as.character(res))
@@ -248,7 +248,7 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
     return()
   }
 
-  res = try(dbInsert(se$db,"semcrit",crit.df,mode = "insert",schema=glob$schemas$seminar))
+  res = try(dbInsert(se$db,"semcrit",crit.df,mode = "insert",schema=glob$schemas$semcrit))
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when updating database:<br> ",as.character(res))
