@@ -190,14 +190,19 @@ formSubmitClick = function(form, success.handler = NULL,app=getApp(),id=NULL,ses
 
 
 
-get.form.values = function(form=get.form(),fields=form$fields,field.names=names(fields), prefix=form$prefix, postfix=form$postfix, show.alerts=TRUE) {
-  restore.point("get.form.values")
+get.form.values = function(form=get.form(),fields=form$fields,field.names=names(fields), prefix=form$prefix, postfix=form$postfix, check.values = TRUE, show.alerts=TRUE) {
 
   values = lapply(field.names, function(name) {
     id = paste0(prefix,name,postfix)
     getInputValue(name)
   })
+  restore.point("get.form.values")
+
+
   names(values) = field.names
+  if (!check.values)
+    return(values)
+
   check = check.form.values(values, form=form, show.alerts=TRUE)
 
   return(check)
@@ -226,12 +231,13 @@ check.form.values = function(values, form, fields=form$fields[field.names], fiel
   return(list(ok=ok,values=values,failed.fields=failed.fields))
 }
 
-clear.field.alert = function(name=field$name,field, form) {
-  show.field.alert(name=name,msg="", form=form, color=NULL)
+clear.field.alert = function(name=field$name,field=NULL, form=NULL, prefix=form$prefix, postfix=form$postfix, id = paste0(prefix,name,postfix,"__Alert")) {
+
+  show.field.alert(name=name,msg="", form=form, color=NULL, prefix=prefix,postfix=postfix, id=id)
 }
 
-show.field.alert = function(name=field$name, msg="",field, prefix=form$prefix, postfix=form$postfix, form=NULL, color="red") {
-  id = paste0(prefix,name,postfix,"__Alert")
+show.field.alert = function(name=field$name, msg="",field=NULL, prefix=form$prefix, postfix=form$postfix, form=NULL, color="red",id = paste0(prefix,name,postfix,"__Alert")) {
+
 
   if (!is.null(color))
     msg = colored.html(msg, color)
@@ -242,7 +248,7 @@ show.field.alert = function(name=field$name, msg="",field, prefix=form$prefix, p
 check.field.value = function(value, field) {
   restore.point("check.field.value")
 
-
+  if (is.null(value)) value = ''
   if (isTRUE(field$type=="numeric")) {
     num = as.numeric(value)
     if (is.na(num)) {
@@ -437,6 +443,11 @@ form.default.values = function(form, values = NULL, sets=form[["sets"]], boolean
   vals
 }
 
+form.schema.template = function(form) {
+  li = form.default.values(form)
+  schema.template(li)
+}
+
 field.default.values = function(form, field, sets = NULL) {
   if (!is.null(field[["value"]])) field$value
 
@@ -447,7 +458,7 @@ field.default.values = function(form, field, sets = NULL) {
 
   choice_set = field$choice_set
   if (!is.null(choice_set)) {
-    for (set in sets[choice_set]) {
+    for (set in sets[intersect(choice_set,names(sets))]) {
       if (length(set)>0) return(set[[1]])
     }
   }

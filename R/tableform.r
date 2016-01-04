@@ -37,7 +37,7 @@ examples.vecForm = function() {
 }
 
 
-form.ui.handsone.table = function(id="handsoneTableFormUI", form, data, fields=form$fields, label=first.none.null(lang.form[["label"]],form[["label"]]), help_html=lang.form[["help_html"]],note_html=lang.form[["note_html"]],note_title=first.none.null(lang.form[["note_title"]],"Info"), sets = form[["sets"]],
+form.ui.handsone.table = function(form, data, fields=form$fields, label=first.none.null(lang.form[["label"]],form[["label"]]), help_html=lang.form[["help_html"]],note_html=lang.form[["note_html"]],note_title=first.none.null(lang.form[["note_title"]],"Info"), sets = form[["sets"]],
   submitBtn=NULL, submitLabel="Submit",add.submit=TRUE,lang=form[["lang"]], addLabel="",addIcon=icon(name = icon("plus",lib = "glyphicon")), width=first.none.null(form$width,"100%"), height=first.none.null(form$height), stretchH='all', lang.form = get.lang.form(form, lang), ...) {
   restore.point("form.ui.handsone.table")
 
@@ -45,6 +45,14 @@ form.ui.handsone.table = function(id="handsoneTableFormUI", form, data, fields=f
 
   cols = names(fields)
   df = data[,cols]
+
+#   df = lapply(df, function(val) {
+#     val = as.character(val)
+#     val[is.na(val)] = ''
+#     val
+#   })
+
+  id = paste0(form$prefix,"handsoneTableFormUI", form$postfix)
 
   ui = rHandsontableOutput(outputId = id, width=width, height=height)
 
@@ -103,6 +111,16 @@ form.ui.handsone.table = function(id="handsoneTableFormUI", form, data, fields=f
   ui
 }
 
+get.table.form.df = function(form) {
+  id = paste0(form$prefix,"handsoneTableFormUI", form$postfix)
+  hot = getInputValue(id)
+  if (is.null(hot)) return(NULL)
+  restore.point("get.table.form.df")
+  df = as_data_frame(data.table::rbindlist(hot$data))
+  #df = hot_to_r(hot)
+  colnames(df) = names(form$fields)
+  df
+}
 
 table.form.default.values = function(form, data = NULL, nrow=max(NROW(data),1), sets=NULL, boolean.correction=TRUE) {
   restore.point("table.form.default.values")
@@ -121,4 +139,44 @@ table.form.default.values = function(form, data = NULL, nrow=max(NROW(data),1), 
       vals[replace][boolean] =  lapply(vals[replace][boolean], as.logical)
   }
   as.data.frame(vals)
+}
+
+check.field.values = function(values, field) {
+  restore.point("check.field.values")
+
+  if (is.null(values))
+    return(list(ok=TRUE,msg="", values=values, err.rows=NULL))
+
+  if (isTRUE(field$type=="numeric")) {
+    chars = as.character(values)
+    values = as.numeric(values)
+    na.rows = larger.rows = smaller.rows = rep(FALSE, NROW(values))
+
+    na.rows = is.na(values)
+    if (isTRUE(field$optional))
+      na.rows = na.rows & nchar(chars)>0
+
+    if (!is.null(field$max))
+      larger.rows = is.true(values > field$max)
+
+    if (!is.null(field$min))
+      smaller.rows = is.true(values < field$max)
+
+    err.rows = which(na.rows | larger.rows | smaller.rows)
+
+    if (length(err.rows)>0) {
+      msg = "Not all entries are correct"
+      return(list(ok=FALSE,msg=msg, values=values,err.rows=err.rows))
+    }
+    return(list(ok=TRUE,msg="", values=values,err.rows=NULL))
+  }
+  if (!isTRUE(fiel$optional)) {
+    na.rows = is.na(values) | nchar(value)==0
+    if (na.rows) {
+      msg = "Forbidden empty entries"
+      err.rows = which(na.rows)
+      return(list(ok=FALSE,msg=msg, values=values,err.rows=err.rows))
+    }
+  }
+  return(list(ok=TRUE,msg="", values=values))
 }

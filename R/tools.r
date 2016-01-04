@@ -1,3 +1,14 @@
+copy.intersect = function(dest, source, keep.dest.types = FALSE) {
+  names = intersect(names(dest),names(source))
+  if (keep.dest.types) {
+    temp = lapply(names, function(name) as(source[name], class(dest[name])))
+    dest[names] = temp
+  } else {
+    dest[names] = source[names]
+  }
+  dest
+}
+
 copy.into.missing.fields = function(dest, source) {
   restore.point("copy.into.empty.fields")
 

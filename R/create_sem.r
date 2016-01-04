@@ -2,6 +2,8 @@ examples.EditSeminarApp = function() {
   setwd("D:/libraries/SeminarMatching/semedit_app/")
   db.dir = paste0(getwd(),"/db")
 
+  restore.point.options(display.restore.point = TRUE)
+
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
 
   # Create Databases
@@ -30,7 +32,7 @@ EditSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
 
   glob = app$glob
 
-  glob$schemas = yaml.load_file(paste0(schema.dir, "/semdb.yaml"))
+  glob$schemas = load.and.init.schemas(paste0(schema.dir, "/semdb.yaml"))
   glob$semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 
   glob$yaml.dir = yaml.dir
@@ -40,12 +42,14 @@ EditSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
 
   form = load.and.init.form(file=paste0(yaml.dir,"/semform.yaml"))
+  #form.schema.template(form)
   form$lang = lang
   form$widget.as.character=FALSE
   form$sets = glob$sets
   glob$semform = form
 
   form = load.and.init.form(file =paste0(yaml.dir,"/semcritform.yaml"))
+  #form.schema.template(form)
   form$lang = lang
   form$widget.as.character=FALSE
   form$sets = glob$sets
@@ -141,7 +145,7 @@ edit.seminar.table = function(df = se$seminars, se=app$se, app=getApp()) {
 
   rows = 1:NROW(df)
   editBtnId = paste0("semEditBtn_",rows)
-  editBtns = extraSmallButtonVector(id=starBtnId, label="",icon=icon("pencil",lib = "glyphicon"))
+  editBtns = extraSmallButtonVector(id=editBtnId, label="",icon=icon("pencil",lib = "glyphicon"))
 
 
   cols = colnames(df)
@@ -168,22 +172,25 @@ show.edit.seminar.ui = function(se, app=getApp()) {
   glob = app$glob
   seminar = se$seminar
 
-  se$semcritId = "semcritHandsoneTableUI"
-
   form.vals = form.default.values(glob$semform,values = seminar)
   form.ui = form.ui.simple(glob$semform, values=form.vals,add.submit = FALSE)
 
   crit.df = table.form.default.values(glob$semcritform, data=se$semcrit)
-  crit.ui = form.ui.handsone.table(id=se$semcritId,form = glob$semcritform,data = crit.df)
+  crit.ui = form.ui.handsone.table(form = glob$semcritform,data = crit.df)
 
 
   ui = fluidRow(column(width=10, offset=1,
     form.ui,
     crit.ui,
     br(),
-    actionButton("saveSemBtn","Save"),
-    actionButton("cancelEditSemBtn","Cancel")
+    uiOutput("editSemAlert"),
+    actionButton("saveSemBtn","Check and Save"),
+    actionButton("exitEditSemBtn","Exit")
   ))
+  clear.field.alert(id="editSemAlert")
+
+
+  buttonHandler("saveSemBtn",save.sem.click)
 
   setUI("mainUI",ui)
 
@@ -192,4 +199,67 @@ show.edit.seminar.ui = function(se, app=getApp()) {
 #  }
 
 #  add.form.handlers(form)
+}
+
+save.sem.click = function(se=app$se, app=getApp(),...) {
+  glob  = app$glob
+
+  sres = get.form.values(glob$semform)
+
+  crit.df  = get.table.form.df(glob$semcritform)
+
+  restore.point("save.sem.click")
+  if (!sres$ok) {
+    show.field.alert(msg="Could not save, since not all fields are correctly entered.",id="editSemAlert")
+    return()
+  }
+
+  se$seminar = copy.intersect(se$seminar,sres$values)
+
+  dbBegin(se$db)
+  # insert new seminar
+  if (is.na(se$seminar$semid)) {
+    res = try(dbInsert(se$db,"seminars",se$seminar,mode = "insert",schema=glob$schemas$seminar,get.key=TRUE))
+  # update existing seminar
+  } else {
+    res = try(dbInsert(se$db,"seminars",se$seminar,mode = "replace"))
+  }
+
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when saving into database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+  se$seminar = res$values
+
+  sem.id = se$seminar.sem.id
+
+  crit.df$pos = 1:NROW(crit.df)
+  crit.df$sem.id = se$seminar$sem.id
+
+
+  #Rewrite criterion table
+  res = try(dbDelete(se$db,"semcrit", list(sem.id=sem.id)))
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when updating database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+
+  res = try(dbInsert(se$db,"semcrit",crit.df,mode = "insert",schema=glob$schemas$seminar))
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when updating database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+
+  se$semcrit = as_data_frame(res$values)
+
+  dbCommit(se$db)
+
+  show.field.alert(msg="Successfully saved.",id="editSemAlert", color=NULL)
+
 }
