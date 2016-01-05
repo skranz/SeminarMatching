@@ -20,6 +20,12 @@ examples.EditSeminarApp = function() {
 
 }
 
+get.sem.number = function(semester) {
+  year = as.numeric(substring(semester,3,4))
+  year = year + 0.5*(tolower(substring(semester,1,1)) == "w")
+  year
+}
+
 EditSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(getwd(),"/schema"), yaml.dir =  paste0(getwd(),"/yaml"),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Editor", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
   restore.point("EditSeminarsApp")
 
@@ -74,7 +80,7 @@ EditSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
     }
   }
 
-  lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "mainUI")
+  lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "semEditMainUI")
   set.lop(lop)
   lop.connect.db(lop=lop)
   lop$login$ui = lop.login.ui(lop)
@@ -89,7 +95,7 @@ EditSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
     useShinyjs(),
     extendShinyjs(text = jsCode),
     fluidPage(
-      uiOutput("mainUI")
+      uiOutput("semEditMainUI")
     )
   )
   app$lop = lop
@@ -97,7 +103,7 @@ EditSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
 }
 
 
-show.edit.sem.main = function(userid, yaml.dir=app$glob$yaml.dir, db=app$glob$semdb, se=NULL, app=getApp()) {
+show.edit.sem.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$glob$semdb, se=NULL, app=getApp()) {
   semester = "SS15"
   restore.point("show.edit.sem.main")
 
@@ -110,46 +116,86 @@ show.edit.sem.main = function(userid, yaml.dir=app$glob$yaml.dir, db=app$glob$se
 
     # check if user is allowed to edit seminars
     if (NROW(se$groups)==0) {
-      show.html.warning("mainUI",paste0("The user ", userid, " has not been given any rights to edit seminars in any group."))
+      show.html.warning("semEditMainUI",paste0("The user ", userid, " has not been given any rights to edit seminars in any group."))
       return()
     } else if (sum(se$groups$edit_sem)==0) {
-      show.html.warning("mainUI",paste0("The user ", userid, " has not been given any rights to edit seminars in any group."))
+      show.html.warning("semEditMainUI",paste0("The user ", userid, " has not been given any rights to edit seminars in any group."))
       return()
     }
-
     se$groupid = se$groups$groupid[1]
-    se$seminars = dbGet(db,"seminars",groupid=se$groupid)
   }
+  se$seminars = dbGet(db,"seminars",groupid=se$groupid,.schema=app$glob$schemas$seminars)
+
+  if (!is.null(se$seminars)) {
+    # Activated and unactivated seminars
+    se$aseminars = filter(se$seminars, semester==se$semester, active==TRUE)
+    se$pseminars = filter(se$seminars, semester!=se$semester | active==FALSE)
+    se$pseminars=se$pseminars[-get.sem.number(se$pseminars$semester),]
+  }
+
 
   app$se = se
 
-  table = edit.seminar.table(se$seminars)
+  atable = edit.seminar.table(se$aseminars, prefix="a")
+  ptable = edit.seminar.table(se$pseminars, prefix="p")
 
 
   buttonHandler("createSeminarBtn",create.seminar.click)
   ui = fluidRow(column(width=10, offset=1,
-    HTML(table),
+    h4(paste0("Seminars for group ",se$groupid)),
+    h5(paste0("Activated Seminars for ",se$semester)),
+    HTML(atable),
     br(),
-    actionButton("createSeminarBtn","Create Seminar")
+    actionButton("createSeminarBtn","Create Seminar"),
+    h5(paste0("Unactivated seminars and previous seminars (can be used as templates)")),
+    HTML(ptable)
   ))
-  setUI("mainUI", ui)
+  setUI("semEditMainUI", ui)
 }
 
+add.edit.seminar.table.handler = function(rows,prefix="a") {
+  editBtnId = paste0(prefix,"semEditBtn_",rows)
+  copyEditBtnId = paste0(prefix,"semCopyEditBtn_",rows)
 
-edit.seminar.table = function(df = se$seminars, se=app$se, app=getApp()) {
+  for (i in seq_along(rows)) {
+    row = rows[i]
+    buttonHandler(editBtnId[i],edit.seminar.click,row=row, prefix=prefix, mode="edit",if.handler.exists = "skip")
+    buttonHandler(copyEditBtnId[i],edit.seminar.click, row=row, prefix=prefix, mode="copyedit",if.handler.exists = "skip")
+  }
+}
+
+edit.seminar.table = function(df = se$seminars, prefix="a", se=app$se, app=getApp()) {
   restore.point("edit.seminar.table")
 
   if (NROW(df)==0) {
-    return("<p>No seminars entered yet</p>")
+    if (prefix == "a") {
+      return("<p>... no seminars activated yet ...</p>")
+    } else {
+      return("<p>... no seminars ...</p>")
+    }
   }
 
   rows = 1:NROW(df)
-  editBtnId = paste0("semEditBtn_",rows)
-  editBtns = extraSmallButtonVector(id=editBtnId, label="",icon=icon("pencil",lib = "glyphicon"))
+  add.edit.seminar.table.handler(rows, prefix=prefix)
 
+  editBtnId = paste0(prefix,"semEditBtn_",rows)
+  editBtns = extraSmallButtonVector(id=editBtnId, label="edit")
 
-  cols = colnames(df)
-  wdf = data.frame(Edit=editBtns, df[,cols])
+  copyEditBtnId = paste0(prefix,"semCopyEditBtn_",rows)
+  copyEditBtns = extraSmallButtonVector(id=copyEditBtnId, label="new")
+
+  deleteBtnId = paste0(prefix,"semDeleteBtn_",rows)
+  if (prefix=="p") {
+    deleteBtns = extraSmallButtonVector(id=copyEditBtnId, label="delete")
+    deleteBtns[df$locked] = ""
+  } else {
+    deleteBtns = rep("", NROW(df))
+  }
+
+  btns = paste0(editBtns,copyEditBtns, deleteBtns, sep=" \n")
+
+  cols = setdiff(colnames(df),c("groupid","locked","active"))
+  wdf = data.frame(Action=btns, df[,cols])
   html.table(wdf, bg.color="#ffffff")
 }
 
@@ -166,20 +212,60 @@ create.seminar.click=function(se = app$se, app=getApp(),...) {
 
 }
 
-show.edit.seminar.ui = function(se, app=getApp()) {
+
+edit.seminar.click=function(se = app$se, app=getApp(),mode="edit", prefix="a", row=1,...) {
+  restore.point("edit.seminar.click")
+
+  if (prefix=="a") {
+    seminars = se$aseminars
+  } else {
+    seminars = se$pseminars
+  }
+
+  se$seminar = as.list(seminars[row,])
+
+  se$semcrit = dbGet(se$db,"semcrit",semid=se$seminar$semid)
+
+  if (NROW(se$semcrit)<10) {
+    df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(se$semcrit), semid=se$seminar$semid)
+    se$semcrit = rbind(se$semcrit,df)
+  }
+
+  if (mode=="copyedit") {
+    se$seminar$semid = NA_integer_
+    se$seminar$active = FALSE
+    se$seminar$semester = se$semester
+    se$seminar$locked = FALSE
+
+    se$semcrit$semid = NA_integer_
+  }
+  show.edit.seminar.ui(se=se, app=app)
+}
+
+
+show.edit.seminar.ui = function(se, app=getApp(), edit=isTRUE(!is.na(se$seminar$semid))) {
   restore.point("show.edit.seminar.ui")
 
   glob = app$glob
   seminar = se$seminar
 
+  form = glob$semform
   form.vals = form.default.values(glob$semform,values = seminar)
   form.ui = form.ui.simple(glob$semform, values=form.vals,add.submit = FALSE)
 
+
   crit.df = table.form.default.values(glob$semcritform, data=se$semcrit)
+  se$org.crit.df = crit.df
   crit.ui = form.ui.handsone.table(form = glob$semcritform,data = crit.df)
 
+  if (edit) {
+    header = h4("Edit Exististing Seminar")
+  } else {
+    header = h4("Create new seminar")
+  }
 
   ui = fluidRow(column(width=10, offset=1,
+    header,
     form.ui,
     crit.ui,
     br(),
@@ -191,8 +277,9 @@ show.edit.seminar.ui = function(se, app=getApp()) {
 
 
   buttonHandler("saveSemBtn",save.sem.click)
+  buttonHandler("exitEditSemBtn", function(...) show.edit.sem.main(se=se))
 
-  setUI("mainUI",ui)
+  setUI("semEditMainUI",ui)
 
 #  form$success.handler = function(...) {
 #    cat("\nGreat you inserted valid numbers!")
@@ -206,7 +293,7 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
 
   sres = get.form.values(glob$semform)
 
-  crit.df  = get.table.form.df(glob$semcritform)
+  crit.df  = get.table.form.df(glob$semcritform, null.value = se$org.crit.df)
 
   restore.point("save.sem.click")
   if (!sres$ok) {

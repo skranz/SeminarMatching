@@ -34,13 +34,35 @@ examples.appForm = function() {
 
 }
 
-load.and.init.form = function(file=NULL, text=NULL, utf8 = TRUE) {
-  form = read.yaml(file=file, text=text,utf8 = utf8)
-  init.form(form)
+
+view.form = function(form, params, launch.browser = rstudioapi::viewer, ...) {
+  app = eventsApp()
+  if (is.null(ui)) {
+    ui = form.ui(form=form, params=params,...)
+    form = get.form()
+  }
+  if (!is.null(form)) {
+    add.form.handlers(form,function(...) cat("\nGreat, all values are ok!"))
+  }
+  app$ui = fluidPage(with_mathjax(ui))
+  runEventsApp(app, launch.browser=launch.browser)
 }
 
-init.form = function(form, compile.markdown.help=TRUE) {
+
+load.and.init.form = function(file=NULL, text=NULL, utf8 = TRUE, lang="en", prefix=NULL, postfix=NULL,...) {
+  form = read.yaml(file=file, text=text,utf8 = utf8)
+  init.form(form, lang=lang, prefix=prefix, postfix=postfix, ...)
+}
+
+init.form = function(form, compile.markdown.help=TRUE, lang="en", prefix=form$prefix, postfix=form$postfix, show.alerts = TRUE,   widget.as.character=first.none.null(form$widget.as.character,FALSE) ) {
   restore.point("init.form")
+
+  form$widget.as.character=widget.as.character
+  form$show.alerts = show.alerts
+  form$prefix = prefix
+  form$postfix = postfix
+  form$lang = lang
+  form$texts = get.form.texts(form, lang=lang)
 
   if (is.null(form$type))
     form$type = infer.form.type(form)
@@ -54,6 +76,8 @@ init.form = function(form, compile.markdown.help=TRUE) {
     if (exists(init.form.fun,mode = "function"))
       form = do.call(init.form.fun, list(form=form))
   }
+
+
   form
 }
 
@@ -117,7 +141,7 @@ get.form = function(app=getApp()) {
   }
 }
 
-formSubmitButton = function(label="Ok", form=get.form()) {
+formSubmitButton = function(label=form$texts$submitBtnLabel, form=get.form()) {
   restore.point("formSubmitButton")
 
   id = paste0(form$prefix,"submitBtn",form$postfix)
@@ -144,7 +168,7 @@ form.ui = function(form, params=form$params, add_handlers=FALSE,  success_fun=fo
   ui
 }
 
-form.ui.simple = function(form, fields=form$fields, values=NULL, submitBtn=NULL, submitLabel="Submit",add.submit=TRUE,lang=form[["lang"]], postfix = form$postfix, prefix = form$prefix, ...) {
+form.ui.simple = function(form, fields=form$fields, values=NULL, submitBtn=NULL, submitLabel=form$texts$submitBtnLabel,add.submit=TRUE,lang=form[["lang"]], postfix = form$postfix, prefix = form$prefix, add.form.alert=TRUE, ...) {
   restore.point("form.ui.simple")
 
 
@@ -157,26 +181,20 @@ form.ui.simple = function(form, fields=form$fields, values=NULL, submitBtn=NULL,
   if (!add.submit) return(li)
 
 
+  if (add.form.alert) {
+    submitAlertId = paste0(form$prefix,"form___Alert",form$postfix)
+    submitAlert = uiOutput(submitAlertId)
+    clear.form.alert(form=form)
+  }
+
   if (is.null(submitBtn)) {
+
     id = paste0(form$prefix,"submitBtn",form$postfix)
     submitBtn = actionButton(id,submitLabel)
   }
-  c(li, list(submitBtn))
+  c(li,  list(submitAlert,submitBtn))
 }
 
-
-view.form = function(form, params, launch.browser = rstudioapi::viewer, ...) {
-  app = eventsApp()
-  if (is.null(ui)) {
-    ui = form.ui(form=form, params=params,...)
-    form = get.form()
-  }
-  if (!is.null(form)) {
-    add.form.handlers(form,function(...) cat("\nGreat, all values are ok!"))
-  }
-  app$ui = fluidPage(with_mathjax(ui))
-  runEventsApp(app, launch.browser=launch.browser)
-}
 
 formSubmitClick = function(form, success.handler = NULL,app=getApp(),id=NULL,session=NULL,...) {
   restore.point("formSubmitClick")
@@ -190,11 +208,11 @@ formSubmitClick = function(form, success.handler = NULL,app=getApp(),id=NULL,ses
 
 
 
-get.form.values = function(form=get.form(),fields=form$fields,field.names=names(fields), prefix=form$prefix, postfix=form$postfix, check.values = TRUE, show.alerts=TRUE) {
+get.form.values = function(form=get.form(),fields=form$fields,field.names=names(fields), prefix=form$prefix, postfix=form$postfix, check.values = TRUE, show.alerts=isTRUE(form$show.alerts)) {
 
   values = lapply(field.names, function(name) {
     id = paste0(prefix,name,postfix)
-    getInputValue(name)
+    getInputValue(id)
   })
   restore.point("get.form.values")
 
@@ -203,8 +221,15 @@ get.form.values = function(form=get.form(),fields=form$fields,field.names=names(
   if (!check.values)
     return(values)
 
-  check = check.form.values(values, form=form, show.alerts=TRUE)
+  check = check.form.values(values, form=form, show.alerts=show.alerts)
 
+  if (show.alerts) {
+    if (!check$ok) {
+      show.form.alert(form=form,msg=form$texts$submitFailure)
+    } else {
+      show.form.alert(form=form,msg=form$texts$submitSuccess, color=NULL)
+    }
+  }
   return(check)
 }
 
@@ -212,7 +237,7 @@ check.form.values = function(values, form, fields=form$fields[field.names], fiel
   restore.point("check.form.values")
 
   li = lapply(field.names, function(name) {
-    ret = check.field.value(values[[name]], fields[[name]])
+    ret = check.field.value(values[[name]], fields[[name]], lang=form$lang)
     if (!ret$ok & show.alerts) {
       show.field.alert(name=name, msg=ret$msg, form=form)
     } else {
@@ -231,6 +256,26 @@ check.form.values = function(values, form, fields=form$fields[field.names], fiel
   return(list(ok=ok,values=values,failed.fields=failed.fields))
 }
 
+
+clear.form.alert = function(form=NULL,msg="", prefix=form$prefix, postfix=form$postfix, color=NULL,id = paste0(prefix,"form___Alert",postfix)) {
+  show.form.alert(msg=msg, form=form, color=color, prefix=prefix,postfix=postfix, id=id)
+}
+
+show.form.alert = function(form=NULL,msg="", prefix=form$prefix, postfix=form$postfix, color="red",id = paste0(prefix,"form___Alert",postfix)) {
+  restore.point("show.form.alert")
+
+  #cat("\n*********************************")
+  #cat("\nshow.form.alert:\n", msg)
+  #cat("\n*********************************")
+
+  if (is.null(msg)) msg = ""
+  if (!is.null(color))
+    msg = colored.html(msg, color)
+
+  setUI(id,HTML(msg))
+}
+
+
 clear.field.alert = function(name=field$name,field=NULL, form=NULL, prefix=form$prefix, postfix=form$postfix, id = paste0(prefix,name,postfix,"__Alert")) {
 
   show.field.alert(name=name,msg="", form=form, color=NULL, prefix=prefix,postfix=postfix, id=id)
@@ -245,64 +290,92 @@ show.field.alert = function(name=field$name, msg="",field=NULL, prefix=form$pref
   setUI(id,HTML(msg))
 }
 
-check.field.value = function(value, field) {
+check.field.value = function(value, field, lang="en") {
   restore.point("check.field.value")
 
   if (is.null(value)) value = ''
+  if (!is.null(field$collapse)) {
+    value = paste0(value,collapse=field$collapse)
+  }
+
   if (isTRUE(field$type=="numeric")) {
     num = as.numeric(value)
     if (is.na(num)) {
       if (value %in% field$na_value | isTRUE(field$optional)) {
         return(list(ok=TRUE,msg="", value=num))
       }
-      msg = field.failure.msg(field, value)
+      msg = field.failure.msg(field, value, lang=lang)
       return(list(ok=FALSE,msg=msg, value=num))
     }
 
     if (!is.null(field$max)) {
       if (num>field$max) {
-        msg = field.failure.msg(field, value)
+        msg = field.failure.msg(field, value, lang=lang)
         return(list(ok=FALSE,msg=msg, value=num))
       }
     }
     if (!is.null(field$min)) {
       if (num<field$min) {
-        msg = field.failure.msg(field, value)
+        msg = field.failure.msg(field, value, lang=lang)
         return(list(ok=FALSE,msg=msg, value=num))
       }
     }
     return(list(ok=TRUE,msg="", value=num))
   }
   if (nchar(value)==0 & !isTRUE(field$optional)) {
-    msg = field.failure.msg(field, value)
+    msg = field.failure.msg(field, value, lang=lang)
     return(list(ok=FALSE,msg=msg, value=value))
   }
   return(list(ok=TRUE,msg="", value=value))
 }
 
-field.failure.msg = function(field,value, use.custom = TRUE) {
+field.failure.msg = function(field,value, use.custom = TRUE, lang="en") {
   restore.point("field.failure.msg")
 
   if (use.custom & !is.null(field$failure_msg))
     return(field$failure_msg)
 
+  if (isTRUE(lang=="de")) {
   if (isTRUE(field$type=="numeric")) {
-    msg = "Please enter a number "
-    if (!is.null(field[["min"]]) & !is.null(field[["max"]])) {
-      msg = paste0(msg, " between ", field[["min"]], " and ", field[["max"]])
-    } else if (!is.null(field[["min"]])) {
-      msg = paste0(msg, " above or equal to ", field[["min"]])
-    } else if (!is.null(field[["max"]])) {
-      msg = paste0(msg, " below or equal to ", field[["min"]])
+      msg = "Bitte geben Sie eine Zahl "
+      if (!is.null(field[["min"]]) & !is.null(field[["max"]])) {
+        msg = paste0(msg, " zwischen ", field[["min"]], " und ", field[["max"]])
+      } else if (!is.null(field[["min"]])) {
+        msg = paste0(msg, " größer gleich ", field[["min"]])
+      } else if (!is.null(field[["max"]])) {
+        msg = paste0(msg, " kleine gleich ", field[["min"]])
+      }
+      if (!is.null(field$na_value)) {
+        msg = paste0(msg,"ein. Für keinen Eintrag geben Sie ", paste0('"',field$na_value,'"', collapse=" oder "))
+      }
+      msg = paste0(msg,"ein.")
+      msg = mark_utf8(msg)
+      return(msg)
     }
-    if (!is.null(field$na_value)) {
-      msg = paste0(msg,". For no number enter ", paste0('"',field$na_value,'"', collapse=" or "))
+
+    msg = mark_utf8("Bitte machen Sie eine gültige Eingabe.")
+
+  } else {
+    if (isTRUE(field$type=="numeric")) {
+      msg = "Please enter a number "
+      if (!is.null(field[["min"]]) & !is.null(field[["max"]])) {
+        msg = paste0(msg, " between ", field[["min"]], " and ", field[["max"]])
+      } else if (!is.null(field[["min"]])) {
+        msg = paste0(msg, " above or equal to ", field[["min"]])
+      } else if (!is.null(field[["max"]])) {
+        msg = paste0(msg, " below or equal to ", field[["min"]])
+      }
+      if (!is.null(field$na_value)) {
+        msg = paste0(msg,". For no number enter ", paste0('"',field$na_value,'"', collapse=" or "))
+      }
+      msg = paste0(msg,".")
+      return(msg)
     }
-    msg = paste0(msg,".")
-    return(msg)
+
+    msg = "Please enter a valid input."
+
   }
 
-  msg = "Please enter a valid input."
   return(msg)
 }
 
@@ -375,6 +448,10 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
     }
     li = as.list(choices)
     multiple = isTRUE(field[["multiple"]])
+    if (multiple & !is.null(field$collapse)) {
+      value = strsplit(value,split = field$collapse,fixed = TRUE)[[1]]
+    }
+
     res[[1]] = selectizeInput(id, label,choices=choices, selected=value, multiple=multiple)
 
   } else if (input == "ace") {
@@ -463,4 +540,41 @@ field.default.values = function(form, field, sets = NULL) {
     }
   }
   return("")
+}
+
+get.form.texts = function(form, lang="en") {
+  restore.point("get.form.texts")
+
+  if (lang=="de") {
+    texts = list(
+      submitBtnLabel = "Speichern",
+      submitFailure = "Einige notwendige Angaben fehlen oder sind inkorrekt.",
+      submitSuccess = ""
+    )
+  } else {
+    texts = list(
+      submitBtnLabel = "Submit",
+      submitFailure = "Some required entries are missing or wrong.",
+      submitSuccess = ""
+    )
+  }
+  if (!is.null(form$texts)) {
+    te = get.lang.object(form$texts,lang=lang)
+    texts[names(te)] = te
+  }
+
+  texts
+}
+
+get.lang.object = function(obj, lang="en") {
+  restore.point("get.lang.object")
+
+  if (isTRUE(substring(names(obj[[1]]),1,5)=="lang_")) {
+    if (!is.null(obj[[paste0("lang_",lang)]])) {
+      return(obj[[paste0("lang_",lang)]])
+    } else {
+      return(obj[[paste0("lang_en")]])
+    }
+  }
+  return(obj)
 }

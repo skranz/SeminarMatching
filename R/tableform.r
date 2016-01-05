@@ -106,16 +106,24 @@ form.ui.handsone.table = function(form, data, fields=form$fields, label=first.no
     ui = c(ui,list(HTML(help_html)))
   }
   if (!is.null(note_html)) {
-    ui =c(ui, list(bsCollapse(bsCollapsePanel(title=note_title,HTML(note_html)))))
+    ui =c(ui, list(br(),bsCollapse(bsCollapsePanel(title=note_title,HTML(note_html)))))
   }
   ui
 }
 
-get.table.form.df = function(form) {
+#' Get the data frame from a table form
+#' @param form the form on which the table is based
+#' @param null.value rhandsonetable does not return a value if nothing is changed, but only returns null. null.value can be se to the initial data.frame which will then be returned in case nothing has been changed.
+get.table.form.df = function(form, null.value = NULL) {
   id = paste0(form$prefix,"handsoneTableFormUI", form$postfix)
   hot = getInputValue(id)
-  if (is.null(hot)) return(NULL)
   restore.point("get.table.form.df")
+  if (is.null(hot)) {
+    cat("\n*********************************")
+    cat("\nhandsoneTableFormUI == NULL")
+    cat("\n*********************************")
+    return(null.value)
+  }
   df = as_data_frame(data.table::rbindlist(hot$data))
   #df = hot_to_r(hot)
   colnames(df) = names(form$fields)

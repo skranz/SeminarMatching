@@ -10,4 +10,4 @@ License: GPL >= 2.0
 LazyData: TRUE
 Depends: matchingR, stringtools, restorepoint, dplyr, codeUtils,
          shiny, shinyEvents, shinyPart, DT, YamlObjects, hwriter,
-         loginPart, shinyjs, RSQLite, DBI, dbmisc, markdown
+         loginPart, shinyjs, RSQLite, DBI, dbmisc, markdown, data.table
