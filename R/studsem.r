@@ -33,6 +33,7 @@ StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
 
   glob$opts = opts = read.yaml(file=paste0(yaml.dir,"/settings.yaml"),keep.quotes = FALSE)
+  glob$use_joker = isTRUE(opts$use_joker)
   lang = opts$start_lang
 
   app$opts = glob$opts
@@ -128,7 +129,7 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
   }
   app$se = se
   se$semester = semester
-
+  se$use_joker = app$glob$use_joker
 
   se$stud = load.student.from.db(userid=userid, semester=semester,se=se)
 
@@ -195,17 +196,17 @@ show.stud.sem.ui = function(se=app$se, app=getApp(), refresh.se = FALSE) {
   sem.df$selected = FALSE
   sem.df$row = 1:NROW(sem.df)
   sem.df$pos = NA
-  sem.df$joker = FALSE
+  sem.df$joker = 0
 
   #app$ui = fluidPage(dataTableOutput("selTable"))
 
 
 
   if (NROW(se$studpref)>0) {
-    sel.rows = match(se$studpref$semid, sem.df$sem.id)
+    sel.rows = match(se$studpref$semid, sem.df$semid)
     sel.df = sem.df[sel.rows,]
     sel.df$pos = 1:NROW(sel.df)
-    sel.df$joker = TRUE
+    sel.df$joker = se$studpref$joker
   } else {
     sel.rows = integer(0)
     sel.df = sem.df[sel.rows,]
@@ -223,6 +224,7 @@ show.stud.sem.ui = function(se=app$se, app=getApp(), refresh.se = FALSE) {
     )),
     h3(opts$selSemTitle[[lang]]),
     uiOutput("selSemUI"),
+    br(),
     actionButton("saveStudprefBtn",opts$rankingSaveBtnLabel[[lang]]),
     h3(opts$allSemTitle[[lang]]),
     uiOutput("allSemUI")
@@ -256,7 +258,12 @@ update.selTable = function(sel.df, sel.row=NULL, app=getApp(), se=app$se) {
 
 hwrite.selTable = function(widget.df, sel.row=1, app=getApp(), opts=app$opts, lang=app$lang) {
   restore.point("hwrite.selTable")
-  html.table(widget.df,sel.row = sel.row, header=opts$selSemColnames[[lang]], bg.color="#ffffff")
+  header = opts$selSemColnames[[lang]]
+  if (!app$glob$use_joker) {
+    header = setdiff(header, c("joker","Joker"))
+  }
+
+  html.table(widget.df,sel.row = sel.row, header=header, bg.color="#ffffff")
 }
 
 sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
@@ -271,16 +278,24 @@ sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
   upBtns = extraSmallButtonVector(id=upBtnId,label="",icon=icon("arrow-up",lib = "glyphicon"))
   downBtns = extraSmallButtonVector(id=downBtnId, label="",icon=icon("arrow-down",lib="glyphicon"))
   removeBtns = extraSmallButtonVector(id=removeBtnId, label="",icon=icon("remove",lib = "glyphicon"))
-  jokerBtns = extraSmallButtonVector(id=jokerBtnId, label="",icon=icon("star-empty",lib = "glyphicon"))
 
-  srows = which(df$joker)
-  if (length(srows)>0) {
-    jokerBtns[srows] = extraSmallButtonVector(id=jokerBtnId[srows], label="",icon=icon("star",lib = "glyphicon"))
+  if (app$glob$use_joker) {
+    jokerBtns = extraSmallButtonVector(id=jokerBtnId, label="",icon=icon("star-empty",lib = "glyphicon"))
+
+    srows = which(df$joker>0)
+    if (length(srows)>0) {
+      jokerBtns[srows] = extraSmallButtonVector(id=jokerBtnId[srows], label="",icon=icon("star",lib = "glyphicon"))
+    }
+
   }
 
 
   btns = paste0(upBtns,downBtns,removeBtns)
-  data.frame(Rank=rows,Joker =jokerBtns, btns,df[,cols])
+  if (app$glob$use_joker) {
+    data.frame(Rank=rows,Joker =jokerBtns, btns,df[,cols])
+  } else {
+    data.frame(Rank=rows, btns,df[,cols])
+  }
 }
 
 
