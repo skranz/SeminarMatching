@@ -95,10 +95,10 @@ StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
 load.student.from.db = function(userid=se$userid, semester=NULL, app=getApp(), se=app$se) {
   restore.point("load.student.from.db")
 
-  all = dbGet(se$db,"students",userid=userid,
-    .schema=app$glob$schemas$students)
+  all = dbGet(se$db,"students",list(userid=userid),
+    schema=app$glob$schemas$students)
 
-  if (NROW(all)==0) return(NULL)
+  if (NROW(all)==0) return(list(userid=userid, email=userid, semester=se$semester))
 
   .sem = semester
   stud = filter(all, semester==.sem)
@@ -132,7 +132,9 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
 
   se$stud = load.student.from.db(userid=userid, semester=semester,se=se)
 
-  se$sems = dbGet(se$db,"seminars",semester=semester,active=TRUE,.schema=app$glob$schemas$seminars)
+  se$sems = dbGet(se$db,"seminars",list(semester=semester,active=TRUE),schema=app$glob$schemas$seminars)
+
+  se$studpref = dbGet(se$db,"studpref", list(userid=userid, semester=semester), schema=app$glob$schemas$studpref, orderby="pos ASC")
 
   app$se = se
   se
@@ -162,8 +164,9 @@ save.studform = function(values, app=getApp(), se=app$se,...) {
   restore.point("save.studForm")
 
   #schema.template(values, "students")
+  form = app$glob$studform
 
-  se$stud = copy.intersect(se$stud,values)
+  se$stud[names(values)] = values
   se$stud$semester = se$semester
   se$stud.exists = TRUE
   se$stud$userid = se$userid
@@ -173,7 +176,7 @@ save.studform = function(values, app=getApp(), se=app$se,...) {
   dbInsert(se$db,"students", se$stud)
   dbCommit(se$db)
 
-  show.form.alert(form=form,msg=se$studform$texts$submitSuccess, color=NULL)
+  show.form.alert(form=form,msg=form$texts$submitSuccess, color=NULL)
 }
 
 show.stud.sem.ui = function(se=app$se, app=getApp(), refresh.se = FALSE) {
@@ -182,18 +185,36 @@ show.stud.sem.ui = function(se=app$se, app=getApp(), refresh.se = FALSE) {
   if (refresh.se)
     se = refresh.stud.app.data(se=se)
 
+  lang = app$lang
   glob = app$glob
+  opts = glob$opts
   sems = se$sems
 
-  cols = intersect(union(opts$selSemCols,opts$allSemCols),colnames(sems))
+  cols = c("semid",intersect(union(opts$selSemCols,opts$allSemCols),colnames(sems)))
   sem.df = sems[,cols]
   sem.df$selected = FALSE
   sem.df$row = 1:NROW(sem.df)
   sem.df$pos = NA
-  sem.df$star = FALSE
+  sem.df$joker = FALSE
 
   #app$ui = fluidPage(dataTableOutput("selTable"))
-  ui = fluidRow(
+
+
+
+  if (NROW(se$studpref)>0) {
+    sel.rows = match(se$studpref$semid, sem.df$sem.id)
+    sel.df = sem.df[sel.rows,]
+    sel.df$pos = 1:NROW(sel.df)
+    sel.df$joker = TRUE
+  } else {
+    sel.rows = integer(0)
+    sel.df = sem.df[sel.rows,]
+  }
+  update.selTable(sel.df)
+  update.semTable(sem.df, sel.rows=sel.rows)
+
+
+  ui = fluidRow(column(offset=1, width=10,
     HTML(opts$rankingTitle[[lang]]),
     p(opts$rankingDescr[[lang]]),
     bsCollapse(bsCollapsePanel(
@@ -202,30 +223,22 @@ show.stud.sem.ui = function(se=app$se, app=getApp(), refresh.se = FALSE) {
     )),
     h3(opts$selSemTitle[[lang]]),
     uiOutput("selSemUI"),
+    actionButton("saveStudprefBtn",opts$rankingSaveBtnLabel[[lang]]),
     h3(opts$allSemTitle[[lang]]),
     uiOutput("allSemUI")
-  )
+  ))
 
-  sel.rows = sample(1:NROW(sem.df),2)
-  sel.df = sem.df[sel.rows,]
-  sel.df$pos = 1:NROW(sel.df)
-  sel.df$star = TRUE
-  update.selTable(sel.df)
-  update.semTable(sem.df, sel.rows=sel.rows)
-
-  add.seminar.choice.handlers(num.sems=NROW(sem.df))
-
-  bsButton("id","label",size="extra-small")
-
+  buttonHandler("saveStudprefBtn",save.studpref)
+  add.studpref.handlers(num.sems=NROW(sem.df))
   setUI("studsemUI", ui)
 
 }
 
 
-update.selTable = function(sel.df, sel.row=NULL, app=getApp()) {
+update.selTable = function(sel.df, sel.row=NULL, app=getApp(), se=app$se) {
   restore.point("update.selTable")
 
-  app$sel.df = sel.df
+  se$sel.df = sel.df
   if (NROW(sel.df)==0) {
     setUI("selSemUI",p("---"))
     return()
@@ -253,30 +266,30 @@ sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
   upBtnId = paste0("upBtn_",rows)
   downBtnId = paste0("downBtn_",rows)
   removeBtnId = paste0("removeBtn_",rows)
-  starBtnId = paste0("starBtn_",rows)
+  jokerBtnId = paste0("jokerBtn_",rows)
 
   upBtns = extraSmallButtonVector(id=upBtnId,label="",icon=icon("arrow-up",lib = "glyphicon"))
   downBtns = extraSmallButtonVector(id=downBtnId, label="",icon=icon("arrow-down",lib="glyphicon"))
   removeBtns = extraSmallButtonVector(id=removeBtnId, label="",icon=icon("remove",lib = "glyphicon"))
-  starBtns = extraSmallButtonVector(id=starBtnId, label="",icon=icon("star-empty",lib = "glyphicon"))
+  jokerBtns = extraSmallButtonVector(id=jokerBtnId, label="",icon=icon("star-empty",lib = "glyphicon"))
 
-  srows = which(df$star)
+  srows = which(df$joker)
   if (length(srows)>0) {
-    starBtns[srows] = extraSmallButtonVector(id=starBtnId[srows], label="",icon=icon("star",lib = "glyphicon"))
+    jokerBtns[srows] = extraSmallButtonVector(id=jokerBtnId[srows], label="",icon=icon("star",lib = "glyphicon"))
   }
 
 
   btns = paste0(upBtns,downBtns,removeBtns)
-  data.frame(Rank=rows,Star =starBtns, btns,df[,cols])
+  data.frame(Rank=rows,Joker =jokerBtns, btns,df[,cols])
 }
 
 
-update.semTable = function(sem.df, sel.rows=which(sem.df$selected), app=getApp()) {
+update.semTable = function(sem.df, sel.rows=which(sem.df$selected), app=getApp(), se=app$se) {
   restore.point("update.semTable")
 
   sem.df$selected[sel.rows] = TRUE
 
-  app$sem.df = sem.df
+  se$sem.df = sem.df
 
   widget.df = sem.widgets.df(sem.df)
   html = hwrite.semTable(widget.df,sel.rows=sel.rows)
@@ -303,14 +316,14 @@ sem.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
 
 
 
-add.seminar.choice.handlers = function(num.sems) {
+add.studpref.handlers = function(num.sems) {
   rows = 1:num.sems
 
   upBtnId = paste0("upBtn_",rows)
   downBtnId = paste0("downBtn_",rows)
   removeBtnId = paste0("removeBtn_",rows)
   addBtnId = paste0("addBtn_",rows)
-  starBtnId =  paste0("starBtn_",rows)
+  jokerBtnId =  paste0("jokerBtn_",rows)
 
 
   for (row in rows) {
@@ -318,14 +331,14 @@ add.seminar.choice.handlers = function(num.sems) {
     buttonHandler(downBtnId[row],updown.click, row=row,up=FALSE)
     buttonHandler(addBtnId[row],add.seminar.click, row=row)
     buttonHandler(removeBtnId[row],remove.seminar.click, pos=row)
-    buttonHandler(starBtnId[row],star.seminar.click, pos=row)
+    buttonHandler(jokerBtnId[row],joker.seminar.click, pos=row)
   }
 
 }
 
 
-updown.click = function(app,value,row,up=TRUE,...) {
-  sel.df = app$sel.df
+updown.click = function(app=getApp(),value,row,up=TRUE,se=app$se,...) {
+  sel.df = se$sel.df
   restore.point("updown.click")
   cat("updown.click")
 
@@ -340,11 +353,11 @@ updown.click = function(app,value,row,up=TRUE,...) {
   #setUI("studMainUI", HTML(table))
 }
 
-add.seminar.click = function(row, app,...) {
+add.seminar.click = function(row, app=getApp(),se=app$se,...) {
   restore.point("add.seminar.click")
 
-  sem.df = app$sem.df
-  sel.df = app$sel.df
+  sem.df = se$sem.df
+  sel.df = se$sel.df
   # Seminar does already exist
   if (row %in% sel.df$row) return()
   #
@@ -356,32 +369,48 @@ add.seminar.click = function(row, app,...) {
 
 }
 
-remove.seminar.click = function(pos,app,...) {
+remove.seminar.click = function(pos,app=getApp(),se=app$se,...) {
   restore.point("remove.seminar.click")
 
-  sem.df = app$sem.df
-  sel.df = app$sel.df
+  sem.df = se$sem.df
+  sel.df = se$sel.df
   #
   row = sel.df$row[pos]
   sel.df = sel.df[-pos,]
+  rows = sel.df$pos > pos
+  sel.df$pos[rows] = sel.df$pos[rows]-1
   sem.df$selected[row] = FALSE
   update.selTable(sel.df,sel.row = NULL)
   update.semTable(sem.df)
 }
 
 
-star.seminar.click = function(pos,app,...) {
-  sel.df = app$sel.df
-  restore.point("star.seminar.click")
+joker.seminar.click = function(pos,app=getApp(),se=app$se,...) {
+  sel.df = se$sel.df
+  restore.point("joker.seminar.click")
 
-  if (sel.df$star[pos]) {
-    sel.df$star[pos] = FALSE
+  if (sel.df$joker[pos]) {
+    sel.df$joker[pos] = FALSE
   } else {
-    sel.df$star = FALSE
-    sel.df$star[pos] = TRUE
+    sel.df$joker = FALSE
+    sel.df$joker[pos] = TRUE
   }
 #  cat("\nsel.df: \n\n")
 #  print(sel.df)
 
   update.selTable(sel.df=sel.df,sel.row = NULL)
+}
+
+save.studpref = function(app=getApp(), se=app$se,...) {
+  restore.point("save.stud.prefs")
+
+  dbBegin(se$db)
+  dbDelete(se$db, "studpref",list(userid=se$userid, semester=se$semester))
+
+  if (NROW(se$sel.df)>0) {
+    sel.df = arrange(se$sel.df,pos)
+    studpref = data_frame(semid=se$sem.df$semid[sel.df$row], userid=se$userid,semester=se$semester, pos=sel.df$pos, joker=sel.df$joker)
+    dbInsert(se$db, "studpref",studpref, schema=app$glob$schemas$studpref)
+  }
+  dbCommit(se$db)
 }

@@ -112,7 +112,7 @@ show.edit.sem.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=a
     se$semester = semester
     se$db = db
     se$userid = userid
-    se$groups = dbGet(db,"groupstaff",userid=userid)
+    se$groups = dbGet(db,"groupstaff",list(userid=userid))
 
     # check if user is allowed to edit seminars
     if (NROW(se$groups)==0) {
@@ -124,7 +124,7 @@ show.edit.sem.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=a
     }
     se$groupid = se$groups$groupid[1]
   }
-  se$seminars = dbGet(db,"seminars",groupid=se$groupid,.schema=app$glob$schemas$seminars)
+  se$seminars = dbGet(db,"seminars",list(groupid=se$groupid),schema=app$glob$schemas$seminars)
 
   if (!is.null(se$seminars)) {
     # Activated and unactivated seminars
@@ -224,7 +224,7 @@ edit.seminar.click=function(se = app$se, app=getApp(),mode="edit", prefix="a", r
 
   se$seminar = as.list(seminars[row,])
 
-  se$semcrit = dbGet(se$db,"semcrit",semid=se$seminar$semid)
+  se$semcrit = dbGet(se$db,"semcrit",list(semid=se$seminar$semid))
 
   if (NROW(se$semcrit)<10) {
     df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(se$semcrit), semid=se$seminar$semid)

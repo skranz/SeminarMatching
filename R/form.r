@@ -569,12 +569,10 @@ get.form.texts = function(form, lang="en") {
 get.lang.object = function(obj, lang="en") {
   restore.point("get.lang.object")
 
-  if (isTRUE(substring(names(obj[[1]]),1,5)=="lang_")) {
-    if (!is.null(obj[[paste0("lang_",lang)]])) {
-      return(obj[[paste0("lang_",lang)]])
-    } else {
-      return(obj[[paste0("lang_en")]])
-    }
+  if (!is.null(obj[[paste0("lang_",lang)]])) {
+    return(obj[[paste0("lang_",lang)]])
+  } else if (!is.null(obj[["lang_en"]])) {
+    return(obj[["lang_en"]])
   }
   return(obj)
 }
