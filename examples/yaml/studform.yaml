@@ -1,11 +1,23 @@
+texts:
+  lang_de:
+    submitBtnLabel: Speichern
+    submitFailure: |
+      Einige Angaben fehlen oder sind fehlerhaft.
+      Konnte Ihre Daten nicht speichern.
+    submitSuccess: |
+      Ihre Angaben wurden erfolgreich aktualisiert.
+      Erstellen Sie nun bitte ihre Präferenzliste
+      über die Seminare nächstes Semester.
+  lang_en:
+    submitBtnLabel: Save
+    submitFailure: |
+      Some entry is missing or wrong. Could not save your data.
+    submitSuccess: |
+      Your data has been successfully saved.
+      Please now create your list of preferences over the
+      next semester's seminars.
+
 fields:
-  name:
-    lang_de:
-      label: Name
-      help: Bitte geben Sie hier ihren Vor- und Nachnamen ein
-    lang_en:
-      label: Name
-      help: Please enter your first name and family name
   email:
     lang_de:
       label: Email
@@ -19,6 +31,14 @@ fields:
         Please enter your Ulm University email.
         Only email adresses that end with '@uni-ulm.de'
         are valid
+    readonly: TRUE
+  name:
+    lang_de:
+      label: Name
+      help: Bitte geben Sie hier ihren Vor- und Nachnamen ein
+    lang_en:
+      label: Name
+      help: Please enter your first name and family name
     test: |
       str.ends.with(email,'@uni-ulm.de')
   studBAMA:
@@ -53,7 +73,7 @@ fields:
     showif: |
       studSubject == "WiWi" | studSubject2 == "WiWi"
 
-  studFieldMA:
+  studSpecMA:
     lang_de:
       label: Schwerpunkt (WiWi-Master)
       help: Falls Sie bereits einen Schwerpunkt im Master gewählt haben, geben Sie ihn bitte an
@@ -63,8 +83,8 @@ fields:
     choice_set: specMA
     showif: |
       studSubject == "WiWi" | studSubject2 == "WiWi"
-    value: '---'
-  studFieldMA2:
+    value: ''
+  studSpecMA2:
     lang_de:
       label: Zweiter Schwerpunkt (Master)
       help: Falls Sie bereits einen zweiten Schwerpunkt im Masterstudium gewählt haben, geben Sie ihn bitte an
@@ -74,4 +94,4 @@ fields:
     choice_set: specMA
     showif: |
       studSubject == "WiWi" | studSubject2 == "WiWi"
-    value: '---'
+    value: ''

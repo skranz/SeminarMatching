@@ -1,0 +1,20 @@
+[{
+  name: 'John Doe'
+  email: 'john.doe@uni-ulm.de'
+  fach: 'wiwi'
+  studSchwerpunkt: 'FinVer'
+  level: 'ba'
+  ranking:
+    controlling_ba: 1
+    econbr:
+},{
+  name: 'Jane Doe'
+  email: 'jane.doe@uni-ulm.de'
+  fach: 'wiwi'
+  studSchwerpunkt: 'controlling'
+  level: 'ba'
+  ranking:
+    controlling_ba: 1
+    econbr: 2
+}
+]

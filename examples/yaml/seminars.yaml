@@ -1,0 +1,59 @@
+- title: "Controlling"
+  slots: 2
+  points:
+    - [10,'studSchwerpunkt == "controlling"']
+    - [1, 'fach == "wiwi"']
+    - [100,'numsem(stud.id, semSchwerpunkt="controlling", level="ba")==0 & studSchwerpunktBA == "controlling"']
+  fields: 'Controlling'
+  unit: "Controlling"
+  lecturer: 'Wentges, Paul'
+  semLevel: 'BA'
+  subjects:
+  choiceDescr:
+    Präferenz für WiWi Studierende mit Schwerpunkt Controlling,
+    die bislang noch kein Controlling Seminar im Bachelor gehört haben.
+  weblink:
+
+- title: "Spezialfragen des Controllings"
+  numSlots: 2
+  points:
+    - [10,'studSchwerpunkt == "controlling"']
+    - [1, 'fach == "wiwi"']
+    - [100,'numsem(stud.id, semSchwerpunkt="controlling", level="MA")==0 & studSchwerpunktMA == "controlling"']
+  semSchwerpunkt: 'Controlling'
+  lecturer: 'Wentges, Paul'
+  semLevel: 'MA'
+  field: "Controlling"
+  unit: "Controlling"
+  choiceDescr:
+    Präferenz für WiWi Masterstudierende mit Schwerpunkt Controlling,
+    die bislang noch kein Controlling Seminar im Master gehört haben.
+  weblink:
+
+- title: "Verhaltensökonomik"
+  slots: 2
+  points:
+  semSchwerpunkt: 'Economics'
+  field: "Economics"
+  unit: "Economics"
+  lecturer: 'Fellner, Gerlinde'
+  semLevel: 'MA'
+  choiceDescr:
+    Präferenz für WiWi Masterstudierende mit Schwerpunkt Controlling,
+    die bislang noch kein Controlling Seminar im Master gehört haben.
+  weblink:
+
+
+- title: "Seminar zur Bankenregulierung"
+  slots: 3
+  points:
+    - [10,studSchwerpunkt == 'econ']
+  semSchwerpunkt: 'econ'
+  lecturer: 'Kranz, Sebastian'
+  semLevel: 'ba'
+  descr: >
+    Ökonomische Fragestellungen zur Bankenregulierung.
+  weblink:
+  field: "Economics"
+  unit: "Economics"
+

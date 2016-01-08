@@ -1,0 +1,39 @@
+fields:
+  subject:
+    lang_de:
+      label: Fach
+    lang_en:
+      label: Subject
+    condition: >
+      studSubject == "{{subject}}" | studSubject2 == "{{subject}}"
+    choices: ['-']
+    choice_set: subjects
+
+  spec:
+    lang_de:
+      label: Schwerpunkt
+    lang_en:
+      label: Specializ.
+    condition: >
+      (studSubject == "WiWi" | studSubject2 == "WiWi"') &
+      (
+        (studBAMA == "Bachelor" & studSpecBA == "{{spec}}") |
+        (studBAMA == "Master" & (studSpecMA == "{{spec}}" | studSpecMA2 == "{{spec}}")
+      )
+    choices: ['-']
+    choice_set: [specBA, specMA]
+  #heard_sem:
+  #  lang_de:
+  #    label: Schon Seminar ... gehört
+  #  lang_en:
+  #    label: Has already heard seminar ...
+  #  condition: >
+  #    TRUE
+  #  choice_set: [seminars]
+  email:
+    lang_de:
+      label: Email
+    lang_en:
+      label: Email
+    condition: >
+      email == "{{email}}"

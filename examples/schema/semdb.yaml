@@ -1,0 +1,123 @@
+# Tables for simple user management
+
+groupstaff:
+  descr: table of groupstaff
+  table:
+    userid: VARCHAR(255)
+    groupid: VARCHAR(255)
+    email: VARCHAR(255)
+    edit_sem: BOOLEAN
+    notify: BOOLEAN
+    admin: BOOLEAN
+    boss: BOOLEAN
+  defaults:
+    edit_sem: TRUE
+    notify: TRUE
+    admin: FALSE
+    boss: FALSE
+  indexes:
+    - "CREATE UNIQUE INDEX groupstaff1 on groupstaff (groupid,userid)"
+
+students:
+  descr: students table
+  table:
+    userid: VARCHAR(255)
+    email: VARCHAR(255)
+    semester: VARCHAR(20)
+    name: VARCHAR(255)
+    studBAMA: VARCHAR(255)
+    studSubject: VARCHAR(255)
+    studSubject2: VARCHAR(255)
+    studSpecBA: VARCHAR(255)
+    studSpecMA: VARCHAR(255)
+    studSpecMA2: VARCHAR(255)
+  indexes:
+    - "CREATE INDEX students1 on students (userid)"
+    - "CREATE UNIQUE INDEX students2 on students (userid, semester)"
+
+seminars:
+  table:
+    semid: INTEGER PRIMARY KEY AUTOINCREMENT
+    groupid: VARCHAR(255)
+    semester: VARCHAR(20)
+    active: BOOLEAN
+    locked: BOOLEAN
+    name: VARCHAR(1024)
+    teacher: VARCHAR(255)
+    slots: INTEGER
+    semBAMA: VARCHAR(100)
+    area: TEXT
+    weblink: TEXT
+    descr: TEXT
+    pairs: BOOLEAN
+  indexes:
+    - "CREATE INDEX seminars1 on seminars (groupid, semester, teacher)"
+    - "CREATE INDEX seminars2 on seminars (semester)"
+    - "CREATE INDEX seminars3 on seminars (teacher)"
+    - "CREATE INDEX seminars4 on seminars (name)"
+
+semcrit:
+  descr: The criteria for giving points to students of a seminar
+  table:
+    semid: INTEGER REFERENCES seminars (semid)
+    pos: INTEGER
+    points: NUMERIC
+    slots: TEXT
+    subject: VARCHAR(255)
+    spec: VARCHAR(255)
+    email: VARCHAR(255)
+    points_pair_first: VARCHAR(255)
+  indexes:
+    - "CREATE INDEX semcrit1 on semcrit (semid)"
+
+studpref:
+  descr: The preference list of students
+  table:
+    semid: INTEGER REFERENCES seminars (semid)
+    userid: VARCHAR(255)
+    pos: INTEGER
+    semester: VARCHAR(20)
+    joker: INTEGER
+  indexes:
+    - "CREATE INDEX studpref1 on studpref (semester)"
+    - "CREATE INDEX studpref2 on studpref (userid,semester)"
+
+
+assignment:
+  descr: The final student-seminar assignment of the semester
+  table:
+    semid: INTEGER REFERENCES seminars (semid)
+    userid: VARCHAR(255)
+    semester: VARCHAR(20)
+    slot: INTEGER
+    points: NUMERIC
+    joker: INTEGER
+    round: INTEGER
+  indexes:
+    - "CREATE INDEX assignment1 on assignment (semester, round)"
+    - "CREATE INDEX assignment2 on assignment (userid,semester)"
+    - "CREATE INDEX assignment3 on assignment (semid,semester)"
+
+semsettings:
+  descr: Settings for current semester
+  table:
+    semester: VARCHAR(20)
+    sem_free_edit: BOOLEAN
+    sem_cond_edit: BOOLEAN
+    sem_pref: BOOLEAN
+    matching_rounds: INTEGER
+  indexes:
+    - "CREATE INDEX semsettings1 on semsettings (semester)"
+
+settings:
+  descr: Global settings by admin
+  table:
+    semester: VARCHAR(20)
+
+adminstaff:
+  descr: Seminarmatching Administrators
+  table:
+    userid: VARCHAR(255)
+    email: VARCHAR(255)
+  indexes:
+    - "CREATE UNIQUE INDEX adminstaff1 on adminstaff (userid)"

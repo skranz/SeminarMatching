@@ -1,0 +1,95 @@
+fields:
+  semester:
+    lang_de:
+      label: Semester in dem Seminar stattfindet
+    lang_en:
+      label: Semester in which Seminar stattfindet
+    readonly: TRUE
+  active:
+    lang_de:
+      label: Freigeschaltet
+      help: |
+        Sie müssen das Seminar freischalten, damit Studierende
+        es bei der Seminarplatzvergabe sehen können. Nicht frei geschaltete
+        Seminare dienen als Entwürfe, die sie später freischalten können.
+      choices:
+        'Nein': FALSE
+        'Ja': TRUE
+    lang_en:
+      label: Active
+      choices:
+        'No': FALSE
+        'Yes': TRUE
+  name:
+    lang_de:
+      label: Titel des Seminars
+      help: Geben Sie den Seminartitel ein
+    lang_en:
+      label: Seminar Title
+      help: Please enter the title of the seminar
+  teacher:
+    lang_de:
+      label: Dozent (Nachname, ggf. noch Initialien Vorname)
+      help: 'Beispiel: Mustermann, F.'
+    lang_en:
+      label: Lecturer (Family name, possibly add afterwards initials first name)
+      help: 'Example: Mustermann, F.'
+  semBAMA:
+    lang_de:
+      label: Niveau (Bachelor / Master) des Seminars
+    lang_en:
+      label: Level of Seminar
+    choice_set: semBAMA
+  area:
+    lang_de:
+      label: Bereiche
+      help: Wählen Sie alle Bereiche aus zu denen das Seminar thematisch passt.
+    lang_en:
+      label: Areas
+      help: Please choose all WiWi fields of specialiaziations, to which the seminar topics belong
+    choice_set: [area]
+    multiple: TRUE
+    collapse: ','
+  slots:
+    lang_de:
+      label: Anzahl der Seminarplätze
+      help: Geben Sie die Anzahl der Seminarplätze ein.
+    lang_en:
+      label: Number of Slots
+      help: Please enter the number of seminar slots
+    numeric: TRUE
+  weblink:
+    lang_de:
+      label: Link zur Seminarwebseite
+    lang_en:
+      label: Weblink to Seminar
+    optional: TRUE
+  descr:
+    lang_de:
+      label: Kurzbeschreibung (Optional)
+    lang_en:
+      label: Short description (optional)
+    input: ace
+    height: 100
+    optional: TRUE
+  pairs:
+    lang_de:
+      label: Projekt in 2er Teams
+      help: |
+        Werden Teile der Seminarleistungen durch 2er Gruppen
+        erstellt und wollen Sie Studierenden die Möglichkeit
+        geben, gegenseitig Wunschpartner bereits bei der
+        Seminarauswahl anzugeben?
+      choices:
+        Nein: FALSE
+        Ja: TRUE
+    lang_en:
+      label: Project in pairs
+      help: |
+        Will parts of the seminar project be created in
+        pairs of two students and do you want to give
+        students the opportunity to state a desired
+        partner when choosing seminar preferences.
+      choices:
+        No: FALSE
+        Yes: TRUE

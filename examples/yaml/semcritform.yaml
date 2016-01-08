@@ -1,0 +1,149 @@
+height: 200
+lang: de
+lang_de:
+  label: Prioritäten für Studierende
+  note_title: Info zu Prioritäten
+  note: |
+    Sie können hier nach verschiedenen Kriterien Punkte für Studierende
+    vergeben. Studierende mit mehr Punkten erhalten Priorität für Ihr
+    Seminar bei der Seminarplatzvergabe. Beispielsweise können Sie
+    Studierende eines bestimmten Studiengangs oder Schwerpunktes bevorzugen.
+
+    Zusätzlich zu ihren Punkten erhält jeder Studierende automatisch
+    folgende Punkte:
+
+      - Eine Zufallszahl zwischen 0 und 10.
+      - 100 Punkte wenn für das Seminar der Joker gesetzt wurde.
+        (Nur relevant falls die Jokernutzung bei der Seminarvergabe aktiviert wird.)
+
+    Im Feld `Slots` können Sie die Priorität auf bestimmte Seminarplätze beschränken.
+    Das Eingabefortmat ist `von:bis`, z. B. `1:5` für Plätze 1 bis 5.
+
+    ### Beispiel
+
+    Wenn Sie z. B. in Ihrem die ersten 10 Seminarplätze für Bachelor WiWi
+    Studierende mit Schwerpunkt "Controlling und Unternehmensführung "
+    reservieren möchten, können Sie folgende Zeile erstellen:
+
+      - Punkte: `200`
+      - Slots: `1:10`
+      - Studiengang: `WiWi`
+      - Schwerpunkt: `Unternehmensführung und Controlling (BA)`
+
+    Wenn dies dies ihr einziges Kriterium ist, erhalten die Studierenden die sowohl den
+    Studiengang (WiWi) als auch den Schwerpunkt (Unternehmensführung und Controlling (BA))
+    haben 200 Extrapunkte für die Seminarplätze 1:10. Da andere Studierende maximal 110
+    Punkte erreichen können, erhalten zumindest 10 Studierende aus der präferierten Kategorie
+    einen Seminarplatz (wenn sich so viele bewerben).
+
+    Für die verbleibenden Seminarplätze werden alle Studierenden gleich behandelt.
+    Die Studierenden müssen nur auf das Seminar, nicht auf einzelne Plätze, bewerben.
+    Die Vorteile für einzelen Plätze werden im benutzten Algorithmus (basierend auf
+    Gale-Shapleys 'Student Optimal Deferred Acceptance') automatisch berücksichtigt.
+
+    ### Weitere Anmerkungen
+
+    - Wenn Sie mehrer Prioritätenzeilen erstellen, werden die Punkte daraus einfach addiert.
+
+    - Wenn Sie einen Malus für eine bestimmte Teilgruppe eintragen möchten,
+    weisen Sie einfach negative Punkte zu.
+
+    - Sie können auch einzelnen Studierenden einen Bonus oder Malus geben,
+    wenn es hierfür einen gerechtfertigten Grund gibt. Nutzen Sie hierfür
+    die Spalte `Email`.
+
+    - Wenn Sie eine Priorität deaktivieren wollen, löschen Sie einfach die Punktespalte.
+      Alternativ können Sie mit rechter Maustaste ein Kontextmenu öffnen und eine
+      Zeile löschen.
+
+    - Wenn Sie mehr als 10 Prioritäten nutzen möchten, drücken Sie die rechte
+    Maustaste in der Tabelle um neue Zeilen im Kontextmenu hinzuzufügen.
+
+
+fields:
+  points:
+    lang_de:
+      label: Punkte
+      help: |
+        Punkte für Teilnehmer, die Kriterium erfüllen.
+        Auch negative Punkte möglich.
+    lang_en:
+      label: Points
+      help: Enter the points, e.g. 10
+    numeric: TRUE
+    optional: TRUE
+  slots:
+    optional: TRUE
+    lang_de:
+      label: Slots
+      help: |
+        Eingabe z. B.  1:10
+
+        Wenn Sie das Feld leer lassen, gilt das Kriterium für
+        alle Seminarplätze.
+    lang_en:
+      label: Seminar slots to which criterium is applied
+      help: |
+        e.g.  1:10
+
+        If you leave this field empty, the selection criterion
+        will be applied to all seminar seats.
+  subject:
+    optional: TRUE
+    lang_de:
+      label: Fach
+    lang_en:
+      label: Subject
+    condition: >
+      studSubject == "{{subject}}" | studSubject2 == "{{subject}}"
+    choices: ['']
+    choice_set: subjects
+
+  spec:
+    optional: TRUE
+    lang_de:
+      label: Schwerpunkt
+    lang_en:
+      label: Specializ.
+    condition: >
+      (studSubject == "WiWi" | studSubject2 == "WiWi"') &
+      (
+        (studBAMA == "Bachelor" & studSpecBA == "{{spec}}") |
+        (studBAMA == "Master" & (studSpecMA == "{{spec}}" | studSpecMA2 == "{{spec}}")
+      )
+    choices: ['']
+    choice_set: [specBA, specMA]
+  #heard_sem:
+  #  lang_de:
+  #    label: Schon Seminar ... gehört
+  #  lang_en:
+  #    label: Has already heard seminar ...
+  #  condition: >
+  #    TRUE
+  #  choice_set: [seminars]
+  email:
+    optional: TRUE
+    lang_de:
+      label: Email
+    lang_en:
+      label: Email
+    condition: >
+      email == "{{email}}"
+  points_pair_first:
+    optional: TRUE
+    lang_de:
+      label: Teambonus bei Erstwahl mit Partner
+      help:
+      choices:
+        Nein: FALSE
+        Ja: TRUE
+    lang_en:
+      label: Prefer pairs and first choice
+      help: |
+        If the seminar is based on pairs,
+        you can prefer pairs of students
+        that make the seminar their first choice.
+        Internally, these pairs will get a sufficiently
+        large bonus, such that they will always
+        be preferred over other students.
+

@@ -1,0 +1,32 @@
+noactivesem:
+  format: html
+  lang_en: |
+    <p>... no seminars activated yet ...</p>
+  lang_de: |
+    <p>... noch keine freigeschaltenen Seminare ...</p>
+
+nosem:
+  format: html
+  lang_en: |
+    <p>... no seminars ...</p>
+  lang_de: |
+    <p>... keine Seminare vorhanden ...</p>
+
+instructions: |
+  format: markdown
+  lang_en: |
+    #### Instructions
+
+    - To create a completely new seminar press
+      the button "Create Seminar"
+    - To create a seminar using an existing seminar
+      as template, press the corresponding button "Template".
+    - To edit an existing seminar press "Edit".
+    - Students can only choose an activated seminar
+    - To activate or delete a
+
+    <p>... no seminars ...</p>
+  lang_de: |
+    <p>... keine Seminare vorhanden ...</p>
+
+
