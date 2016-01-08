@@ -10,8 +10,8 @@ examples.EditSeminarApp = function() {
   #create.login.db(db.arg = logindb.arg)
   #create.user.in.db(userid = "test", email = "sebkranz@gmail.com",password = "test",db.arg = logindb.arg)
 
-  #schema.file = "./schema/semdb.yaml"
-  #semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+  schema.file = "./schema/semdb.yaml"
+  semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
   #dbCreateSchemaTables(semdb, schema.file=schema.file)
 
   app = EditSeminarsApp(db.dir = db.dir, init.userid = "test", init.password="test", lang="de")

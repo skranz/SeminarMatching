@@ -1,20 +1,21 @@
-examples.RankSeminarApp = function() {
+examples.AdminSeminarApp = function() {
   setwd("D:/libraries/SeminarMatching/semedit_app/")
   db.dir = paste0(getwd(),"/db")
 
   restore.point.options(display.restore.point = TRUE)
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
-  app = StudSeminarsApp(db.dir = db.dir, init.userid = "test", init.password="test", lang="de")
+
+  app = AdminSeminarsApp(db.dir = db.dir, init.userid = "test", init.password="test", lang="de")
 
   runEventsApp(app, launch.browser = rstudio::viewer)
 
 }
 
+AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(getwd(),"/schema"), yaml.dir =  paste0(getwd(),"/yaml"),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Administration", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
+  restore.point("EditSeminarsApp")
 
-StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(getwd(),"/schema"), yaml.dir =  paste0(getwd(),"/yaml"),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
-  restore.point("StudSeminarsApp")
-
+  library(shinyjs)
   library(loginPart)
   library(RSQLite)
   library(DBI)
@@ -26,38 +27,37 @@ StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
   glob$schemas = load.and.init.schemas(paste0(schema.dir, "/semdb.yaml"))
   glob$semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 
+  glob$admins = dbGet(glob$semdb,"adminstaff")
+
+
   glob$yaml.dir = yaml.dir
   glob$schema.dir = schema.dir
   glob$db.dir = db.dir
 
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
 
-  glob$opts = opts = read.yaml(file=paste0(yaml.dir,"/settings.yaml"),keep.quotes = FALSE)
-  glob$use_joker = isTRUE(opts$use_joker)
-  lang = opts$start_lang
-
-  app$opts = glob$opts
-  app$lang = lang
-
-  form = load.and.init.form(file=paste0(yaml.dir,"/studform.yaml"), lang=lang)
-  #form.schema.template(form)
-
+  form = load.and.init.form(file=paste0(yaml.dir,"/adminform.yaml"),lang=lang)
   form$sets = glob$sets
-  glob$studform = form
+  glob$adminform = form
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
 
   login.fun = function(app=getApp(),userid,...) {
-    se = refresh.stud.app.data(userid=userid)
-    ui = tabsetPanel(
-      id = "studTabsetPanel",
-      tabPanel(title = "Student", value="studPanel", uiOutput("studformUI")),
-      tabPanel(title = "Seminars", value="semPanel", uiOutput("studsemUI"))
-    )
-    setUI("studMainUI", ui)
+    db = app$glob$semdb
 
-    show.stud.form.ui(refresh.se = FALSE)
-    show.stud.sem.ui(refresh.se = FALSE)
+    if (!userid %in% app$glob$admins$userid) {
+      app$glob$admins = dbGet(glob$semdb,"adminstaff")
+      if (!userid %in% app$glob$admins$userid) {
+        show.html.warning("semAdminMainUI",paste0("The user ", userid, " has not the rights to administrate the seminar matching."))
+        return()
+      }
+    }
+
+    se = new.env()
+    se$db = db
+    se$userid = userid
+    app$se = se
+    show.admin.main(se=se)
   }
 
   if (is.null(check.email.fun)) {
@@ -72,84 +72,59 @@ StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
     }
   }
 
-  lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "studMainUI")
+  lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "semAdminMainUI")
   set.lop(lop)
   lop.connect.db(lop=lop)
   lop$login$ui = lop.login.ui(lop)
   lop$smtp = lop.get.smtp()
 
   appInitHandler(function(session,...) {
-
     initLoginDispatch(lop)
   })
 
   app$ui = tagList(
     fluidPage(
-      uiOutput("studMainUI")
+      uiOutput("semAdminMainUI")
     )
   )
-
   app$lop = lop
   app
 }
 
-load.student.from.db = function(userid=se$userid, semester=NULL, app=getApp(), se=app$se) {
-  restore.point("load.student.from.db")
 
-  all = dbGet(se$db,"students",list(userid=userid),
-    schema=app$glob$schemas$students)
+load.admin.data.from.db = function(semester=se$semester, app=getApp(), se=app$se) {
+  restore.point("load.admin.data.from.db")
 
-  if (NROW(all)==0) return(list(userid=userid, email=userid, semester=se$semester))
-
-  .sem = semester
-  stud = filter(all, semester==.sem)
-  if (NROW(stud)>0) {
-    se$stud.exists = TRUE
-    se$stud = stud
-    return(stud)
+  if (is.null(semester)) {
+    semester = dbGet(se$db,"settings")$semester
+    if (length(semester)==0) {
+      semester = app$glob$sets$semesters[[1]]
+    } else if (length(semester)>1) {
+      semester = semester[[1]]
+    }
   }
-
-  sem.num = get.sem.number(all$semester)
-  .sem = all$semester[which.max(sem.num)]
-  stud = filter(all, semester==.sem)[1,]
-
-  se$stud.exists = FALSE
-  se$stud = stud
-  return(stud)
-}
-
-refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
-  semester = "SS15"
-  restore.point("refresh.stud.app.data")
-
-  if (is.null(se)) {
-    se = new.env()
-    se$db = app$glob$semdb
-    se$userid = userid
-  }
-  app$se = se
   se$semester = semester
-  se$use_joker = app$glob$use_joker
 
-  se$stud = load.student.from.db(userid=userid, semester=semester,se=se)
+  se$seminars = dbGet(se$db,"seminars", list(semester=se$semester))
 
-  se$sems = dbGet(se$db,"seminars",list(semester=semester,active=TRUE),schema=app$glob$schemas$seminars)
+  se$ses = dbGet(se$db,"semsettings",list(semester=se$semester),
+    schema=app$glob$schemas$semsettings)
 
-  se$studpref = dbGet(se$db,"studpref", list(userid=userid, semester=semester), schema=app$glob$schemas$studpref, orderby="pos ASC")
+  if (is.null(se$ses)) se$ses = list(semester=se$semester)
 
-  app$se = se
-  se
-
+  return(invisible())
 }
 
-show.stud.form.ui = function(se=app$se, app=getApp(), refresh.se=TRUE) {
 
-  restore.point("show.stud.form.ui")
-  if (refresh.se)
-    se = refresh.stud.app.data(se=se)
+show.admin.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$glob$semdb, se=NULL, app=getApp(), refresh=TRUE) {
+  semester = "SS15"
+  restore.point("show.edit.sem.main")
+
+  if (refresh)
+    load.admin.data.from.db(se=se)
 
   glob = app$glob
-  form = glob$studform
+  form = glob$adminform
   form.vals = form.default.values(glob$studform,values = se$stud)
   form.ui = form.ui.simple(glob$studform, values=form.vals,add.submit = TRUE)
   clear.form.alert(form=form)
