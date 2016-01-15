@@ -1,3 +1,60 @@
+example.random.students = function() {
+
+}
+
+
+random.students = function(n=2, semester, yaml.dir = paste0(getwd(),"/yaml")) {
+
+  setwd("D:/libraries/SeminarMatching/semedit_app/")
+  db.dir = paste0(getwd(),"/db")
+  yaml.dir = paste0(getwd(),"/yaml")
+  n = 50
+  semester = "SS15"
+
+  schema.file = "./schema/semdb.yaml"
+  schemas = load.and.init.schemas(schema.file)
+  semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+
+
+
+  studform = load.and.init.form(file=paste0(yaml.dir,"/studform.yaml"), lang=lang)
+  sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
+
+  empty.stud  = empty.row.from.schema(schemas$students, semester=semester)
+
+  random.stud = function(...) {
+    restore.point("random.stud")
+    stud = form.random.values(studform,sets = sets)
+    stud$semester = semester
+    stud$userid = stud$email = stud$name = paste0("random__", sample.int(.Machine$integer.max,1))
+    stud = stud[names(empty.stud)]
+
+    stud
+  }
+
+  li = lapply(1:n, random.stud)
+  studs = as_data_frame(rbindlist(li))
+
+  seminars = dbGet(semdb,"seminars", list(semester=semester))
+
+  make.stud.pref = function(stud) {
+    data.frame(
+      semid = sample(seminars$semid,length(seminars$semid)),
+      userid = stud$userid,
+      pos = 1:NROW(seminars),
+      semester = semester,
+      joker = 0
+    )
+  }
+  li = lapply(1:n, function(i) {
+    make.stud.pref(studs[i,])
+  })
+  studpref = as_data_frame(rbindlist(li))
+
+  dbInsert(semdb,"students", vals=studs)
+  dbInsert(semdb,"studpref", vals=studpref)
+}
+
 examples.seminar.matching = function() {
   library(matchingR)
   library(YamlObjects)

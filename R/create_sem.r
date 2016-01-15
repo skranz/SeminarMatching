@@ -126,6 +126,8 @@ show.edit.sem.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=a
   }
   se$seminars = dbGet(db,"seminars",list(groupid=se$groupid),schema=app$glob$schemas$seminars)
 
+  se$seminars$locked = FALSE
+
   if (!is.null(se$seminars)) {
     # Activated and unactivated seminars
     se$aseminars = filter(se$seminars, semester==se$semester, active==TRUE)
@@ -301,6 +303,8 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
     return()
   }
 
+  if (is.null(se$seminar$enabled))
+      se$seminar$enabled = TRUE
   se$seminar = copy.intersect(se$seminar,sres$values)
 
   dbBegin(se$db)

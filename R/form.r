@@ -412,7 +412,13 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
 
   if (is.null(input)) {
     if (is.null(choices) & is.null(choice_set)) {
-      input = "text"
+      if (is.null(field$type)) {
+        input = "text"
+      } else if (field$type=="date") {
+        input = "date"
+      } else {
+        input = "text"
+      }
     } else {
       input = "selectize"
     }
@@ -438,6 +444,10 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
     } else {
       res[[1]] = textInput(id, label, value)
     }
+  } else if (input == "date") {
+    if (is.null(value)) value = ""
+    if (is.na(value) & na.is.empty) value= ""
+    res[[1]] = dateInput(id, label=label, value=value)
   } else if (input == "selectize") {
     # choices come from a specified set
     restore.point("fieldInput.selectize")
@@ -520,10 +530,45 @@ form.default.values = function(form, values = NULL, sets=form[["sets"]], boolean
   vals
 }
 
+form.random.values = function(form, values = NULL, sets=form[["sets"]]) {
+  restore.point("form.random.values")
+
+  vals = lapply(form$fields, function(field) field.random.value(form=form, field=field,sets=sets))
+
+  replace = intersect(names(vals), names(values))
+
+  if (length(replace)>0) {
+    vals[replace] = values[replace]
+  }
+  vals
+}
+
+
 form.schema.template = function(form) {
   li = form.default.values(form)
   schema.template(li)
 }
+
+field.random.value = function(form, field, sets = NULL) {
+  #restore.point("field.random.value")
+
+  if (!is.null(field[["value"]])) field$value
+
+
+  choices = unlist(field$choices)
+  choice_set = field$choice_set
+  if (!is.null(choice_set)) {
+    for (set in sets[intersect(choice_set,names(sets))]) {
+      choices = c(choices, unlist(set))
+    }
+  }
+
+  if (length(choices)>0)
+    return(sample(choices,1))
+
+  return(sample(0:1,1))
+}
+
 
 field.default.values = function(form, field, sets = NULL) {
   if (!is.null(field[["value"]])) field$value
