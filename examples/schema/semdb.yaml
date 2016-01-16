@@ -41,7 +41,7 @@ seminars:
     groupid: VARCHAR(255)
     semester: VARCHAR(20)
     active: BOOLEAN
-    locked: BOOLEAN
+    enabled: BOOLEAN
     name: VARCHAR(1024)
     teacher: VARCHAR(255)
     slots: INTEGER
@@ -79,10 +79,11 @@ studpref:
     userid: VARCHAR(255)
     pos: INTEGER
     semester: VARCHAR(20)
+    round: INTEGER
     joker: INTEGER
   indexes:
-    - "CREATE INDEX studpref1 on studpref (semester)"
-    - "CREATE INDEX studpref2 on studpref (userid,semester)"
+    - "CREATE INDEX studpref1 on studpref (semester,round)"
+    - "CREATE INDEX studpref2 on studpref (userid,semester,round)"
 
 
 assignment:
@@ -100,21 +101,21 @@ assignment:
     - "CREATE INDEX assignment2 on assignment (userid,semester)"
     - "CREATE INDEX assignment3 on assignment (semid,semester)"
 
-semsettings:
-  descr: Settings for current semester
+admin:
+  descr: Administrative settings for given semester
   table:
     semester: VARCHAR(20)
-    sem_free_edit: BOOLEAN
-    sem_cond_edit: BOOLEAN
-    sem_pref: BOOLEAN
-    matching_rounds: INTEGER
+    default_start_date: DATE
+    stud_start_date: DATE
+    round1_date: DATE
+    round1_done_date: DATE
+    round2_date: DATE
+    round2_done_date: DATE
+    rounds_done: INTEGER
+  defaults:
+    rounds_done: 0
   indexes:
-    - "CREATE INDEX semsettings1 on semsettings (semester)"
-
-settings:
-  descr: Global settings by admin
-  table:
-    semester: VARCHAR(20)
+    - "CREATE INDEX admin1 on admin (semester)"
 
 adminstaff:
   descr: Seminarmatching Administrators

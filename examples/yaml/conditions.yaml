@@ -5,7 +5,7 @@ fields:
     lang_en:
       label: Subject
     condition: >
-      studSubject == "{{subject}}" | studSubject2 == "{{subject}}"
+      studSubject == .subject | studSubject2 == .subject
     choices: ['-']
     choice_set: subjects
 
@@ -15,10 +15,10 @@ fields:
     lang_en:
       label: Specializ.
     condition: >
-      (studSubject == "WiWi" | studSubject2 == "WiWi"') &
+      (studSubject == "WiWi" | studSubject2 == "WiWi") &
       (
-        (studBAMA == "Bachelor" & studSpecBA == "{{spec}}") |
-        (studBAMA == "Master" & (studSpecMA == "{{spec}}" | studSpecMA2 == "{{spec}}")
+        (studBAMA == "Bachelor" & studSpecBA == .spec) |
+        (studBAMA == "Master" & (studSpecMA == .spec | studSpecMA2 == .spec))
       )
     choices: ['-']
     choice_set: [specBA, specMA]
@@ -36,4 +36,4 @@ fields:
     lang_en:
       label: Email
     condition: >
-      email == "{{email}}"
+      email == .email

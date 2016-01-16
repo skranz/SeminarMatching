@@ -5,6 +5,7 @@ fields:
     lang_en:
       label: Semester in which Seminar stattfindet
     readonly: TRUE
+    #choice_set: semesters
   active:
     lang_de:
       label: Freigeschaltet

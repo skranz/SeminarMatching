@@ -1,57 +1,53 @@
 fields:
   semester:
     lang_en:
-      label: Semester
+      label: Edit Semester
       help: |
-        Please enter the relevant semester for the seminar selection.
-        Once the seminar selection for the current semester is finished
-        this will be the next semester. In Ulm you should set it
-        mid November to the next summer semester
-        and mid May to the next winter semester.
+        Please pick the semester you want to edit.
     choice_set: semesters
-  sem_free_edit:
+  default_start_date:
     lang_en:
-      label: Free creation, edit and deletion of seminars?
+      label: |
+        Date from which on the semester will be shown as default
+        for lecturers and students.
       help: |
-        Can lecturers still freely create, edit and delete seminars?
-        This should be possibly until seminar choice is opened for
-        students.
-        Afterward, creation of new seminars or disabling
-        existing seminars should
-        only be possible by the admin. A lecturer should send
-        an email to the admin then. The admin must decide whether
-        to perform the changes and possible send an email to all
-        students.
-    choices:
-      Yes: TRUE
-      No: FALSE
-  sem_cond_edit:
+        Could be around Mai for next
+        wintersemester and around November / December for next
+        summersemester.
+    type: date
+  stud_start_date:
     lang_en:
-      label: Can lecturers still edit number of slots, and priorities?
+      label: |
+        Date at which students start to see the seminars and
+        can submit their preferences.
       help: |
-        Can lecturers still edit the number of seminar slots and
-        their priorities over students? In principle, we can
-        still allows this, until the (first round of) matching takes place.
-    choices:
-      Yes: TRUE
-      No: FALSE
-  sem_pref:
+        If you have set the current semester correctly, seminar
+        choice will be automatically opened at the beginning of
+        this date. The lecturers should have added all their seminars
+        before this date!
+    type: date
+  round1_date:
     lang_en:
-      label: Can students now state their seminar preferences?
+      label: Date of main matching
       help: |
-        You should fix this date and send a reminder to students
-        via email. You should also note in the email, when
-        the seminar matching will be performed.
-    choices:
-      No: FALSE
-      Yes: TRUE
-  matching_rounds:
+        The date at which the main matching round shall take place.
+        Students shall submit their preferences until the day before
+        has finished.
+
+        Note that an administrator must manually press a butto
+        to run the matching on this date, don't forget to do this.
+        There is no automatic run.
+    type: date
+  round2_date:
     lang_en:
-      label: How many matching rounds shall be there?
+      label: Date of secondary matching
       help: |
-        You may only have a single matching round or more.
-        More than one round can be useful if some students
-        want to participate in more than one seminar. In the
-        second round remaining seats after the first round
-        can be assigned.
-    choices: [2,1,3]
+        You may run a secondary matching a few days after the main matching.
+        It can be used to give students that want to participate in two seminars
+        a chance to get one of the remaining open slots.
+
+        If you don't want to run a secondary matching leave this field empty.
+        Again an administrator must press manually the button to run this
+        seminar on this date.
+    type: date
+

@@ -1,0 +1,81 @@
+fields:
+  semester:
+    lang_en:
+      label: Edit Semester
+      help: |
+        Please enter the semester you want to edit.
+    choice_set: semesters
+  sem_free_edit:
+    lang_en:
+      label: Free creation, edit and deletion of seminars?
+      help: |
+        Can lecturers still freely create, edit and delete seminars?
+        This should be possibly until seminar choice is opened for
+        students.
+        Afterward, creation of new seminars or disabling
+        existing seminars should
+        only be possible by the admin. A lecturer should send
+        an email to the admin then. The admin must decide whether
+        to perform the changes and possible send an email to all
+        students.
+    choices:
+      Yes: TRUE
+      No: FALSE
+  sem_cond_edit:
+    lang_en:
+      label: Can lecturers still edit number of slots, and priorities?
+      help: |
+        Can lecturers still edit the number of seminar slots and
+        their priorities over students? In principle, we can
+        still allows this, until the (first round of) matching takes place.
+    choices:
+      Yes: TRUE
+      No: FALSE
+  sem_pref:
+    lang_en:
+      label: Can students now state their seminar preferences?
+      help: |
+        You should fix this date and send a reminder to students
+        via email. You should also note in the email, when
+        the seminar matching will be performed.
+    choices:
+      No: FALSE
+      Yes: TRUE
+  matching_rounds:
+    lang_en:
+      label: How many matching rounds shall be there?
+      help: |
+        You may only have a single matching round or more.
+        More than one round can be useful if some students
+        want to participate in more than one seminar. In the
+        second round remaining seats after the first round
+        can be assigned.
+    choices: [2,1]
+  stud_see_date:
+    lang_en:
+      label: Date at which students can see the seminars
+      help: |
+        You may only have a single matching round or more.
+        More than one round can be useful if some students
+        want to participate in more than one seminar. In the
+        second round remaining seats after the first round
+        can be assigned.
+    type: date
+  round1_date:
+    lang_en:
+      label: At which date shall the first matching take place?
+      help: |
+        The date at which the first matching round shall take place.
+        Students shall submit their preferences until the day before finishes.
+        Note that the matching must be started manually on this date by
+        an administrator.
+    type: date
+  round2_date:
+    lang_en:
+      label: At which date shall the second matching take place?
+      help: |
+        The date at which the second matching shall take place (if there are two rounds).
+        Note that the matching must be started manually on this date by
+        an administrator.
+    type: date
+
