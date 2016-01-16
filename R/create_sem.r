@@ -208,7 +208,7 @@ create.seminar.click=function(se = app$se, app=getApp(),...) {
   se$seminar = empty.row.from.schema(app$glob$schemas$seminars, groupid=se$groupid, semester=se$semester, semester=se$semester)
 
   se$semcrit = empty.df.from.schema(app$glob$schemas$semcrit, 10)
-
+  se$semcrit$semester = se$semester
 
   show.edit.seminar.ui(se=se, app=app)
 
@@ -230,6 +230,7 @@ edit.seminar.click=function(se = app$se, app=getApp(),mode="edit", prefix="a", r
 
   if (NROW(se$semcrit)<10) {
     df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(se$semcrit), semid=se$seminar$semid)
+    df$semester = se$semester
     se$semcrit = rbind(se$semcrit,df)
   }
 
@@ -240,6 +241,8 @@ edit.seminar.click=function(se = app$se, app=getApp(),mode="edit", prefix="a", r
     se$seminar$locked = FALSE
 
     se$semcrit$semid = NA_integer_
+    se$semcrit$semester = se$semester
+
   }
   show.edit.seminar.ui(se=se, app=app)
 }
@@ -328,7 +331,7 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
 
   crit.df$pos = 1:NROW(crit.df)
   crit.df$semid = semid
-
+  crit.df$semester = se$semester
 
   #Rewrite criterion table
   res = try(dbDelete(se$db,"semcrit", list(semid=semid)))

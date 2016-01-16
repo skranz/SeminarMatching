@@ -60,6 +60,7 @@ semcrit:
   descr: The criteria for giving points to students of a seminar
   table:
     semid: INTEGER REFERENCES seminars (semid)
+    semester: VARCHAR(20)
     pos: INTEGER
     points: NUMERIC
     slots: TEXT
@@ -69,6 +70,7 @@ semcrit:
     points_pair_first: VARCHAR(255)
   indexes:
     - "CREATE INDEX semcrit1 on semcrit (semid)"
+    - "CREATE INDEX semcrit2 on semcrit (semester)"
 
 studpref:
   descr: The preference list of students
