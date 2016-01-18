@@ -2,17 +2,41 @@
 examples.perform.matching = function() {
   setwd("D:/libraries/SeminarMatching/semedit_app/")
 
-  n = 100
+  n = 45
   semester = "SS15"
   delete.random.students(semester=semester)
+  li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
+  df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,use.glob.points = 1,insert.into.db = TRUE)
 
+  df = df %>% arrange(num_ranked, semid)
+
+  df$has = df$semid != -1
+  df %>% group_by(num_ranked) %>% summarise(matched=sum(has)/n())
+
+  df %>% filter(has==TRUE) %>% group_by(pos) %>% summarise(count=n())
+
+
+  analyse = function(use.glob.points=0) {
+    df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,use.glob.points = 1,insert.into.db = !TRUE, seed=seed)
+
+    df$has = df$semid != -1
+
+    mean.share = as.numeric(df %>% filter(num_ranked==3) %>% summarise(matched=sum(has)/n()))
+    mean.pos = mean(df$pos)
+
+    list(use.glob.points=use.glob.points,mean.share3=mean.share, mean.rank=mean.pos, rank1=sum(df$pos==1)/NROW(df))
+
+  }
+  analyse(0.1, seed=seed)
+  seed = as.integer(Sys.time())
   li = draw.random.students(n=n,semester=semester,insert.into.db = !TRUE)
-  df = perform.matching(semester=semester,students=li$students, studpref=li$studpref )
 
-
+  res.li = lapply(seq(0,1,by=0.2),analyse,seed=seed)
+  res = rbindlist(res.li)
+  res
 }
 
-perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,students=NULL, studpref=NULL, semcrit=NULL, semdb=se[["db"]], conds=glob[["conds"]], sets=glob[["sets"]], se=NULL, glob=getApp()$glob, yaml.dir=glob$yaml.dir, db.dir=glob$db.dir, schema.dir=glob$schema.dir, reload=FALSE) {
+perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,students=NULL, studpref=NULL, semcrit=NULL, semdb=se[["db"]], conds=glob[["conds"]], sets=glob[["sets"]], schemas=glob$schemas, se=NULL, glob=getApp()$glob, yaml.dir=glob$yaml.dir, db.dir=glob$db.dir, schema.dir=glob$schema.dir, reload=FALSE, seed=NULL, insert.into.db=TRUE, use.glob.points = TRUE) {
   restore.point("perform.matching")
 
 
@@ -39,7 +63,7 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   if (is.null(students))
     students = dbGet(semdb,"students", list(semester=semester))
   if (is.null(studpref))
-    studpref = dbGet(semdb,"studpref", list(semester=semester))
+    studpref = dbGet(semdb,"studpref", list(semester=semester, round=round))
   if (is.null(semcrit))
     semcrit = dbGet(semdb,"semcrit", list(semester=semester))
 
@@ -47,20 +71,50 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
 
   semcrit$slot.pos = parse.semcrit.slots(semcrit$slots)
 
-  students$glob.points = runif(NROW(students),0,10)
+
 
   num.studs = NROW(students)
   num.sems = NROW(seminars)
   num.slots = sapply(1:num.sems,function(row) seminars$slots[row])
   total.slots = sum(num.slots)
 
-  # Seminar slot utilities over students
+  # Fixed seminar slot utilities over students coming from priorities
   seu.li = lapply(1:num.sems, function(row) {
-    make.seminar.slots.u(seminars[row,], semcrit, students, studpref, conds)
+    fixed = make.seminar.slots.u(seminars[row,], semcrit, students, studpref, conds)
+    fixed
   })
 
   # matrix with total.slots rows and num.studs columns
-  seu = do.call(rbind,seu.li)
+  fixed.seu = do.call(rbind,seu.li)
+
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  students$glob.points = runif(NROW(students),0,10)
+
+  # Random basic points for each seminar
+  # Students either have a global random value
+  # or we draw the value separately for each seminar
+  # Global values are more likely to be pareto-efficient
+  # but separate values benefit students who rank many
+  # seminars compared to those that rank a few.
+  # Assuming that students who rank many seminars
+  # have higher utility from getting a seminar slot,
+  # this may be beneficial.
+
+
+  sem.base.points =
+    use.glob.points*matrix(students$glob.points,num.sems,num.studs,byrow=TRUE) +
+    (1-use.glob.points)*matrix(runif(num.sems*num.studs,0,10),num.sems,num.studs)
+
+  sem.of.slot = unlist(lapply(1:num.sems, function(sem.pos) rep(sem.pos,seminars$slots[sem.pos])))
+  slot.of.slot = unlist(lapply(1:num.sems, function(sem.pos) if (num.slots[sem.pos]>0) 1:num.slots[sem.pos] else NULL))
+
+  # Expand the random base points to slots
+  random.seu = sem.base.points[sem.of.slot,]
+
+  # Seminar slots utility over students
+  seu = fixed.seu + random.seu
 
   # empty seminar, which will be assigned to students who do not
   # get a seminar
@@ -68,6 +122,10 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
 
   # add empty seminar
   seu = rbind(seu, empty.sem)
+  random.seu = rbind(random.seu, empty.sem)
+  fixed.seu = seu-random.seu
+
+
 
   # create student utility over seminars
   studpref$pos.points = (num.sems+1 - studpref$pos)
@@ -101,14 +159,14 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
 
   gs = galeShapley.marriageMarket(proposerUtils = t(stu),reviewerUtils = t(seu))
 
-  # The macthed seminars for each student are in
+  # The matched seminars for each student are in
   # gs$proposals
 
   # Now we will store the matchings in a data frame that also
   # contains info about the seminar pos in the student's ranking
   # and the point the student got
-  sem.of.slot = c(unlist(lapply(1:num.sems, function(sem.pos) rep(sem.pos,seminars$slots[sem.pos]))), rep(num.sems+1, num.studs))
-  slot.of.slot = c(unlist(lapply(1:num.sems, function(sem.pos) if (num.slots[sem.pos]>0) 1:num.slots[sem.pos] else NULL)), 1:num.studs)
+  sem.of.slot = c(sem.of.slot, rep(num.sems+1, num.studs))
+  slot.of.slot = c(slot.of.slot, 1:num.studs)
 
   semids  = c(seminars$semid, -1)
   sempos  = sem.of.slot[gs$proposals]
@@ -121,7 +179,8 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
     semid  = gs.semid,
     slot = gs.slot,
     points = seu[cbind(gs$proposals,1:num.studs)],
-    glob_points = students$glob.points
+    fixed_points = fixed.seu[cbind(gs$proposals,1:num.studs)],
+    random_points = random.seu[cbind(gs$proposals,1:num.studs)]
   )
 
   # check the number of matched students for each seminar
@@ -138,9 +197,42 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   rows = is.na(df$pos)
   df$pos[rows] = df$num_ranked[rows]+1
 
+  df$round = round
+  df$semester = semester
+  df$joker = 0
   df = arrange(df, semid, slot)
 
-  df
+  if (insert.into.db) {
+    restore.point("perform.matchin.db")
+
+    if (is.null(schemas))
+      schemas = load.and.init.schemas(paste0(schema.dir,"/semdb.yaml"))
+
+
+    dbBegin(semdb)
+    res = try({
+      if (round==1) {
+        # delete also later matching rounds
+        dbDelete(semdb,"matchings",nlist(semester))
+        dbUpdate(semdb,"admin",list(rounds_done=round, round1_seed=seed), where=nlist(semester))
+      } else if (round==2) {
+        dbDelete(semdb,"matchings",nlist(semester,round))
+        dbUpdate(semdb,"admin",list(rounds_done=round, round2_seed=seed), where=nlist(semester))
+      } else {
+        stop("round must be 1 or 2")
+      }
+
+      dbInsert(semdb,"matchings",df,schema = schemas$matchings)
+    })
+    if (is(res,"try-error")) {
+      dbRollback(semdb)
+    } else {
+      dbCommit(semdb)
+    }
+  }
+
+  invisible(df)
+  #invisible(nlist(df, seu, stu, studpref, sem.of.slot, slot.of.slot, fixed.seu, random.seu, base.points=base.points, seed=seed)
 }
 
 students.satisfy.semcrit = function(sc, students, studpref, conds) {
@@ -185,7 +277,7 @@ parse.semcrit.slots = function(slots) {
   sv
 }
 
-make.seminar.slots.u = function(sem, semcrit, students, studpref, conds) {
+make.seminar.slots.u = function(sem, semcrit, students, studpref, conds, base.points = rep(0, NROW(students))) {
   restore.point("make.seminar.slots.u")
 
 
@@ -195,7 +287,7 @@ make.seminar.slots.u = function(sem, semcrit, students, studpref, conds) {
 
   slostu = expand.grid(stud=students$userid,slot=1:sem$slots)
 
-  points = students$glob.points
+  points = base.points
 
   scs = filter(semcrit, semid==sem$semid)
 
@@ -228,7 +320,7 @@ import.semcrit.conds = function(file =paste0(yaml.dir,"/conditions.yaml"), yaml.
   fconds = read.yaml(file, utf8 = TRUE)
   conds = lapply(fconds$fields, function(co) {
     restore.point("njnfngh")
-    cat(co$condition)
+    #cat(co$condition)
     parse.as.call(text=co$condition)
   })
   conds
@@ -269,20 +361,24 @@ delete.random.students = function(semester=NULL, db = NULL, db.dir = "./db") {
   # to prevent sql injection, properly escape the strings
   # this already pastes them together
   escaped = dplyr::escape(userids, parens=TRUE)
+  semester.add = paste0(" and semester in ", dplyr::escape(semester, parens=TRUE))
+
+  sql = paste0("delete from matchings where userid in ", escaped)
+  if (!is.null(semester)) sql = paste0(sql,semester.add)
+  dbSendQuery(db, sql)
 
 
   sql = paste0("delete from studpref where userid in ", escaped)
-  if (!is.null(semester)) sql = paste0(sql, " and semester in ", dplyr::escape(semester, parens=TRUE))
-  if (length(sql)>1) stop("dplyr::escape suddenly returns a vector!")
+  if (!is.null(semester)) sql = paste0(sql,semester.add)
   dbSendQuery(db, sql)
 
   sql = paste0("delete from students where userid in ", escaped)
-  if (!is.null(semester)) sql = paste0(sql, " and semester in ", dplyr::escape(semester,parens=TRUE))
+  if (!is.null(semester)) sql = paste0(sql,semester.add)
   dbSendQuery(db, sql)
 
 }
 
-draw.random.students = function(n=2, semester, insert.into.db=FALSE, yaml.dir = "./yaml", db.dir = "./db", schema.dir = "./schema") {
+draw.random.students = function(n=2, semester, round=1, insert.into.db=FALSE, yaml.dir = "./yaml", db.dir = "./db", schema.dir = "./schema", counter.name=TRUE) {
   restore.point("draw.random.students")
 
   semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
@@ -295,11 +391,16 @@ draw.random.students = function(n=2, semester, insert.into.db=FALSE, yaml.dir = 
 
   empty.stud  = empty.row.from.schema(schemas$students, semester=semester)
 
-  random.stud = function(...) {
+  random.stud = function(i,...) {
     restore.point("random.stud")
     stud = form.random.values(studform,sets = sets)
     stud$semester = semester
-    stud$userid = stud$email = stud$name = paste0("random__", sample.int(.Machine$integer.max,1))
+    if (!counter.name) {
+      name = paste0("random__", sample.int(.Machine$integer.max,1))
+    } else {
+      name = paste0("random__",i)
+    }
+    stud$userid = stud$email = stud$name = name
     stud = stud[names(empty.stud)]
 
     stud
@@ -316,11 +417,12 @@ draw.random.students = function(n=2, semester, insert.into.db=FALSE, yaml.dir = 
       userid = stud$userid,
       pos = 1:num.pos,
       semester = semester,
+      round=round,
       joker = 0
     )
   }
   li = lapply(1:n, function(i) {
-    make.stud.pref(studs[i,])
+    make.stud.pref(studs[i,], num.pos = ((i-1) %% NROW(seminars))+1)
   })
   studpref = as_data_frame(rbindlist(li))
 
