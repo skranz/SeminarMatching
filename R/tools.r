@@ -1,3 +1,9 @@
+replace.na = function(df, replace=0, cols=1:NCOL(df)) {
+  ind = which(is.na(df[,cols]), arr.ind=TRUE)
+  df[,cols][ind] = replace
+  df
+}
+
 copy.intersect = function(dest, source, keep.dest.types = FALSE) {
   names = intersect(names(dest),names(source))
   if (keep.dest.types) {

@@ -50,6 +50,9 @@ seminars:
     weblink: TEXT
     descr: TEXT
     pairs: BOOLEAN
+    match_topics: BOOLEAN
+    topics_date: DATE
+    close_latecomer: DATE
   indexes:
     - "CREATE INDEX seminars1 on seminars (groupid, semester, teacher)"
     - "CREATE INDEX seminars2 on seminars (semester)"
@@ -72,6 +75,43 @@ semcrit:
     - "CREATE INDEX semcrit1 on semcrit (semid)"
     - "CREATE INDEX semcrit2 on semcrit (semester)"
 
+semtopic:
+  descr: Topics for seminars
+  table:
+    semid: INTEGER
+    semester: VARCHAR(20)
+    ind: INTEGER
+    title: TEXT
+    size: INTEGER
+  defaults:
+    size: 1
+  indexes:
+    - "CREATE INDEX semtopics on semtopic (semid,pos)"
+    - "CREATE INDEX semtopics2 on semtopic (semester)"
+
+topicpref:
+  descr: The preference list of students over topics
+  table:
+    semid: INTEGER
+    userid: VARCHAR(255)
+    semester: VARCHAR(20)
+    ind: INTEGER
+    pos: INTEGER
+  indexes:
+    - "CREATE INDEX topicpref on topicpref (semester,semid,userid,ind)"
+    - "CREATE INDEX topicpref2 on topicpref (semid,userid,ind)"
+
+latecomer:
+  descr: Students that get a slot after the official assignment
+  table:
+    semid: INTEGER REFERENCES seminars (semid)
+    semester: VARCHAR(20)
+    userid:
+    pos: INTEGER
+    points: NUMERIC
+    slots: TEXT
+
+
 studpref:
   descr: The preference list of students
   table:
@@ -86,20 +126,24 @@ studpref:
     - "CREATE INDEX studpref2 on studpref (userid,semester,round)"
 
 
-assignment:
+matchings:
   descr: The final student-seminar assignment of the semester
   table:
     semid: INTEGER REFERENCES seminars (semid)
     userid: VARCHAR(255)
     semester: VARCHAR(20)
+    round: INTEGER
     slot: INTEGER
     points: NUMERIC
+    pos: INTEGER
     joker: INTEGER
-    round: INTEGER
+    random_points: NUMERIC
+    fixed_points: NUMERIC
+    num_ranked: INTEGER
   indexes:
-    - "CREATE INDEX assignment1 on assignment (semester, round)"
-    - "CREATE INDEX assignment2 on assignment (userid,semester)"
-    - "CREATE INDEX assignment3 on assignment (semid,semester)"
+    - "CREATE INDEX matchings1 on matchings (semester, round)"
+    - "CREATE INDEX matchings2 on matchings (userid,semester)"
+    - "CREATE INDEX matchings3 on matchings (semid,semester)"
 
 admin:
   descr: Administrative settings for given semester
@@ -109,13 +153,15 @@ admin:
     stud_start_date: DATE
     round1_date: DATE
     round1_done_date: DATE
+    round1_seed: INTEGER
     round2_date: DATE
     round2_done_date: DATE
+    round2_seed: INTEGER
     rounds_done: INTEGER
-    rounds_show: INTEGER
+    rounds_shown: INTEGER
   defaults:
     rounds_done: 0
-    rounds_show: 0
+    rounds_shown: 0
   indexes:
     - "CREATE INDEX admin1 on admin (semester)"
 

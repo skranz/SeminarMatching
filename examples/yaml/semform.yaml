@@ -94,3 +94,39 @@ fields:
       choices:
         No: FALSE
         Yes: TRUE
+  match_topics:
+    lang_de:
+      label: Themen automatisch vergeben
+      help: |
+        Sollen die Themenvergabe auch zentral über diese Software laufen.
+        Dann können die Studierende, die dem Seminar zugeordnet werden,
+        ihre Präferenzliste über Themen online eintragen.
+        Zum unten festgelegten Datum werden die Themen dann per
+        "Serial Random Dictatorship" zugeordnet (es ist dabei optimal,
+        die wahren Präferenzen anzugeben.)
+      choices:
+        Nein: FALSE
+        Ja: TRUE
+    lang_en:
+      label: Automatically match topics
+      help: |
+        Do you want to use this software to automatically assign topcis?
+      choices:
+        No: FALSE
+        Yes: TRUE
+  topics_date:
+    lang_de:
+      label: Datum der automatischen Themenvergabe
+      help: |
+        Wann soll die automatische Themenvergabe stattfinden? Üblicherweise
+        1-2 Wochen nach der ersten Runde der Seminarzuteilungen.
+      choices:
+        Nein: FALSE
+        Ja: TRUE
+    lang_en:
+      label: Date of automatic topic choice
+      help: |
+        When should the automatic topic choice take place?
+      choices:
+        Nein: FALSE
+        Ja: TRUE

@@ -1,0 +1,77 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(error = TRUE, echo=FALSE, cache=FALSE)
+library(ggplot2)
+library(SeminarMatching)
+library(dplyr)
+library(tidyr)
+library(reshape2)
+```
+
+```{r init_param, include=FALSE}
+semester = "SS15"
+db.dir = paste0("../db")
+round = 1
+semid = 1
+```
+
+```{r load_data, include=FALSE}
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+matchings = dbGet(semdb,"matchings",nlist(semester, round, semid))
+seminars = dbGet(semdb,"seminars",nlist(semester, semid))
+studpref = dbGet(semdb,"studpref",nlist(semester, semid))
+students = dbGet(semdb,"students",nlist(semester))
+```
+
+```{r init_data, include=FALSE}
+df = studpref
+cols = c("semid",setdiff(colnames(seminars),colnames(df)))
+df = left_join(df, seminars[,cols,drop=FALSE], by="semid")
+cols = c("userid",setdiff(colnames(students),colnames(df)))
+df = left_join(df, students[,cols,drop=FALSE], by="userid")
+cols = c("semid","userid",setdiff(colnames(matchings),colnames(df)))
+df = left_join(df, matchings[,cols,drop=FALSE], by=c("semid","userid"))
+df$matched = !is.na(df$slot)
+
+df$Matched = ifelse(df$matched, "matched","not")
+seminar = as.list(seminars[1,])
+
+
+num.prefs = NROW(df)
+num.matched = sum(df$matched)
+```
+
+# Report for Seminar `r seminar$name` `r semester` round `r round`
+
+- A total of `r num.prefs` students have put the seminar in their preference list.
+
+- `r num.matched` students got a slot (in total you have `r seminar$slots` slots.)
+
+
+The following table shows how many students ranked the seminar at position `pos` and how many of them were matchted to the seminar or not.
+```{r }
+sdf = df %>%
+  group_by(pos,Matched) %>% 
+  summarise(n=n()) %>%
+  spread(key = Matched, value=n) %>%
+  replace.na(0, cols=-1) %>%
+  as.data.frame()
+
+sdf$total = rowSums(sdf[,-1],na.rm = TRUE)
+sdf
+```
+
+The following table compares students by their main subject.
+```{r }
+sdf = df %>%
+  group_by(studSubject,Matched) %>% 
+  summarise(n=n()) %>%
+  spread(key = Matched, value=n) %>%
+  replace.na(0, cols=-1) %>%
+  as.data.frame()
+
+sdf$total = rowSums(sdf[,-1],na.rm = TRUE)
+sdf = arrange(sdf, -total)
+sdf
+```
+

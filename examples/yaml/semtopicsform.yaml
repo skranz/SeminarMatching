@@ -1,0 +1,14 @@
+height: 200
+fields:
+  ind:
+    lang_de:
+      label: Nr.
+    lang_en:
+      label: No.
+    numeric: TRUE
+    readonly: TRUE
+  title:
+     lang_de:
+      label: Thema
+    lang_en:
+      label: Topic

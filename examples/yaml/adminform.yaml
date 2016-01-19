@@ -15,6 +15,7 @@ fields:
         wintersemester and around November / December for next
         summersemester.
     type: date
+    optional: TRUE
   stud_start_date:
     lang_en:
       label: |
@@ -26,6 +27,7 @@ fields:
         this date. The lecturers should have added all their seminars
         before this date!
     type: date
+    optional: TRUE
   round1_date:
     lang_en:
       label: Date of main matching
@@ -38,6 +40,7 @@ fields:
         to run the matching on this date, don't forget to do this.
         There is no automatic run.
     type: date
+    optional: TRUE
   round2_date:
     lang_en:
       label: Date of secondary matching
@@ -50,4 +53,4 @@ fields:
         Again an administrator must press manually the button to run this
         seminar on this date.
     type: date
-
+    optional: TRUE
