@@ -112,8 +112,10 @@ admin:
     round2_date: DATE
     round2_done_date: DATE
     rounds_done: INTEGER
+    rounds_show: INTEGER
   defaults:
     rounds_done: 0
+    rounds_show: 0
   indexes:
     - "CREATE INDEX admin1 on admin (semester)"
 

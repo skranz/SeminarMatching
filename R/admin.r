@@ -2,7 +2,7 @@ examples.AdminSeminarApp = function() {
   setwd("D:/libraries/SeminarMatching/semedit_app/")
   db.dir = paste0(getwd(),"/db")
 
-  restore.point.options(display.restore.point = TRUE)
+  restore.point.options(display.restore.point = !TRUE)
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
 
@@ -12,7 +12,7 @@ examples.AdminSeminarApp = function() {
 
 }
 
-AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(getwd(),"/schema"), yaml.dir =  paste0(getwd(),"/yaml"),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Administration", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
+AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(getwd(),"/schema"), yaml.dir =  paste0(getwd(),"/yaml"), report.dir = paste0(getwd(),"/reports"),  init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Administration", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
   restore.point("AdminSeminarsApp")
 
   library(shinyjs)
@@ -29,7 +29,7 @@ AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(
 
   glob$admins = dbGet(glob$semdb,"adminstaff")
 
-
+  glob$report.dir = report.dir
   glob$yaml.dir = yaml.dir
   glob$schema.dir = schema.dir
   glob$db.dir = db.dir
@@ -60,14 +60,19 @@ AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(
     se$userid = userid
     app$se = se
 
-    ui = tabsetPanel(
-      tabPanel(title = "Setting", uiOutput("semAdminSettingsUI")),
-      tabPanel(title = "Seminars & Matching", uiOutput("semAdminSemUI"))
+    ui = tabsetPanel(id = "adminTabset",
+      tabPanel(title = "Settings", uiOutput("semAdminSettingsUI")),
+      tabPanel(title = "Seminars", uiOutput("semAdminSemUI")),
+      tabPanel(title = "Matching", uiOutput("semAdminMatchingUI")),
+      tabPanel(title = "Report",uiOutput("semAdminReportUI"))
     )
     setUI("semAdminMainUI",ui)
+    changeHandler("adminTabset", change.admin.tabset)
+    load.admin.data.from.db(se=se)
 
     show.admin.main(se=se)
     show.admin.sems(se=se)
+    show.admin.matching(se=se)
   }
 
   if (is.null(check.email.fun)) {
@@ -105,22 +110,26 @@ AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(
 load.admin.data.from.db = function(semester=se$semester, app=getApp(), se=app$se) {
   restore.point("load.admin.data.from.db")
 
-  se$admin = dbGet(se$db,"admin")
-  if (is.null(semester)) {
-    if (NROW(se$admins)>0) {
-      semester = max(se$admin)
-    } else {
-      semester = app$glob$sets$semesters[[1]]
-    }
-  }
-  se$semester = semester
-  se$seminars = dbGet(se$db,"seminars", list(semester=se$semester))
+  semester = get.default.semester(se=se)
+  if (is.null(semester))
+    semester = app$glob$sets$semesters[[1]]
 
-  se$ses = se$admin[se$admin$semester==se$semester,,drop=FALSE]
+
+  admin = dbGet(se$db,"admin", nlist(semester),schema = app$glob$schemas$admin)
+  admin = as.list(admin)
+
+  if (is.null(admin)) {
+    admin = empty.row.from.schema(.schema = app$glob$schemas$admin, semester=semester)
+  }
+  se$admin = init.se.admin(admin)
+  se$update.report = TRUE
+  se$report.html = NULL
+
+  se$semester = semester
+
+  se$seminars = dbGet(se$db,"seminars", list(semester=se$semester))
   se$studpref = dbGet(se$db,"studpref",list(semester=se$semester))
   se$students = dbGet(se$db,"students",list(semester=se$semester))
-
-  if (NROW(se$ses)==0) se$ses = list(semester=se$semester)
 
   return(invisible())
 }
@@ -131,17 +140,15 @@ show.admin.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$
   restore.point("show.admin.main")
 
   se$semester = semester
-  if (refresh)
-    load.admin.data.from.db(se=se)
 
   glob = app$glob
   form = glob$adminform
-  form.vals = form.default.values(form,values = se$ses)
+  form.vals = form.default.values(form,values = se$admin)
   form.ui = form.ui.simple(form, values=form.vals,add.submit = TRUE)
   clear.form.alert(form=form)
 
 
-  add.form.handlers(form,success.handler = save.adminform)
+  add.form.handlers(form,success.handler = save.admin.form)
 
   changeHandler("semester", function(value,...) {
     show.admin.main(se=se, semester=value, refresh=TRUE)
@@ -156,18 +163,22 @@ show.admin.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$
 
 }
 
-save.adminform = function(values, app=getApp(), se=app$se,...) {
-  restore.point("save.studForm")
+save.admin.form = function(values, app=getApp(), se=app$se,...) {
+  restore.point("save.admin.form")
 
   #schema.template(values, "students")
   form = app$glob$adminform
 
-  se$ses[names(values)] = values
+  admin = empty.row.from.schema(app$glob$schemas$admin)
+  admin = copy.intersect(admin, se$admin)
+  admin = copy.intersect(admin, values)
 
   dbBegin(se$db)
-  dbDelete(se$db,"admin", se$ses["semester"])
-  dbInsert(se$db,"admin", se$ses)
+  on.exit(try(dbRollback(se$db),silent = TRUE))
+  dbDelete(se$db,"admin", admin["semester"])
+  admin = dbInsert(se$db,"admin", admin)$values
   dbCommit(se$db)
+  se$admin = init.se.admin(admin)
 
   show.form.alert(form=form,msg=form$texts$submitSuccess, color=NULL)
   show.admin.main(se=se)
@@ -181,31 +192,238 @@ show.admin.sems = function(se=app$se, app=getApp()) {
 
   if (NROW(df)>0) {
     rows = 1:NROW(df)
-    endisBtnId = paste0("endisBtn_",rows)
-    endisLabel = ifelse (df$enabled, "disable", "enable")
+    if (FALSE) {
+      endisBtnId = paste0("endisBtn_",rows)
+      endisLabel = ifelse (df$enabled, "disable", "enable")
 
-    endisBtns = extraSmallButtonVector(id=endisBtnId,label=endisLabel)
-    cols = setdiff(colnames(df), c("semester","active","enabled"))
-    wdf = data.frame(action=endisBtns,df[,cols])
+      endisBtns = extraSmallButtonVector(id=endisBtnId,label=endisLabel)
+      cols = setdiff(colnames(df), c("semester","active","enabled"))
+      wdf = data.frame(action=endisBtns,df[,cols])
+    } else {
+      cols = setdiff(colnames(df), c("semester","active","enabled"))
+      wdf = data.frame(df[,cols])
+    }
     html = html.table(wdf, sel.row=which(!df$enabled), sel.col="#aaaaaa",bg.col="#ffffff")
 
   } else {
     html="<p>No active seminars for this semester yet.</p>"
   }
 
-  num.pref = length(unique(se$studpref$userid))
+  ui = fluidRow(column(offset=1, width=10,
+    h4(paste0("Seminars for ", se$semester)),
+    HTML(html)
+  ))
+  setUI("semAdminSemUI", ui)
+  buttonHandler("doMatching1Btn", do.matching.click, round=1)
+}
 
+show.admin.matching = function(se=app$se, app=getApp()) {
+  restore.point("show.admin.matching")
+  if (is.null(se$admin)) {
+    setUI("semAdminMatchingUI", HTML("No matching info"))
+    return()
+  }
+  mui = do.matching.ui(se=se)
 
 
   ui = fluidRow(column(offset=1, width=10,
-    h4(paste0("Seminars for ", se$semester)),
+    h4(paste0("Matching for ", se$semester)),
     br(),
-    HTML(html),
-    br(),
-    p(paste0(num.pref, " students have submitted their preferences.")),
-    actionButton("doMatching1Btn","Perform Round 1 Matching")
+    mui
   ))
-  setUI("semAdminSemUI", ui)
+  setUI("semAdminMatchingUI", ui)
+  buttonHandler("doMatching1Btn", do.matching.click, round=1,se=se)
+  buttonHandler("doMatching2Btn", do.matching.click, round=2,se=se)
+}
+
+
+init.se.admin = function(admin) {
+  restore.point("init.sem.admin")
+  today = as.Date(Sys.time())
+
+  admin$after.stud.date = FALSE
+  if (is.na(admin$round1_date)) {
+    admin$num_rounds = 0
+  } else if ((is.na(admin$round2_date))) {
+    admin$num_rounds = 1
+  } else {
+    admin$num_rounds = 2
+  }
+
+  if (!is.na(admin$stud_start_date)) {
+    admin$after.stud.date = (admin$stud_start_date >=today)
+  }
+
+  if (admin$rounds_done == 0) {
+    admin$stud.can.select = admin$after.stud.date
+    admin$stud.see.matching = c(FALSE, FALSE)
+    admin$cur_round_date = admin$round1_date
+    if (admin$after.stud.date) {
+      admin$selection.round = 1
+    } else {
+      admin$selection.round = 0
+    }
+  } else if (admin$rounds_done == 1) {
+    admin$stud.see.matching = c(admin$rounds_show>=1, FALSE)
+    if (is.na(admin$round2_date)) {
+      admin$stud.can.select = FALSE
+      admin$selection.round = 1
+    } else if (admin$round2_date <= today) {
+      admin$stud.can.select = FALSE
+      admin$selection.round = 1
+    } else if (admin$round2_date <= today) {
+      admin$stud.can.select = TRUE
+      admin$selection.round = 2
+    }
+  } else if (admin$rounds_done == 2) {
+    admin$stud.see.matching = c(admin$rounds_show>=1, admin$rounds_show>=2)
+    admin$stud.can.select = FALSE
+   }
+
+  admin
+}
+
+
+do.matching.click = function(app=getApp(),se=app$se, round=1,...) {
+  restore.point("do.matching.click")
+
+  perform.matching(semester=se$semester,use.glob.points = 1,insert.into.db = TRUE, round=round)
+  load.admin.data.from.db(se = se)
+  show.admin.matching(se=se)
+}
+
+
+publish.matching.click = function(app=getApp(),se=app$se, round=1,...) {
+  restore.point("publish.matching.click")
+
+  dbUpdate(se$db,"admin",list(rounds_shown=round),where=list(semester=se$semester))
+  show.admin.matching(se=se)
+}
+
+
+do.matching.ui = function(se=app$se, app=getApp()) {
+  restore.point("do.matching.ui")
+
+  admin = se$admin
+
+  today = as.Date(Sys.time())
+
+  ui = NULL
+  if (admin$num_rounds==0) {
+    ui = p("You have specified no dates for the matching, so no matching can be done.")
+    return(ui)
+  }
+
+  num.pref = length(unique(se$studpref$userid))
+  ui = list(p(paste0(num.pref, " students have submitted their preferences.")))
+
+  if (num.pref == 0) {
+    ui = c(ui, list(p("At least one student must have submitted their preferences for the matching do be done.")))
+    return(ui)
+  }
+
+  if (admin$rounds_done == 0) {
+    if (is.na(admin$round1_date)) {
+      ui = c(ui, list(p("You have not yet specified a date at which the first matching round shall take place.")))
+      return(ui)
+    }
+
+    if (today < admin$round1_date) {
+      ui = c(ui, list(p(paste0("You have specified that the matching shall take place at ", admin$round1_date,". So you cannot run the matching already today."))))
+      return(ui)
+    }
+
+    ui = c(ui, list(
+      actionButton("doMatching1Btn","Perform matching"),
+      helpText("Note that once you perform the matching, the results are fixed and you cannot run the matching again.")
+    ))
+    return(ui)
+  } else if (admin$rounds_done == 1) {
+    ui = c(ui, list(p("The first matching round has been performed. You can take a look at the report.")))
+
+    if (is.na(admin$round2_date)) {
+      ui = c(ui, list(p("You have not yet specified a date for a second round of matching. So there will only be a first round.")))
+      return(ui)
+    }
+
+    if (today < admin$round2_date) {
+      ui = c(ui, list(p(paste0("You have specified that the second matching run shall take place at ", admin$round2_date,". So you cannot run the second matching round already today the ", as.Date(Sys.time()) ))))
+      return(ui)
+    }
+
+    ui = c(ui, list(
+      actionButton("doMatching2Btn","Perform second matching round"),
+      helpText("Note that once you perform the matching, the results are fixed and you cannot run the matching again.")
+    ))
+    return(ui)
+  } else {
+    ui = c(ui, list(p("Both matching round have been performed. You can take a look at the report.")))
+  }
+  return(ui)
 
 }
+
+change.admin.tabset = function(value,...) {
+  restore.point("change.admin.tabset")
+
+  if (value=="Report") {
+    show.admin.report()
+  }
+  cat("Changed admin tabset...")
+
+}
+
+show.admin.report = function(se=app$se, app=getApp()) {
+  restore.point("show.admin.report")
+
+  report.dir = app$glob$report.dir
+
+  file = paste0(report.dir,"/matching_admin.Rmd")
+  if (!file.exists(file)) {
+    ui = p("No report file exists.")
+    setUI("semAdminReportUI",ui)
+    return()
+  }
+
+  if (se$admin$rounds_done==0) {
+    ui = p("No matching has been performed.")
+    setUI("semAdminReportUI",ui)
+    return()
+  }
+
+  if (isTRUE(se$update.report)) {
+    rmd = readLines(file,warn = FALSE)
+    rmd = remove.rmd.chunks(rmd, "init_param")
+
+    writeClipboard(rmd)
+    env = as.environment(list(semester=se$semester, db=se$db, db.dir=app$glob$db.dir, round=1))
+    parent.env(env) = environment()
+    rmd = paste0(rmd, collapse="\n\n")
+    html = try(knit.rmd.in.temp(rmd,envir = env, fragment.only = FALSE))
+    #html = try(render.rmd.in.temp(rmd,envir = env))
+    if (is(html,"try-error")) {
+      html = as.character(html)
+    }
+    se$update.report = FALSE
+    se$report.html = html
+    setUI("semAdminReportUI",HTML(html))
+  }
+
+}
+
+
+
+get.default.semester = function(db = se$db, se=NULL) {
+  restore.point("get.default.semester")
+
+  today = as.Date(Sys.time())
+  admins = dbGet(db,"admin")
+  started = which(admins$default_start_state <= today)
+  if (length(started)>0) {
+    row = started[which.max(admins$default_start_state[started])]
+    return(admins$semester[row])
+  }
+  return(NULL)
+}
+
 

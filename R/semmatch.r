@@ -87,9 +87,8 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   # matrix with total.slots rows and num.studs columns
   fixed.seu = do.call(rbind,seu.li)
 
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
+  if (is.null(seed)) seed = as.integer(Sys.time())
+  set.seed(seed)
   students$glob.points = runif(NROW(students),0,10)
 
   # Random basic points for each seminar
@@ -209,15 +208,17 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
       schemas = load.and.init.schemas(paste0(schema.dir,"/semdb.yaml"))
 
 
+
+
     dbBegin(semdb)
     res = try({
       if (round==1) {
         # delete also later matching rounds
         dbDelete(semdb,"matchings",nlist(semester))
-        dbUpdate(semdb,"admin",list(rounds_done=round, round1_seed=seed), where=nlist(semester))
+        dbUpdate(semdb,"admin",list(rounds_done=round, round1_seed=seed, round1_done_date=as.Date(Sys.time())), where=nlist(semester), schema = schemas$admin)
       } else if (round==2) {
         dbDelete(semdb,"matchings",nlist(semester,round))
-        dbUpdate(semdb,"admin",list(rounds_done=round, round2_seed=seed), where=nlist(semester))
+        dbUpdate(semdb,"admin",list(rounds_done=round, round2_seed=seed, round2_done_date=as.Date(Sys.time())), where=nlist(semester),schema = schemas$admin)
       } else {
         stop("round must be 1 or 2")
       }

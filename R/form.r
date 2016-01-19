@@ -298,7 +298,20 @@ check.field.value = function(value, field, lang="en") {
     value = paste0(value,collapse=field$collapse)
   }
 
-  if (isTRUE(field$type=="numeric")) {
+  if (isTRUE(field$type=="date")) {
+    if (is(value,"Date")) return(list(ok=TRUE,msg="", value=value))
+    value = str.trim(as.character(value))
+    if (nchar(value)==0) {
+      if (isTRUE(field$optional)) return(list(ok=TRUE,msg="", value=as.Date(NA, origin="1970-01-01")))
+    }
+    value = try(as.Date(value), silent=TRUE)
+    if (is(value,"try-error")) value = as.Date(NA, origin="1970-01-01")
+    if (is.na(value)) {
+      msg = "Please enter a date in the format yyyy-mm-dd, e.g. 2014-12-24."
+      return(list(ok=FALSE,msg=msg, value=value))
+    }
+    return(list(ok=TRUE,msg="", value=value))
+  } else if (isTRUE(field$type=="numeric")) {
     num = as.numeric(value)
     if (is.na(num)) {
       if (value %in% field$na_value | isTRUE(field$optional)) {
@@ -447,7 +460,8 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
   } else if (input == "date") {
     if (is.null(value)) value = ""
     if (is.na(value) & na.is.empty) value= ""
-    res[[1]] = dateInput(id, label=label, value=value)
+    #res[[1]] = dateInput(id, label=label, value=value)
+    res[[1]] = textInput(id, label=label, value=value)
   } else if (input == "selectize") {
     # choices come from a specified set
     restore.point("fieldInput.selectize")
