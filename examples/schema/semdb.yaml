@@ -50,9 +50,8 @@ seminars:
     weblink: TEXT
     descr: TEXT
     pairs: BOOLEAN
-    match_topics: BOOLEAN
     topics_date: DATE
-    close_latecomer: DATE
+    latecomer_date: DATE
   indexes:
     - "CREATE INDEX seminars1 on seminars (groupid, semester, teacher)"
     - "CREATE INDEX seminars2 on seminars (semester)"
@@ -62,7 +61,7 @@ seminars:
 semcrit:
   descr: The criteria for giving points to students of a seminar
   table:
-    semid: INTEGER REFERENCES seminars (semid)
+    semid: INTEGER
     semester: VARCHAR(20)
     pos: INTEGER
     points: NUMERIC
@@ -81,13 +80,15 @@ semtopic:
     semid: INTEGER
     semester: VARCHAR(20)
     ind: INTEGER
-    title: TEXT
+    topic: TEXT
     size: INTEGER
+    userid: VARCHAR(255)
   defaults:
     size: 1
   indexes:
-    - "CREATE INDEX semtopics on semtopic (semid,pos)"
+    - "CREATE INDEX semtopics1 on semtopic (semid,ind)"
     - "CREATE INDEX semtopics2 on semtopic (semester)"
+    - "CREATE INDEX semtopics3 on semtopic (semid,userid)"
 
 topicpref:
   descr: The preference list of students over topics
@@ -104,18 +105,16 @@ topicpref:
 latecomer:
   descr: Students that get a slot after the official assignment
   table:
-    semid: INTEGER REFERENCES seminars (semid)
+    semid: INTEGER
     semester: VARCHAR(20)
-    userid:
-    pos: INTEGER
-    points: NUMERIC
-    slots: TEXT
+    userid: VARCHAR(255)
+    inscription_date: DATE
 
 
 studpref:
   descr: The preference list of students
   table:
-    semid: INTEGER REFERENCES seminars (semid)
+    semid: INTEGER
     userid: VARCHAR(255)
     pos: INTEGER
     semester: VARCHAR(20)
@@ -129,7 +128,7 @@ studpref:
 matchings:
   descr: The final student-seminar assignment of the semester
   table:
-    semid: INTEGER REFERENCES seminars (semid)
+    semid: INTEGER
     userid: VARCHAR(255)
     semester: VARCHAR(20)
     round: INTEGER

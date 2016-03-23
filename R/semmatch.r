@@ -1,8 +1,8 @@
 
 examples.perform.matching = function() {
-  setwd("D:/libraries/SeminarMatching/semedit_app/")
+  setwd("D:/libraries/SeminarMatching/semapps/shared")
 
-  n = 45
+  n = 80
   semester = "SS15"
   delete.random.students(semester=semester)
   li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
@@ -207,33 +207,65 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
     if (is.null(schemas))
       schemas = load.and.init.schemas(paste0(schema.dir,"/semdb.yaml"))
 
-
-
-
     dbBegin(semdb)
     res = try({
       if (round==1) {
         # delete also later matching rounds
         dbDelete(semdb,"matchings",nlist(semester))
+        dbDelete(semdb,"assign",nlist(semester, assign_method="r1"))
+        dbDelete(semdb,"assign",nlist(semester, assign_method="r2"))
+
         dbUpdate(semdb,"admin",list(rounds_done=round, round1_seed=seed, round1_done_date=as.Date(Sys.time())), where=nlist(semester), schema = schemas$admin)
       } else if (round==2) {
         dbDelete(semdb,"matchings",nlist(semester,round))
+        dbDelete(semdb,"assign",nlist(semester, assign_method="r2"))
         dbUpdate(semdb,"admin",list(rounds_done=round, round2_seed=seed, round2_done_date=as.Date(Sys.time())), where=nlist(semester),schema = schemas$admin)
       } else {
         stop("round must be 1 or 2")
       }
 
+      # Store in matching
       dbInsert(semdb,"matchings",df,schema = schemas$matchings)
+      # Also store into assign
+      adf = select(df,semid,userid,semester) %>%
+            filter(semid != -1) %>%
+            mutate(assign_method = paste0("r",round),topic_ind=NA_integer_,assign_time=Sys.time())
+      dbInsert(semdb,"assign",adf,schema = schemas$assign)
     })
     if (is(res,"try-error")) {
       dbRollback(semdb)
     } else {
       dbCommit(semdb)
     }
+
+    update.seminar.filled_slots(semid=NULL, semester=semester,semdb=semdb)
   }
 
   invisible(df)
   #invisible(nlist(df, seu, stu, studpref, sem.of.slot, slot.of.slot, fixed.seu, random.seu, base.points=base.points, seed=seed)
+}
+
+# Update number of filled slots in seminar table
+update.seminar.filled_slots = function(semid=se$semid, semester=se$semester, filled_slots=NULL,semdb=se$semdb,se=NULL) {
+  restore.point("update.seminar.filled.slots")
+  if (is.null(filled_slots)) {
+    # Update filled_slots
+    if (is.null(semid)) {
+      assign = dbGet(semdb,"assign",nlist(semester=semester))
+      semid = unique(assign$semid)
+    } else {
+      assign = dbGet(semdb,"assign",nlist(semester=semester, semid=semid))
+    }
+    df = assign %>% group_by(semid) %>% summarise(filled_slots=n())
+    filled_slots = df$filled_slots[match(semid,df$semid)]
+  }
+  dbBegin(semdb)
+  tryCatch({
+    for (i in seq_along(semid)) {
+      dbUpdate(semdb,"seminars", vals=list(filled_slots=filled_slots[i]), where=nlist(semester, semid=semid[i]))
+    }
+  }, error=function(...) {dbRollback(semdb)})
+  dbCommit(semdb)
 }
 
 students.satisfy.semcrit = function(sc, students, studpref, conds) {
@@ -387,7 +419,7 @@ draw.random.students = function(n=2, semester, round=1, insert.into.db=FALSE, ya
   schema.file = paste0(schema.dir,"/semdb.yaml")
   schemas = load.and.init.schemas(schema.file)
 
-  studform = load.and.init.form(file=paste0(yaml.dir,"/studform.yaml"), lang="en")
+  studform = load.and.init.form(file=paste0(yaml.dir,"/studform.yaml"), lang="en",warn.no.prefix = FALSE)
   sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
 
   empty.stud  = empty.row.from.schema(schemas$students, semester=semester)

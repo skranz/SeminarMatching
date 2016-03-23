@@ -98,12 +98,7 @@ fields:
     lang_de:
       label: Themen automatisch vergeben
       help: |
-        Sollen die Themenvergabe auch zentral über diese Software laufen.
-        Dann können die Studierende, die dem Seminar zugeordnet werden,
-        ihre Präferenzliste über Themen online eintragen.
-        Zum unten festgelegten Datum werden die Themen dann per
-        "Serial Random Dictatorship" zugeordnet (es ist dabei optimal,
-        die wahren Präferenzen anzugeben.)
+
       choices:
         Nein: FALSE
         Ja: TRUE
@@ -118,15 +113,43 @@ fields:
     lang_de:
       label: Datum der automatischen Themenvergabe
       help: |
-        Wann soll die automatische Themenvergabe stattfinden? Üblicherweise
-        1-2 Wochen nach der ersten Runde der Seminarzuteilungen.
-      choices:
-        Nein: FALSE
-        Ja: TRUE
+        Wenn Sie die Seminarthemen auch über diese Software zuteilen
+        möchten geben Sie bitte das Datum der Themenvergabe an.
+        Üblicherweise 1-2 Wochen nach der ersten Runde der
+        Seminarzuteilungen.
+
+        Studierende die einen Seminarplatz erhalten haben,
+        können bis einen Tag vor der Themenvergabe ihre
+        Wunschliste über Themen angeben, die dann per
+        "Random Serial Dictatorship" zugeteilt werden.
+        Studierende, die keine Präferenzliste angeben
+        bekommen ein Thema zufällig zugeteilt.
+
+        Wenn Sie die Themen manuell vergeben wollen, lassen
+        Sie dieses Feld leer.
     lang_en:
       label: Date of automatic topic choice
       help: |
         When should the automatic topic choice take place?
-      choices:
-        Nein: FALSE
-        Ja: TRUE
+    type: date
+    optional: TRUE
+  latecomer_date:
+    lang_de:
+      label: Datum letztmöglicher Einschreibung
+      help: |
+        Geben Sie hier ein Datum ein, bis zu dem Nachzügler
+        sich noch für Restplätze einschreiben können.
+        Wenn Sie das Feld leer lassen ist eine Einschreibung
+        für Nachzügler nicht möglich. Seminarthemen können
+        bereits vorher verteilt werden. Nachzügler müssen
+        sich halt mit einem der nichtverteilten Themen
+        begnügen.
+    lang_en:
+      label: Date of last possible inscription
+      help: |
+        Last date at which late comers can inscribe themselves
+        to remaining seminar. If you leave the field empty,
+        late comers can not inscribe to the seminar.
+    type: date
+    optional: TRUE
+

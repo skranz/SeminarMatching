@@ -1,18 +1,19 @@
-examples.RankSeminarApp = function() {
+examples.StudSeminarsApp = function() {
   setwd("D:/libraries/SeminarMatching/semedit_app/")
   db.dir = paste0(getwd(),"/db")
 
-  restore.point.options(display.restore.point = TRUE)
+  restore.point.options(display.restore.point = FALSE)
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
   app = StudSeminarsApp(db.dir = db.dir, init.userid = "test", init.password="test", lang="de")
+  #runEventsApp(app, launch.browser = TRUE)
 
   runEventsApp(app, launch.browser = rstudio::viewer)
 
 }
 
 
-StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(getwd(),"/schema"), yaml.dir =  paste0(getwd(),"/yaml"),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
+StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(getwd(),"/schema"), yaml.dir =  paste0(getwd(),"/yaml"), rmd.dir = paste0(getwd(),"/rmd"),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
   restore.point("StudSeminarsApp")
 
   library(loginPart)
@@ -27,19 +28,38 @@ StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
   glob$semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 
   glob$yaml.dir = yaml.dir
+  glob$rmd.dir = rmd.dir
   glob$schema.dir = schema.dir
   glob$db.dir = db.dir
 
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
 
+
+  rmd.names = c("matchingnote","pre","post","round1","round2")
+  glob$rmd.li = lapply(rmd.names, function(rmd.name) {
+    file = paste0(glob$rmd.dir,"/studseminfo_",rmd.name,"_",lang,".Rmd")
+    compile.rmd(file, out.type="shiny",use.commonmark = TRUE)
+  })
+  names(glob$rmd.li) = rmd.names
+
   glob$opts = opts = read.yaml(file=paste0(yaml.dir,"/settings.yaml"),keep.quotes = FALSE)
   glob$use_joker = isTRUE(opts$use_joker)
   lang = opts$start_lang
 
+  texts = read.yaml(file=paste0(yaml.dir,"/texts.yaml"),keep.quotes = FALSE)
+  glob$texts = lapply(texts,function(text) text[[lang]])
+
+
+  # Set date format
+  dateFormat = glob$texts[["dateFormat"]]
+  .GlobalEnv$knit_print.Date =  function(x,...) {
+    format(x, format="%a. %d.%m.%Y")
+  }
+
   app$opts = glob$opts
   app$lang = lang
 
-  form = load.and.init.form(file=paste0(yaml.dir,"/studform.yaml"), lang=lang)
+  form = load.and.init.form(file=paste0(yaml.dir,"/studform.yaml"), lang=lang, prefix="studform_")
   #form.schema.template(form)
 
   form$sets = glob$sets
@@ -51,13 +71,18 @@ StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
     se = refresh.stud.app.data(userid=userid)
     ui = tabsetPanel(
       id = "studTabsetPanel",
-      tabPanel(title = "Student", value="studPanel", uiOutput("studformUI")),
-      tabPanel(title = "Seminars", value="semPanel", uiOutput("studsemUI"))
+      tabPanel(title = app$glob$texts$studsemTab, value="semPanel", uiOutput("studsemUI")),
+      tabPanel(title = app$glob$texts$studtopicTab, value="topicPanel", uiOutput("studtopicsUI")),
+      tabPanel(title = app$glob$texts$studstudTab, value="studPanel", uiOutput("studformUI"))
     )
     setUI("studMainUI", ui)
 
-    show.stud.form.ui(refresh.se = FALSE)
-    show.stud.sem.ui(refresh.se = FALSE)
+    if (!isTRUE(se$stud.exists)) {
+      updateTabsetPanel(session=app$session, "studTabsetPanel", selected="studPanel")
+    }
+    #show.stud.info.ui()
+    show.stud.form.ui()
+    show.stud.sem.ui()
   }
 
   if (is.null(check.email.fun)) {
@@ -119,7 +144,6 @@ load.student.from.db = function(userid=se$userid, semester=NULL, app=getApp(), s
 }
 
 refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
-  semester = "SS15"
   restore.point("refresh.stud.app.data")
 
   if (is.null(se)) {
@@ -127,26 +151,54 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
     se$db = app$glob$semdb
     se$userid = userid
   }
+
+  semester = get.default.semester(se=se)
+  if (is.null(semester)) {
+    semester = app$glob$sets$semesters[1]
+  }
+  se$semester = semester
+
   app$se = se
   se$semester = semester
   se$use_joker = app$glob$use_joker
 
   se$stud = load.student.from.db(userid=userid, semester=semester,se=se)
 
-  se$sems = dbGet(se$db,"seminars",list(semester=semester,active=TRUE),schema=app$glob$schemas$seminars)
+  se$seminars = dbGet(se$db,"seminars",list(semester=semester,active=TRUE),schema=app$glob$schemas$seminars)
+  se$seminars = mutate(se$seminars, free_slots = slots-filled_slots)
 
   se$studpref = dbGet(se$db,"studpref", list(userid=userid, semester=semester), schema=app$glob$schemas$studpref, orderby="pos ASC")
 
-  app$se = se
+
+  admin = dbGet(se$db,"admin",nlist(semester=semester),schema=app$glob$schemas$admin)
+  se$admin = init.se.admin(admin)
+
+  se$studmode = se$admin$studmode
+
+  se$assign = dbGet(se$db,"assign", nlist(semester),schema=app$glob$schemas$assign)
+
+  if (NROW(se$assign)>0) {
+    stud_sems =
+      filter(se$assign, userid==se$userid) %>%
+      arrange(assign_time)
+    if (NROW(stud_sems)==0) {
+      se$stud_sems=NULL
+    } else {
+      se$stud_sems = left_join(stud_sems,se$seminars, by=c("semid","semester"),copy=TRUE)
+    }
+  } else {
+    se$stud_sems = NULL
+  }
+
+
+
   se
 
 }
 
-show.stud.form.ui = function(se=app$se, app=getApp(), refresh.se=TRUE) {
+show.stud.form.ui = function(se=app$se, app=getApp()) {
 
   restore.point("show.stud.form.ui")
-  if (refresh.se)
-    se = refresh.stud.app.data(se=se)
 
   glob = app$glob
   form = glob$studform
@@ -157,7 +209,8 @@ show.stud.form.ui = function(se=app$se, app=getApp(), refresh.se=TRUE) {
   add.form.handlers(form,success.handler = save.studform)
 
 
-  setUI("studformUI", form.ui)
+  ui = c(list(HTML(app$glob$texts$profileIntro)), form.ui)
+  setUI("studformUI", ui)
 
 }
 
@@ -181,24 +234,66 @@ save.studform = function(values, app=getApp(), se=app$se,...) {
   show.stud.sem.ui(se=se)
 }
 
-show.stud.sem.ui = function(se=app$se, app=getApp(), refresh.se = FALSE) {
+show.stud.sem.ui = function(se=app$se, app=getApp()) {
   restore.point("show.stud.sem.ui")
 
-  if (refresh.se)
-    se = refresh.stud.app.data(se=se)
-
-  if (!isTRUE(se$stud.exists)) {
-    ui = fluidRow(column(offset=1, width=10,
-      HTML(app$glob$opts$noSemPrefMsg[[app$lang]])
-    ))
-    setUI("studsemUI", ui)
-    return()
+  studmode = se$studmode
+  if (studmode=="post") {
+    show.stud.sem.post.ui(se,app)
+  } else if (studmode=="round1" | studmode=="round2") {
+    show.stud.sem.round.ui(se,app)
+  } else {
+    show.stud.sem.pre.ui(se,app)
   }
 
+}
+
+show.stud.sem.pre.ui = function(se=app$se, app=getApp()) {
+  restore.point("show.stud.sem.pre.ui")
+  studmode = "pre"
+  envir = c(se$admin, list(stud_sems,se$stud_sems,stud.exists=se$stud.exists))
+  cr = app$glob$rmd.li[[studmode]]
+  header = render.compiled.rmd(cr, envir=envir)
+  ui = fluidRow(column(offset=1, width=10,
+    header
+  ))
+  setUI("studsemUI", ui)
+}
+
+
+show.stud.sem.post.ui = function(se=app$se, app=getApp()) {
+  restore.point("show.stud.sem.post.ui")
+  studmode = "post"
+  envir = c(se$admin, nlist(stud_sems=se$stud_sems,stud.exists=se$stud.exists))
+
+  cr = app$glob$rmd.li[[studmode]]
+  header = render.compiled.rmd(cr, envir=envir)
+  ui = fluidRow(column(offset=1, width=10,
+    header
+  ))
+  setUI("studsemUI", ui)
+
+}
+
+
+show.stud.sem.round.ui = function(se=app$se, app=getApp()) {
+  restore.point("show.stud.sem.round.ui")
+
+  studmode = se$studmode
+  if (studmode=="round2")  {
+    round = 2
+  } else {
+    round = 1
+  }
   lang = app$lang
   glob = app$glob
   opts = glob$opts
-  sems = se$sems
+  sems = se$seminars
+
+  envir = c(se$admin, nlist(stud_sems=se$stud_sems, stud.exists=se$stud.exists))
+  cr = glob$rmd.li[[studmode]]
+  header = render.compiled.rmd(cr, envir=envir)
+  note = render.compiled.rmd(glob$rmd.li[["matchingnote"]], envir=se)
 
   cols = c("semid",intersect(union(opts$selSemCols,opts$allSemCols),colnames(sems)))
   sem.df = sems[,cols]
@@ -214,10 +309,6 @@ show.stud.sem.ui = function(se=app$se, app=getApp(), refresh.se = FALSE) {
   sem.df$pos = NA
   sem.df$joker = 0
 
-  #app$ui = fluidPage(dataTableOutput("selTable"))
-
-
-
   if (NROW(se$studpref)>0) {
     sel.rows = match(se$studpref$semid, sem.df$semid)
     sel.df = sem.df[sel.rows,]
@@ -232,25 +323,22 @@ show.stud.sem.ui = function(se=app$se, app=getApp(), refresh.se = FALSE) {
 
 
   ui = fluidRow(column(offset=1, width=10,
-    HTML(opts$rankingTitle[[lang]]),
-    p(opts$rankingDescr[[lang]]),
-    bsCollapse(bsCollapsePanel(
-      title="Details",
-      HTML(opts$rankingBackground[[lang]])
-    )),
-    h3(opts$selSemTitle[[lang]]),
+    header,
+    note,
+    h3(glob$texts$selSemTitle),
     uiOutput("selSemUI"),
     br(),
-    actionButton("saveStudprefBtn",opts$rankingSaveBtnLabel[[lang]]),
+    actionButton("saveStudprefBtn",glob$texts$rankingSaveBtnLabel),
     bsAlert("saveStudprefAlert"),
-    h3(opts$allSemTitle[[lang]]),
+    h3(glob$texts$allSemTitle),
     uiOutput("allSemUI")
   ))
 
+
+  #view.ui(header)
   buttonHandler("saveStudprefBtn",save.studpref)
   add.studpref.handlers(num.sems=NROW(sem.df))
   setUI("studsemUI", ui)
-
 }
 
 
@@ -445,5 +533,11 @@ save.studpref = function(app=getApp(), se=app$se,...) {
     dbInsert(se$db, "studpref",studpref, schema=app$glob$schemas$studpref)
   }
   dbCommit(se$db)
-  createAlert(app$session, "saveStudprefAlert", title=NULL, content=app$glob$opts$rankingSaveSuccess[[app$lang]])
+  createAlert(app$session, "saveStudprefAlert", title=NULL, content=app$glob$texts$rankingSaveSuccess)
+}
+
+max.date = function(vals) {
+  m = suppressWarnings(max(vals, na.rm=TRUE))
+  if (!is.finite(m)) m = as.Date(NA)
+  m
 }

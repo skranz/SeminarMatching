@@ -38,19 +38,13 @@ examples.vecForm = function() {
 
 
 form.ui.handsone.table = function(form, data, fields=form$fields, label=first.none.null(lang.form[["label"]],form[["label"]]), help_html=lang.form[["help_html"]],note_html=lang.form[["note_html"]],note_title=first.none.null(lang.form[["note_title"]],"Info"), sets = form[["sets"]],
-  submitBtn=NULL, submitLabel="Submit",add.submit=TRUE,lang=form[["lang"]], addLabel="",addIcon=icon(name = icon("plus",lib = "glyphicon")), width=first.none.null(form$width,"100%"), height=first.none.null(form$height), stretchH='all', lang.form = get.lang.form(form, lang), ...) {
+  submitBtn=NULL, submitLabel="Submit",add.submit=TRUE,lang=form[["lang"]], addLabel="",addIcon=icon(name = icon("plus",lib = "glyphicon")), width=first.none.null(form$width,"100%"), height=first.none.null(form$height,"100%"), stretchH='all', lang.form = get.lang.form(form, lang), rowHeaders=NULL, readOnly=FALSE, ...) {
   restore.point("form.ui.handsone.table")
 
   library(rhandsontable)
 
   cols = names(fields)
-  df = data[,cols]
-
-#   df = lapply(df, function(val) {
-#     val = as.character(val)
-#     val[is.na(val)] = ''
-#     val
-#   })
+  df = data[,cols,drop=FALSE]
 
   id = paste0(form$prefix,"handsoneTableFormUI", form$postfix)
 
@@ -61,13 +55,7 @@ form.ui.handsone.table = function(form, data, fields=form$fields, label=first.no
   })
   names(labels) = NULL
 
-  #fhelp = sapply(fields,function(field) {
-  #  if (is.null(field$help)) return(NA)
-  #  field$help
-  #})
-  #fhelp = matrix(fhelp, nrow=NROW(df), ncol=ncol(df), byrow=TRUE)
-
-  hot = rhandsontable(data=df, colHeaders=labels, rowHeaders=NULL, useTypes = TRUE, readOnly = FALSE, selectCallback = FALSE,stretchH=stretchH)
+  hot = rhandsontable(data=df, colHeaders=labels, rowHeaders=rowHeaders, useTypes = TRUE, readOnly = readOnly, selectCallback = FALSE,stretchH=stretchH)
 
   for (col in seq_along(fields)) {
     field = fields[[col]]
@@ -89,9 +77,9 @@ form.ui.handsone.table = function(form, data, fields=form$fields, label=first.no
           choices = c(choices, set)
       }
       choices = unlist(choices)
-      hot = hot_col(hot,col=col,type="dropdown", source=choices)
+      hot = hot_col(hot,col=col,type="dropdown", source=choices, readOnly=isTRUE(field$readonly))
     } else {
-      hot = hot_col(hot,col=col,type="text", strict=FALSE)
+      hot = hot_col(hot,col=col,type="text", strict=FALSE, readOnly=isTRUE(field$readonly))
     }
   }
 
@@ -103,7 +91,7 @@ form.ui.handsone.table = function(form, data, fields=form$fields, label=first.no
     ui = c(list(h4(label)),ui)
   }
   if (!is.null(help_html)) {
-    ui = c(ui,list(HTML(help_html)))
+    ui = c(ui,list(br(),HTML(help_html)))
   }
   if (!is.null(note_html)) {
     ui =c(ui, list(br(),bsCollapse(bsCollapsePanel(title=note_title,HTML(note_html)))))
@@ -146,7 +134,7 @@ table.form.default.values = function(form, data = NULL, nrow=max(NROW(data),1), 
     if (boolean.correction)
       vals[replace][boolean] =  lapply(vals[replace][boolean], as.logical)
   }
-  as.data.frame(vals)
+  as.data.frame(vals, stringsAsFactors = FALSE)
 }
 
 check.field.values = function(values, field) {

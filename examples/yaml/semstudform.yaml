@@ -1,0 +1,35 @@
+lang_de:
+  label: Ins Seminar eingeschriebene Studierende
+  help: |
+    Sie sehen hier welche Studierende bereits ins Seminar eingeschrieben sind.
+lang_en:
+  label: Inscribed students
+  help: |
+    You see here which students are inscribed in the seminar
+
+fields:
+  name:
+    lang_de:
+      label: Name
+    lang_en:
+      label: Name
+  topic:
+    lang_de:
+      label: Thema
+    lang_en:
+      label: Topic
+  email:
+    lang_de:
+      label: Email
+    lang_en:
+      label: Email
+  studBAMA:
+    lang_de:
+      label: Abschluss
+    lang_en:
+      label: Degree
+  studSubject:
+    lang_de:
+      label: Fach
+    lang_en:
+      label: Subject

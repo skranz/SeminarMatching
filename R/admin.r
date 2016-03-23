@@ -1,18 +1,12 @@
 examples.AdminSeminarApp = function() {
-  setwd("D:/libraries/SeminarMatching/semedit_app/")
-  db.dir = paste0(getwd(),"/db")
-
+  setwd("D:/libraries/SeminarMatching/semapps/")
   restore.point.options(display.restore.point = !TRUE)
-
-  logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
-
-  app = AdminSeminarsApp(db.dir = db.dir, init.userid = "test", init.password="test", lang="en")
-
-  runEventsApp(app, launch.browser = rstudio::viewer)
+  app = AdminSeminarsApp(init.userid = "test", init.password="test", lang="en", main.dir = paste0(getwd(),"/shared"))
+  viewApp(app)
 
 }
 
-AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(getwd(),"/schema"), yaml.dir =  paste0(getwd(),"/yaml"), report.dir = paste0(getwd(),"/reports"),  init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Administration", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
+AdminSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), report.dir = paste0(main.dir,"/reports"), rmd.dir =  paste0(main.dir,"/rmd"),  main.dir = getwd(),  init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Administration", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
   restore.point("AdminSeminarsApp")
 
   library(shinyjs)
@@ -33,12 +27,32 @@ AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(
   glob$yaml.dir = yaml.dir
   glob$schema.dir = schema.dir
   glob$db.dir = db.dir
+  glob$rmd.dir = rmd.dir
 
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
 
-  form = load.and.init.form(file=paste0(yaml.dir,"/adminform.yaml"),lang=lang)
+  form = load.and.init.form(file=paste0(yaml.dir,"/adminform.yaml"),lang=lang,prefix="adminform_")
   form$sets = glob$sets
   glob$adminform = form
+
+  rmd.names = c("admin_overview")
+  glob$rmd.li = lapply(rmd.names, function(rmd.name) {
+    file = paste0(glob$rmd.dir,"/",rmd.name,"_",lang,".Rmd")
+    compile.rmd(file, out.type="html",use.commonmark = TRUE)
+  })
+  names(glob$rmd.li) = rmd.names
+
+ selectChangeHandler("adminform_semester", function(value, app=getApp(), se=app$se,...) {
+    restore.point("semester.change.handler")
+    cat("\n\nsemester changed to ", value,"\n\n")
+    semester = value
+    load.admin.data.from.db(semester = semester)
+    show.admin.main(se=se, init.handlers=FALSE)
+    #stop()
+    show.admin.sems(se=se)
+    show.admin.matching(se=se)
+  })
+
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
 
@@ -61,6 +75,7 @@ AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(
     app$se = se
 
     ui = tabsetPanel(id = "adminTabset",
+      tabPanel(title = "Overview", uiOutput("semAdminOverviewUI")),
       tabPanel(title = "Settings", uiOutput("semAdminSettingsUI")),
       tabPanel(title = "Seminars", uiOutput("semAdminSemUI")),
       tabPanel(title = "Matching", uiOutput("semAdminMatchingUI")),
@@ -70,6 +85,7 @@ AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(
     changeHandler("adminTabset", change.admin.tabset)
     load.admin.data.from.db(se=se)
 
+    show.admin.overview(se=se)
     show.admin.main(se=se)
     show.admin.sems(se=se)
     show.admin.matching(se=se)
@@ -93,6 +109,8 @@ AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(
   lop$login$ui = lop.login.ui(lop)
   lop$smtp = lop.get.smtp()
 
+
+
   appInitHandler(function(session,...) {
     initLoginDispatch(lop)
   })
@@ -107,20 +125,19 @@ AdminSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(
 }
 
 
-load.admin.data.from.db = function(semester=se$semester, app=getApp(), se=app$se) {
+load.admin.data.from.db = function(semester=get.default.semester(se=se), app=getApp(), se=app$se) {
   restore.point("load.admin.data.from.db")
 
-  semester = get.default.semester(se=se)
   if (is.null(semester))
     semester = app$glob$sets$semesters[[1]]
 
 
   admin = dbGet(se$db,"admin", nlist(semester),schema = app$glob$schemas$admin)
-  admin = as.list(admin)
 
   if (is.null(admin)) {
     admin = empty.row.from.schema(.schema = app$glob$schemas$admin, semester=semester)
   }
+  admin = as.list(admin)
   se$admin = init.se.admin(admin)
   se$update.report = TRUE
   se$report.html = NULL
@@ -135,7 +152,7 @@ load.admin.data.from.db = function(semester=se$semester, app=getApp(), se=app$se
 }
 
 
-show.admin.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$glob$semdb, se, semester=se$semester, app=getApp(), refresh=TRUE) {
+show.admin.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$glob$semdb, se, semester=se$semester, app=getApp(), init.handlers=TRUE, refresh=TRUE) {
 
   restore.point("show.admin.main")
 
@@ -148,12 +165,12 @@ show.admin.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$
   clear.form.alert(form=form)
 
 
-  add.form.handlers(form,success.handler = save.admin.form)
+  if (init.handlers) {
+    add.form.handlers(form,success.handler = save.admin.form)
+    #break.point("show.admin.main.d")
+    cat("\nadd selectChangeHandler")
 
-  changeHandler("semester", function(value,...) {
-    show.admin.main(se=se, semester=value, refresh=TRUE)
-    show.admin.sems(se=se)
-  })
+  }
 
   ui = fluidRow(column(width=10, offset=1,
     form.ui
@@ -197,10 +214,10 @@ show.admin.sems = function(se=app$se, app=getApp()) {
       endisLabel = ifelse (df$enabled, "disable", "enable")
 
       endisBtns = extraSmallButtonVector(id=endisBtnId,label=endisLabel)
-      cols = setdiff(colnames(df), c("semester","active","enabled"))
+      cols = intersect(colnames(df), c("groupid","name","teacher","semBAMA","area","weblink"))
       wdf = data.frame(action=endisBtns,df[,cols])
     } else {
-      cols = setdiff(colnames(df), c("semester","active","enabled"))
+      cols = intersect(colnames(df), c("groupid","name","teacher","semBAMA","area","weblink"))
       wdf = data.frame(df[,cols])
     }
     html = html.table(wdf, sel.row=which(!df$enabled), sel.col="#aaaaaa",bg.col="#ffffff")
@@ -214,7 +231,6 @@ show.admin.sems = function(se=app$se, app=getApp()) {
     HTML(html)
   ))
   setUI("semAdminSemUI", ui)
-  buttonHandler("doMatching1Btn", do.matching.click, round=1)
 }
 
 show.admin.matching = function(se=app$se, app=getApp()) {
@@ -239,6 +255,7 @@ show.admin.matching = function(se=app$se, app=getApp()) {
 
 init.se.admin = function(admin) {
   restore.point("init.sem.admin")
+  admin = as.list(admin)
   today = as.Date(Sys.time())
 
   admin$after.stud.date = FALSE
@@ -251,7 +268,9 @@ init.se.admin = function(admin) {
   }
 
   if (!is.na(admin$stud_start_date)) {
-    admin$after.stud.date = (admin$stud_start_date >=today)
+    admin$after.stud.date = (admin$stud_start_date <=today)
+  } else {
+    admin$after.stud.date = admin$rounds_done >= 0
   }
 
   if (admin$rounds_done == 0) {
@@ -278,7 +297,17 @@ init.se.admin = function(admin) {
   } else if (admin$rounds_done == 2) {
     admin$stud.see.matching = c(admin$rounds_show>=1, admin$rounds_show>=2)
     admin$stud.can.select = FALSE
-   }
+  }
+
+  if (!admin$after.stud.date) {
+    admin$studmode = "pre"
+  } else if (admin$rounds_done == 0) {
+    admin$studmode = "round1"
+  } else if (admin$rounds_done == 1 & admin$num_rounds==2) {
+    admin$studmode = "round2"
+  } else {
+    admin$studmode = "post"
+  }
 
   admin
 }
@@ -292,13 +321,6 @@ do.matching.click = function(app=getApp(),se=app$se, round=1,...) {
   show.admin.matching(se=se)
 }
 
-
-publish.matching.click = function(app=getApp(),se=app$se, round=1,...) {
-  restore.point("publish.matching.click")
-
-  dbUpdate(se$db,"admin",list(rounds_shown=round),where=list(semester=se$semester))
-  show.admin.matching(se=se)
-}
 
 
 do.matching.ui = function(se=app$se, app=getApp()) {
@@ -373,6 +395,18 @@ change.admin.tabset = function(value,...) {
 
 }
 
+show.admin.overview = function(se=app$se, app=getApp()) {
+  restore.point("show.admin.overview")
+  envir = c(se$admin, list(today=as.Date(Sys.time())))
+
+  cr = app$glob$rmd.li[["admin_overview"]]
+  header = render.compiled.rmd(cr, envir=envir)
+  ui = fluidRow(column(offset=1, width=10,
+    HTML(header)
+  ))
+  setUI("semAdminOverviewUI", ui)
+}
+
 show.admin.report = function(se=app$se, app=getApp()) {
   restore.point("show.admin.report")
 
@@ -395,11 +429,19 @@ show.admin.report = function(se=app$se, app=getApp()) {
     rmd = readLines(file,warn = FALSE)
     rmd = remove.rmd.chunks(rmd, "init_param")
 
-    writeClipboard(rmd)
-    env = as.environment(list(semester=se$semester, db=se$db, db.dir=app$glob$db.dir, round=1))
+    round = 1
+    se$matchings = dbGet(se$db,"matchings",nlist(semester=se$semester, round))
+
+    if (NROW(se$matchings)==0) {
+      ui = p("No student has been matched.")
+      setUI("semAdminReportUI",ui)
+      return()
+    }
+    #writeClipboard(rmd)
+    env = as.environment(list(semester=se$semester, seminars=se$seminars, students=se$students, matchings=se$matchings, semdb=se$db, db.dir=app$glob$db.dir, round=1))
     parent.env(env) = environment()
     rmd = paste0(rmd, collapse="\n\n")
-    html = try(knit.rmd.in.temp(rmd,envir = env, fragment.only = FALSE))
+    html = try(knit.rmd.in.temp(rmd,envir = env, fragment.only = TRUE, use.commonmark=TRUE))
     #html = try(render.rmd.in.temp(rmd,envir = env))
     if (is(html,"try-error")) {
       html = as.character(html)
@@ -413,14 +455,14 @@ show.admin.report = function(se=app$se, app=getApp()) {
 
 
 
-get.default.semester = function(db = se$db, se=NULL) {
+get.default.semester = function(db = se$db, se=NULL, schemas=app$glob$schemas$admin) {
   restore.point("get.default.semester")
 
   today = as.Date(Sys.time())
-  admins = dbGet(db,"admin")
-  started = which(admins$default_start_state <= today)
+  admins = dbGet(db,"admin",schema = schemas$admin)
+  started = which(admins$default_start_date <= today)
   if (length(started)>0) {
-    row = started[which.max(admins$default_start_state[started])]
+    row = started[which.max(admins$default_start_date[started])]
     return(admins$semester[row])
   }
   return(NULL)

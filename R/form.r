@@ -49,13 +49,18 @@ view.form = function(form, params, launch.browser = rstudioapi::viewer, ...) {
 }
 
 
-load.and.init.form = function(file=NULL, text=NULL, utf8 = TRUE, lang="en", prefix=NULL, postfix=NULL,...) {
+load.and.init.form = function(file=NULL, text=NULL, utf8 = TRUE, lang="en", prefix=NULL, postfix=NULL, warn.no.prefix = TRUE,...) {
   form = read.yaml(file=file, text=text,utf8 = utf8)
-  init.form(form, lang=lang, prefix=prefix, postfix=postfix, ...)
+  init.form(form, lang=lang, prefix=prefix, postfix=postfix, warn.no.prefix = warn.no.prefix, ...)
 }
 
-init.form = function(form, compile.markdown.help=TRUE, lang="en", prefix=form$prefix, postfix=form$postfix, show.alerts = TRUE,   widget.as.character=first.none.null(form$widget.as.character,FALSE) ) {
+init.form = function(form, compile.markdown.help=TRUE, lang="en", prefix=form$prefix, postfix=form$postfix, show.alerts = TRUE,   widget.as.character=first.none.null(form$widget.as.character,FALSE), warn.no.prefix=TRUE ) {
   restore.point("init.form")
+
+  if (is.null(prefix) & is.null(postfix) & isTRUE(warn.no.prefix)) {
+    warning("It is strongly recommended to init forms with a prefix or postfix that guarantees that field names are unique in your application. If field inputs have the same name, errors can arise that are not easy to detect. So please provide a prefix or postfix to init.form.")
+  }
+
 
   form$widget.as.character=widget.as.character
   form$show.alerts = show.alerts
@@ -87,6 +92,7 @@ compile.form.markdown.tags = function(form, values=NULL,  tags = c("help","note"
 
   inner.compile = function(obj, tags, values, use.lang = TRUE) {
     restore.point("inner.compile")
+    if (!is.list(obj)) return(obj)
 
     for (tag in tags) {
       if (!is.null(obj[[tag]])) {

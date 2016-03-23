@@ -1,14 +1,31 @@
-height: 200
+
+lang: de
+lang_de:
+  label: Seminarthemen
+  help: |
+    Sie müssen die Themen nur eingeben, wenn Sie diese Software
+    auch für autmatische Themenvergabe nutzen wollen. Falls Sie
+    ein Thema doppelt vergeben wollen, geben Sie das Thema zweimal ein.
+    Um mehr als 30 Themen einzugeben, nutzen Sie die rechte Maustaste
+    um neue Zeilen einzufügen.
+lang_en:
+  label: Topics
+  help: |
+    You only have to enter the seminar topics if you also
+    want to assign topics automatically. If you want multiple Slots
+    for a topic, please enter the topic multiple times.
+    If you want more than 30 topics use the right mouse button
+    to enter additional slots.
+
 fields:
   ind:
     lang_de:
-      label: Nr.
+      label: Nr
     lang_en:
-      label: No.
-    numeric: TRUE
+      label: No
     readonly: TRUE
-  title:
-     lang_de:
+  topic:
+    lang_de:
       label: Thema
     lang_en:
       label: Topic

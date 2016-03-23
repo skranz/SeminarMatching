@@ -1,3 +1,40 @@
+replace.na = function(x, replace.value = 0) {
+  x[is.na(x)] = replace.value
+  x
+}
+
+
+copy.non.null.fields = function(dest, source, fields=names(source)) {
+  restore.point("copy.into.empty.fields")
+  copy.fields = fields[!sapply(source[fields], is.null)]
+
+  if (is.environment(dest)) {
+    for (field in copy.fields) dest[[field]] = source[[field]]
+  } else {
+    dest[copy.fields] = source[copy.fields]
+  }
+
+  invisible(dest)
+}
+
+
+
+view.ui = function(ui, launch.browser=rstudio::viewer) {
+  restore.point("view.ui")
+
+  library(shinyEvents)
+
+  app = eventsApp()
+  app$ui = fluidPage(ui)
+  runEventsApp(app,launch.browser = launch.browser)
+  return(invisible())
+}
+
+
+
+filter_.NULL = function(...) return(NULL)
+
+
 replace.na = function(df, replace=0, cols=1:NCOL(df)) {
   ind = which(is.na(df[,cols]), arr.ind=TRUE)
   df[,cols][ind] = replace
