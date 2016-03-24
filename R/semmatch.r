@@ -2,8 +2,8 @@
 examples.perform.matching = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
 
-  n = 80
-  semester = "SS15"
+  n = 70
+  semester = "SS16"
   delete.random.students(semester=semester)
   li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
   df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,use.glob.points = 1,insert.into.db = TRUE)
@@ -36,7 +36,7 @@ examples.perform.matching = function() {
   res
 }
 
-perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,students=NULL, studpref=NULL, semcrit=NULL, semdb=se[["db"]], conds=glob[["conds"]], sets=glob[["sets"]], schemas=glob$schemas, se=NULL, glob=getApp()$glob, yaml.dir=glob$yaml.dir, db.dir=glob$db.dir, schema.dir=glob$schema.dir, reload=FALSE, seed=NULL, insert.into.db=TRUE, use.glob.points = TRUE) {
+perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,students=NULL, studpref=NULL, semcrit=NULL, semdb=se[["db"]], conds=glob[["conds"]], sets=glob[["sets"]], schemas=glob$schemas, se=NULL, dirs=glob, glob=getApp()$glob, yaml.dir=dirs$yaml.dir, db.dir=dirs$db.dir, schema.dir=dirs$schema.dir, reload=FALSE, seed=NULL, insert.into.db=TRUE, use.glob.points = TRUE) {
   restore.point("perform.matching")
 
 
@@ -444,9 +444,12 @@ draw.random.students = function(n=2, semester, round=1, insert.into.db=FALSE, ya
 
   seminars = dbGet(semdb,"seminars", list(semester=semester))
 
+  # Create some weights to make some seminars more attractive
+  sem.weights = runif(NROW(seminars))
+  sem.weights = sem.weights / sum(sem.weights)
   make.stud.pref = function(stud,num.pos = sample.int(NROW(seminars),1)) {
     data_frame(
-      semid = sample(seminars$semid,num.pos),
+      semid = sample(seminars$semid,num.pos,prob=sem.weights),
       userid = stud$userid,
       pos = 1:num.pos,
       semester = semester,

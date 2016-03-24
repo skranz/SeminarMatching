@@ -9,16 +9,16 @@ library(reshape2)
 ```
 
 ```{r init_param, include=FALSE}
+setwd("D:/libraries/SeminarMatching/semapps/shared/reports")
 semester = "SS15"
 db.dir = paste0("../db")
 round = 1
-```
 
-```{r load_data, include=FALSE}
 semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 matchings = dbGet(semdb,"matchings",nlist(semester, round))
 seminars = dbGet(semdb,"seminars",nlist(semester))
 students = dbGet(semdb,"students",nlist(semester))
+
 ```
 
 ```{r init_data, include=FALSE}
@@ -55,23 +55,26 @@ sdf = df %>%
   spread(key = found, value=n) %>%
   as.data.frame()
 
+if (ncol(sdf)==2)
+  sdf$not_found  = 0
+  
 sdf$total = sdf[,2]+sdf[,3]
 sdf
 ```
 
 Here are the shares of students that got the seminar that they ranked at n'th position... 
-
 ```{r }
 df %>% 
+  group_by(studBAMA) %>%
   mutate(N=n()) %>%
   group_by(studBAMA,pos, found) %>% 
   summarise(share = paste0(round(100*n() / first(N),1),"%")) %>%
   ungroup() %>%
+  filter(found == "found seminar") %>%
   mutate(pos = paste0("Ranked ",pos)) %>%
-  dcast(pos ~ studBAMA+found, value.var="share")
+  dcast(pos ~ studBAMA+found, value.var="share") %>%
+  replace.na("0%")
 ```
-
-In an ideal world for students, every student gets his first ranked seminar. The rows where found equals `no seminar` describe the share of students who did not get a seminar and have ranked one seminar less than the rank column (i.e. the option `no seminar` is ranked as the rank column indicates). If students have ranked only very few seminars it may not be surprising that they did not get a seminar. It is not so good if students who have ranked a lot of seminars still do not get a seminar.
 
 And now we show how the length of a students' preference lists relates with the share of students that got assigned a seminar:
 ```{r}
@@ -80,7 +83,8 @@ df %>%
   mutate(N=n()) %>%
   group_by(studBAMA,num_ranked, found) %>% 
   summarise(share = paste0(round(100*n() / first(N),1),"%")) %>%
-  dcast(num_ranked ~ studBAMA + found,value.var="share")
+  dcast(num_ranked ~ studBAMA + found,value.var="share") %>%
+  replace.na("0%")
 ```
 
 Let us now compare for Bachelor students the seminar matching by their main subject:
@@ -91,7 +95,8 @@ df %>%
   group_by(studSubject, found) %>% 
   summarise(n=n()) %>%
   dcast(studSubject ~ found,value.var="n") %>%
-  arrange(-`found seminar`)
+  arrange(-`found seminar`) %>%
+  replace.na(0)
 ```
 
 and the same thing for master students...
@@ -101,6 +106,7 @@ df %>%
   group_by(studSubject, found) %>% 
   summarise(n=n()) %>%
   dcast(studSubject ~ found,value.var="n") %>%
-  arrange(-`found seminar`)
+  arrange(-`found seminar`) %>%
+  replace.na(0)
 ```
 

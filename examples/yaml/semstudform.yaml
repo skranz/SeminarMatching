@@ -8,6 +8,11 @@ lang_en:
     You see here which students are inscribed in the seminar
 
 fields:
+  num:
+    lang_de:
+      label: Nr.
+    lang_en:
+      label: No.
   name:
     lang_de:
       label: Name

@@ -18,7 +18,7 @@ lang_en:
     to enter additional slots.
 
 fields:
-  ind:
+  topic_ind:
     lang_de:
       label: Nr
     lang_en:

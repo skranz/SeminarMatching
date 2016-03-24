@@ -52,11 +52,49 @@ seminars:
     pairs: BOOLEAN
     topics_date: DATE
     latecomer_date: DATE
+    filled_slots: INTEGER
   indexes:
     - "CREATE INDEX seminars1 on seminars (groupid, semester, teacher)"
     - "CREATE INDEX seminars2 on seminars (semester)"
     - "CREATE INDEX seminars3 on seminars (teacher)"
     - "CREATE INDEX seminars4 on seminars (name)"
+  defaults:
+    filled_slots: 0
+
+
+assign:
+  descr: Assignments of seminars and students
+  table:
+    semid: INTEGER
+    userid: VARCHAR(255)
+    semester: VARCHAR(20)
+    assign_method: CHARACTER(2)
+    topic_ind: INTEGER
+    assign_time: DATETIME
+  indexes:
+    - "CREATE INDEX assign1 on assign (semester)"
+    - "CREATE INDEX assign2 on assign (semester, userid)"
+    - "CREATE INDEX assign3 on assign (semester, semid)"
+
+manual:
+  descr: |
+    Manual inscription or removals of students from seminars
+    Could be done by students (latecomer) or by staff
+  table:
+    editid: VARCHAR(20)
+    semid: INTEGER
+    userid: VARCHAR(255)
+    semester: VARCHAR(20)
+    added: BOOLEAN
+    topic_ind: INTEGER
+    edit_type: VARCHAR(20)
+    edit_time: DATETIME
+  defaults:
+    added: TRUE
+  indexes:
+    - "CREATE INDEX manual1 on manual (semester)"
+    - "CREATE INDEX manual2 on manual (semester, userid)"
+    - "CREATE INDEX manual3 on manual (semester, semid)"
 
 semcrit:
   descr: The criteria for giving points to students of a seminar
@@ -79,14 +117,14 @@ semtopic:
   table:
     semid: INTEGER
     semester: VARCHAR(20)
-    ind: INTEGER
+    topic_ind: INTEGER
     topic: TEXT
     size: INTEGER
     userid: VARCHAR(255)
   defaults:
     size: 1
   indexes:
-    - "CREATE INDEX semtopics1 on semtopic (semid,ind)"
+    - "CREATE INDEX semtopics1 on semtopic (semid,topic_ind)"
     - "CREATE INDEX semtopics2 on semtopic (semester)"
     - "CREATE INDEX semtopics3 on semtopic (semid,userid)"
 
@@ -96,19 +134,12 @@ topicpref:
     semid: INTEGER
     userid: VARCHAR(255)
     semester: VARCHAR(20)
-    ind: INTEGER
+    topic_ind: INTEGER
     pos: INTEGER
   indexes:
-    - "CREATE INDEX topicpref on topicpref (semester,semid,userid,ind)"
-    - "CREATE INDEX topicpref2 on topicpref (semid,userid,ind)"
+    - "CREATE INDEX topicpref on topicpref (semester,semid,userid,topic_ind)"
+    - "CREATE INDEX topicpref2 on topicpref (semid,userid,topic_ind)"
 
-latecomer:
-  descr: Students that get a slot after the official assignment
-  table:
-    semid: INTEGER
-    semester: VARCHAR(20)
-    userid: VARCHAR(255)
-    inscription_date: DATE
 
 
 studpref:
@@ -157,10 +188,8 @@ admin:
     round2_done_date: DATE
     round2_seed: INTEGER
     rounds_done: INTEGER
-    rounds_shown: INTEGER
   defaults:
     rounds_done: 0
-    rounds_shown: 0
   indexes:
     - "CREATE INDEX admin1 on admin (semester)"
 

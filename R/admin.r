@@ -220,7 +220,7 @@ show.admin.sems = function(se=app$se, app=getApp()) {
       cols = intersect(colnames(df), c("groupid","name","teacher","semBAMA","area","weblink"))
       wdf = data.frame(df[,cols])
     }
-    html = html.table(wdf, sel.row=which(!df$enabled), sel.col="#aaaaaa",bg.col="#ffffff")
+    html = html.table(wdf, sel.col="#aaaaaa",bg.col="#ffffff")
 
   } else {
     html="<p>No active seminars for this semester yet.</p>"
@@ -455,7 +455,7 @@ show.admin.report = function(se=app$se, app=getApp()) {
 
 
 
-get.default.semester = function(db = se$db, se=NULL, schemas=app$glob$schemas$admin) {
+get.default.semester = function(db = se$db, se=NULL, schemas=app$glob$schemas, app=getApp()) {
   restore.point("get.default.semester")
 
   today = as.Date(Sys.time())
@@ -468,4 +468,8 @@ get.default.semester = function(db = se$db, se=NULL, schemas=app$glob$schemas$ad
   return(NULL)
 }
 
-
+get.semesters.that.have.matchings = function(db = se$db, se=NULL) {
+  sql = 'SELECT semester FROM admin WHERE round1_done_date IS NOT NULL OR round2_done_date IS NOT NULL'
+  res = dbGet(db,sql = sql)
+  res$semester
+}

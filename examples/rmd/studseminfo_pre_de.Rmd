@@ -1,0 +1,58 @@
+
+```{r include=FALSE}
+library(rmdtools)
+library(SeminarMatching)
+
+setwd("D:/libraries/SeminarMatching/semedit_app/rmd")
+db.dir = paste0("../db")
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+seminars = dbGet(semdb,"seminars")
+
+
+file="studseminfo_pre_de.Rmd"
+
+cat.rmd.params(file)
+params = NULL
+#cat(paste0(names(res),"=",res, collapse=", "))
+
+today = as.Date(Sys.time())
+semester = "SS15"
+
+params = list(
+  today = today,
+  round1_date = today-1,  
+  stud_start_date = today-10,
+  round1_done_date = today-1,
+  stud.exists = TRUE,
+  round2_date = today,
+  has_round1_seminar = TRUE,
+  round1_seminar = seminars[1,],
+  round2_done_date = today,
+  has_round2_seminar = !TRUE,
+  round2_seminar = seminars[2,],
+  last_latecomer_date = today+5,
+  semester = semester,
+  studmode = "latecomer"
+)
+copy.into.env(params)
+.GlobalEnv$knit_print.Date = function(x,...) {
+  restore.point("whisker_print.date")
+
+  format(x, format="%a. %d.%m.%Y")
+}
+#whisker_print.data.frame = table.knit_print.data.frame
+
+view.rmd(file = file, envir=params,chunks.like.whisker=FALSE)
+
+
+stop.without.error()
+```
+
+<!-- START -->
+
+## WiWi-Seminarvergabe, Universität Ulm {{semester}}
+
+Die Seminarthemen für das {{semester}} werden erst am **{{stud_start_date}} freigegeben**. Ab
+diesem Termin können Sie Ihre Präferenzen über Seminare angeben. Sie müssen Ihre **Präferenzen spätestens am Ende des {{round1_date-1}} eintragen**. Die automatisierte Seminarplatzvergabe findet dann am {{round1_date}} statt.
+
+Sie können bereits Ihr Profil im Reiter `Profil` eingeben bzw. aktualisieren.

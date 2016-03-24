@@ -1,0 +1,123 @@
+dateFormat:
+  de: "%a. %d.%m.%Y"
+  en: "%a. %d.%m.%Y"
+
+# Titles for tabset panels for students
+studsemTab:
+  de: "Seminarvergabe"
+  en: "Seminar"
+studstudTab:
+  de: "Profil"
+  en: "Profile"
+studtopicTab:
+  de: "Themenvergabe"
+  en: "Topics"
+
+rankingSaveBtnLabel:
+  de: "Präferenzliste speichern"
+  en: "Save seminar preferences"
+
+rankingSaveSuccess:
+  de: "Ihre Seminarpräferenzen wurden gespeichert."
+  en: "Your seminar preferences have been saved."
+
+profileIntro:
+  de: |
+    <h4>Profil</h4>
+    <p>
+    Geben Sie hier Ihre für die Seminarvergabe relevanten
+    persönlichen Daten ein, bzw. aktualisieren Sie ihre
+    Daten vom letzten Semester. Speichern Sie die Daten mit dem
+    Knopf am Ende des Formulars.
+    </p>
+  en: |
+    <h4>Profile</h4>
+    <p>
+    Please enter or update your personal data relevant for
+    the seminar matching. Save your changes by pressing the button
+    at the bottom of the form.
+    </p>
+
+noSemPrefMsg:
+  de: |
+    <p>
+    Bitte aktualisieren Sie zunächst ihre persönlichen Daten
+    und speichern sie diese Daten,
+    bevor Sie ihre Seminarpräferenzen für nächstes Semester angeben.
+    </p>
+  en: |
+    <p>
+    Please first update and save your personal data,
+    before you state your seminar preferences for next semester.
+    </p>
+
+rankingTitle:
+  de: |
+    <h3>
+      Seminarplatzvergabe <br>
+      Wirtschaftswissenschaften, Uni Ulm
+    </h3>
+  en: |
+    <h3>
+      Seminar Allocation,
+      Economics and Managment, Ulm University
+    </h3>
+
+
+rankingDescr:
+  de: >
+    Wählen Sie bitte aus der Liste aller Seminare
+    diejenigen und nur diejenigen Seminare aus,
+    an denen Sie teilnehmen würden,
+    wenn Sie einen Platz erhalten.
+
+    Sortieren Sie dann die
+    ausgewählten Seminare gemäß Ihrer Wunschreihenfolge
+    (bevorzugte Seminare weiter oben) und speichern Sie
+    dann ihre Präferenzen.
+  en: >
+    Please choose and rank your seminars
+
+
+rankingBackground:
+  de: >
+    Sie können so viele Seminare auswählen, wie Sie
+    möchten. Sie sollten aber nur Seminar auswählen,
+    an denen Sie wirklich teilnehmen würden.
+    Wenn Sie einen Seminarplatz erhalten und später
+    doch nicht teilnehmen, können Sie ggf. einen Malus
+    bei zukünftigen Seminarvergaben erhalten.
+
+    Die Seminarplätze werden gemäß des studentenoptimalen
+    Gale-Shapley Algorithmus zugeteilt.
+    Dies bedeutet, es ist in ihrem besten Interesse
+    (schwach dominante Strategie) Ihre
+    Präferenzreihenfolge über die Seminare
+    wahrheitsgetreu anzugeben.
+    Dies ist anders als z. B. bei der Studienplatzvergabe der ZVS,
+    wo es Sinn machen kann seine zweite Wahl aus strategischen
+    Gründen auf Platz 1 zu setzen.
+    Hier ist für sie niemals Vorteilhaft ihre Präferenzen
+    aus strategischen Gründen falsch anzugeben.
+  en: >
+    Please choose and rank your seminars. The seminar assignment
+    uses the student optimal Gale-Shapley deferred acceptance
+    algorithm. This means it is optimal for you to state your
+    true preferences over seminars.
+
+
+selSemTitle:
+  de: "Ausgewählten Seminare und Rangfolge"
+  en: "Selected seminars and ranking"
+
+allSemTitle:
+  de: "Alle angebotenen Seminare"
+  en: "All offered seminars"
+
+allSemColnames:
+  de: ["","","Dozent","Titel","Bereiche"]
+  en: ["","","Lecturer","Title", "Areas"]
+
+selSemColnames:
+  de: ["Pos","Joker", "","Dozent","Titel","Bereiche"]
+  en: ["Pos","Joker", "","Lecturer","Title", "Areas"]

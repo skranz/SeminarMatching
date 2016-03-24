@@ -1,0 +1,94 @@
+
+```{r include=FALSE}
+library(rmdtools)
+library(SeminarMatching)
+
+setwd("D:/libraries/SeminarMatching/semapps/shared/rmd")
+db.dir = paste0("../db")
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+seminars = dbGet(semdb,"seminars")
+
+
+file="admin_overview_en.Rmd"
+
+cat.rmd.params(file)
+params = NULL
+#cat(paste0(names(res),"=",res, collapse=", "))
+
+today = as.Date(Sys.time())
+semester = "SS15"
+
+params = list(
+  today = today,
+  default_start_date = today-2,
+  round1_date = today-1,  
+  stud_start_date = today-10,
+  round1_done_date = today-1,
+  stud.exists = TRUE,
+  round2_date = today,
+  has_round1_seminar = TRUE,
+  round1_seminar = seminars[1,],
+  round2_done_date = today,
+  has_round2_seminar = !TRUE,
+  round2_seminar = seminars[2,],
+  last_latecomer_date = today+5,
+  semester = semester,
+  studmode = "latecomer",
+  active_str = function(from, to=NULL, present="current", past="lies in the past", future="lies in the future") {
+    today = Sys.time()
+    if (is.null(to)) {
+      if (today < from) {return(past)}
+      if (today > from) {return(future)}
+      return(present)
+    } else {
+      if (today < from) {return(past)}
+      if (today > to) {return(future)}
+      return(present)
+    }
+  }
+)
+copy.into.env(params)
+.GlobalEnv$knit_print.Date = function(x,...) {
+  restore.point("whisker_print.date")
+
+  format(x, format="%a. %d.%m.%Y")
+}
+#whisker_print.data.frame = table.knit_print.data.frame
+
+view.rmd(file = file, envir=params,chunks.like.whisker=FALSE,use.commonmark = TRUE, out.type="html")
+
+
+stop.without.error()
+```
+
+<!-- START -->
+
+Today is **{{today}}**. The currently active semester for the seminar matching is **{{semester}}**.
+
+### Timeline 
+
+- {{default_start_date}} - {{stud_start_date-1}}: Institutes must enter their seminar descriptions for the semester {{semester}}.
+
+- {{stud_start_date}} - {{round1_date-1}}: Students must submit their preferences over seminars for the first matching round. 
+
+- {{round1_date}}: 1st round of seminar matching. The matching algorithm is scheduled to run automatically at 3:00 in the morning.
+#< if today > round1_date & ! isTRUE(today >=round1_done_date)
+** WARNING: The seminar matching did not take place as scheduled. Please run the seminar matching manually **
+#>
+#< if !is.na(round1_done_date) & round1_done_date <= today
+The first round of seminar matching was run on {{round1_done_date}}.
+#>
+
+#< if !is.na(round2_date)
+- {{round2_date}}: 2nd round of seminar matching. The matching algorithm is scheduled to run automatically at 3:00 in the morning.
+#< if today > round2_date & ! isTRUE(today >=round2_done_date)
+** WARNING: The seminar matching did not take place as scheduled. Please run the seminar matching manually **
+#>
+#< if !is.na(round2_done_date) & round2_done_date <= today
+The 2nd round of seminar matching was run on {{round2_done_date}}.
+#>
+
+#>
+- From {{round1_date}} onwards: Students may be able to submit preferences over seminar topics for their assigned seminars. Seminar instructors can set individual deadlines. 
+
+

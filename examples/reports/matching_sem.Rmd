@@ -9,21 +9,20 @@ library(reshape2)
 ```
 
 ```{r init_param, include=FALSE}
-semester = "SS15"
+setwd("D:/libraries/SeminarMatching/semapps/shared/reports")
+semester = "SS16"
 db.dir = paste0("../db")
 round = 1
-semid = 1
+semid = 3
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 ```
 
-```{r load_data, include=FALSE}
-semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+```{r init_data, include=FALSE}
 matchings = dbGet(semdb,"matchings",nlist(semester, round, semid))
 seminars = dbGet(semdb,"seminars",nlist(semester, semid))
 studpref = dbGet(semdb,"studpref",nlist(semester, semid))
 students = dbGet(semdb,"students",nlist(semester))
-```
 
-```{r init_data, include=FALSE}
 df = studpref
 cols = c("semid",setdiff(colnames(seminars),colnames(df)))
 df = left_join(df, seminars[,cols,drop=FALSE], by="semid")
@@ -41,11 +40,13 @@ num.prefs = NROW(df)
 num.matched = sum(df$matched)
 ```
 
-# Report for Seminar `r seminar$name` `r semester` round `r round`
+### `r seminar$name` `r semester`
+
+This is a report for the main matching round.
 
 - A total of `r num.prefs` students have put the seminar in their preference list.
 
-- `r num.matched` students got a slot (in total you have `r seminar$slots` slots.)
+- `r num.matched` students got a slot (in total you have `r seminar$slots` slots.) in the main matching round.
 
 
 The following table shows how many students ranked the seminar at position `pos` and how many of them were matchted to the seminar or not.
