@@ -565,32 +565,175 @@ show.studsem.ui = function(se, app=getApp()) {
   stud.df = table.form.default.values(glob$semstudform, data=se$semstuds)
   se$org.semstuds.df = stud.df
   #semstud.ui = form.ui.handsone.table(form = glob$semstudform,data = stud.df)
+  # Choose columns
+  stud.df = stud.df[,setdiff(colnames(stud.df),c("userid"))]
 
-
-
+  # Topics
   tdf = dbGet(se$db,"semtopic",params = nlist(semid=se$seminar$semid, semester=se$seminar$semester))
 
 
-  tdf = left_join(tdf, select(se$semstuds,topic_ind, name,email),by="topic_ind")
+  if (NROW(tdf)>0) {
+    tdf = left_join(tdf, select(se$semstuds,topic_ind, name,email),by="topic_ind")
+
+    tdf = tdf[,setdiff(colnames(tdf),c("userid","semid","semester"))]
+    topics.ui = tagList(
+      h4("Topics"),
+      HTML(html.table(tdf))
+    )
+  } else {
+    topics.ui = tagList(
+      h4("Topics"),
+      p("There are no topics specified for the seminar")
+    )
+  }
 
 
-  # Choose columns
-  stud.df = stud.df[,setdiff(colnames(stud.df),c("userid"))]
-  tdf = tdf[,setdiff(colnames(tdf),c("userid","semid","semester"))]
+  # Add and delete student ui
+  ar.ui = tagList(
+    hr(),
+    h4("Add or remove student from seminar"),
+    textInput("arEmailInput","Student email",value = ""),
+    tags$table(tags$tr(      tags$td(
+        actionButton("arAddButton","Add student"),
+        actionButton("arRemoveButton","Remove student")
+      )
+    )),
+    uiOutput("arInfo"),
+    hr()
+  )
+  setUI("arInfo","")
+
+
 
   ui = fluidRow(column(width=10, offset=1,
     h3(se$seminar$name," - ", se$seminar$teacher," - ", se$seminar$semester),
-    semstud.ui,
     h4("Students"),
     HTML(html.table(stud.df)),
-    h4("Topics"),
-    HTML(html.table(tdf))
+    ar.ui,
+    topics.ui
   ))
 
-  dsetUI("assignUI",ui)
+  buttonHandler("arAddButton",add.student.to.seminar)
+  buttonHandler("arRemoveButton",remove.student.from.seminar)
+
+  setUI("assignUI",ui)
+  #dsetUI("assignUI",ui)
   updateTabsetPanel(session=app$session,inputId = "mainTabset",selected = "assignTab")
 
 }
+
+
+add.student.to.seminar = function(email = NULL,seminar=se$seminar, semstuds=se$semstuds, app=getApp(),se=app$se,...) {
+  if (is.null(email))
+    email = getInputValue("arEmailInput")
+
+  restore.point("add.student.to.seminar")
+
+  if (is.null(email) | isTRUE(nchar(email)==0)) {
+    msg = colored.html(paste0("You must enter the email adress of the student you want to add to the seminar."), color="red")
+    dsetUI("arInfo",HTML(msg))
+    return()
+
+  }
+  student = dbGet(se$db,"students",params = list(semester=seminar$semester,email=email))
+  if (is.null(student)) {
+    msg = colored.html(paste0("No student with email ", email, " is registered in semester ", seminar$semester,"."), color="red")
+    setUI("arInfo",HTML(msg))
+    return()
+  }
+  userid = student$userid
+
+  if (userid %in% semstuds$userid) {
+    msg = colored.html(paste0("The student with email ", email, " is already allocated to the seminar."), color="red")
+    setUI("arInfo",HTML(msg))
+    return()
+  }
+
+  manual = list(
+    editid = se$userid,
+    semid = seminar$semid,
+    userid = student$userid,
+    semester = seminar$semester,
+    added = TRUE,
+    topic_ind = NA_integer_,
+    edit_type = "ta",
+    edit_time = as.POSIXct(Sys.time())
+  )
+  assign = list(
+    semid = seminar$semid,
+    userid = student$userid,
+    semester = seminar$semester,
+    assign_method = "ta",
+    topic_ind = NA_integer_,
+    assign_time = as.POSIXct(Sys.time())
+  )
+
+  dbBegin(se$db)
+  dbInsert(se$db,"manual",manual, schema = app$glob$schemas$manual)
+  dbInsert(se$db,"assign",assign, schema = app$glob$schemas$assign)
+  dbCommit(se$db)
+
+  # reload form
+  se$semstuds = load.studsem(se=se)
+  show.studsem.ui(se=se)
+}
+
+remove.student.from.seminar = function(email = NULL,seminar=se$seminar, semstuds=se$semstuds, app=getApp(),se=app$se,...) {
+  if (is.null(email))
+    email = getInputValue("arEmailInput")
+
+  restore.point("remove.student.from.seminar")
+
+  if (is.null(email) | isTRUE(nchar(email)==0)) {
+    msg = colored.html(paste0("You must enter the email adress of the student you want to remove from the seminar."), color="red")
+    dsetUI("arInfo",HTML(msg))
+    return()
+
+  }
+  student = dbGet(se$db,"students",params = list(semester=seminar$semester,email=email))
+  if (is.null(student)) {
+    msg = colored.html(paste0("No student with email ", email, " is registered in semester ", seminar$semester,"."), color="red")
+    setUI("arInfo",HTML(msg))
+    return()
+  }
+  userid = student$userid
+
+  if (!userid %in% semstuds$userid) {
+    msg = colored.html(paste0("The student with email ", email, " is not allocated to the seminar."), color="red")
+    setUI("arInfo",HTML(msg))
+    return()
+  }
+
+  manual = list(
+    editid = se$userid,
+    semid = seminar$semid,
+    userid = student$userid,
+    semester = seminar$semester,
+    added = FALSE,
+    topic_ind = NA_integer_,
+    edit_type = "tr",
+    edit_time = as.POSIXct(Sys.time())
+  )
+
+  assign = list(
+    semid = seminar$semid,
+    userid = student$userid,
+    semester = seminar$semester,
+    assign_method = "ma",
+    topic_ind = NA_integer_,
+    assign_time = as.POSIXct(Sys.time())
+  )
+
+  dbBegin(se$db)
+  dbInsert(se$db,"manual",manual, schema = app$glob$schemas$manual)
+  dbDelete(se$db,"assign",params = list(userid=student$userid, semester=seminar$semester,semid=seminar$semid))
+  dbCommit(se$db)
+
+  # reload form
+  se$semstuds = load.studsem(se=se)
+  show.studsem.ui(se=se)
+}
+
 
 
 show.teacher.overview = function(se=app$se, app=getApp()) {
