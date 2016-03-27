@@ -3,15 +3,19 @@ dateFormat:
   en: "%a. %d.%m.%Y"
 
 # Titles for tabset panels for students
+studoverviewTab:
+  de: "Überblick"
+  en: "Overview"
 studsemTab:
-  de: "Seminarvergabe"
+  de: "Seminarwahl"
   en: "Seminar"
+studtopicTab:
+  de: "Themenwahl"
+  en: "Topics"
 studstudTab:
   de: "Profil"
   en: "Profile"
-studtopicTab:
-  de: "Themenvergabe"
-  en: "Topics"
+
 
 rankingSaveBtnLabel:
   de: "Präferenzliste speichern"

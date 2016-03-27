@@ -606,7 +606,7 @@ show.studsem.ui = function(se, app=getApp()) {
 
 
   ui = fluidRow(column(width=10, offset=1,
-    h3(se$seminar$name," - ", se$seminar$teacher," - ", se$seminar$semester),
+    h3(se$seminar$semname," - ", se$seminar$teacher," - ", se$seminar$semester),
     h4("Students"),
     HTML(html.table(stud.df)),
     ar.ui,

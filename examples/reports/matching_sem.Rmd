@@ -46,10 +46,10 @@ This is a report for the main matching round.
 
 - A total of `r num.prefs` students have put the seminar in their preference list.
 
-- `r num.matched` students got a slot (in total you have `r seminar$slots` slots.) in the main matching round.
+- `r num.matched` students got one of the `r seminar$slots` slots in the main matching round.
 
 
-The following table shows how many students ranked the seminar at position `pos` and how many of them were matchted to the seminar or not.
+The following table shows how many students ranked the seminar at position `pos` and how many of them were matched to the seminar or not.
 ```{r }
 sdf = df %>%
   group_by(pos,Matched) %>% 
@@ -62,11 +62,41 @@ sdf$total = rowSums(sdf[,-1],na.rm = TRUE)
 sdf
 ```
 
-The following table compares students by their main subject.
+The following table compares students that put the seminar in their preference list by their main subject.
+
 ```{r }
 sdf = df %>%
   group_by(studSubject,Matched) %>% 
   summarise(n=n()) %>%
+  spread(key = Matched, value=n) %>%
+  replace.na(0, cols=-1) %>%
+  as.data.frame()
+
+sdf$total = rowSums(sdf[,-1],na.rm = TRUE)
+sdf = arrange(sdf, -total)
+sdf
+```
+
+The following table compares WiWi students that put the seminar in their preference list by their specialization (students with 2 specializations count 1/2 for each specialization):
+
+```{r }
+d = select(df,userid, Matched, studBAMA, studSpecBA, studSpecMA, studSpecMA2)
+d = tidyr::gather(d,key = specid,value = spec,studSpecBA, studSpecMA, studSpecMA2)
+
+d = filter(d, 
+  (studBAMA=="Bachelor" & specid=="studSpecBA") | 
+  (studBAMA=="Master" & specid=="studSpecMA") |
+  (studBAMA=="Master" & specid=="studSpecMA2")
+)
+
+d = d %>% 
+  group_by(userid) %>%
+  mutate(weight=1/n())
+  
+
+sdf = d %>%
+  group_by(spec,Matched) %>% 
+  summarise(n=sum(weight)) %>%
   spread(key = Matched, value=n) %>%
   replace.na(0, cols=-1) %>%
   as.data.frame()

@@ -51,6 +51,7 @@ stop.without.error()
 <!-- START -->
 
 #< note "Details zur Seminarplatzvergabe"
+
 - Sie können so viele Seminare in Ihre Präferenzliste aufnehmen, wie Sie möchten. Sie bekommen in jeder Vergaberunde maximal einen Seminarplatz hieraus zugeteilt.
 
 - Sie sollten alle Seminare und nur diese Seminare aufnehmen, an denen Sie wirklich teilnehmen würden, wenn Sie einen Seminarplatz erhalten.

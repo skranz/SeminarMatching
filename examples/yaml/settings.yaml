@@ -2,5 +2,5 @@ start_lang: de
 use_joker: FALSE
 
 
-selSemCols: [teacher, name, area]
-allSemCols: [teacher, name, area]
+selSemCols: [teacher, semname, area]
+allSemCols: [teacher, semname, area]

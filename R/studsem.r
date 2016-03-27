@@ -1,19 +1,13 @@
 examples.StudSeminarsApp = function() {
-  setwd("D:/libraries/SeminarMatching/semedit_app/")
-  db.dir = paste0(getwd(),"/db")
-
+  setwd("D:/libraries/SeminarMatching/semapps/shared")
   restore.point.options(display.restore.point = FALSE)
-
-  logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
-  app = StudSeminarsApp(db.dir = db.dir, init.userid = "test", init.password="test", lang="de")
-  #runEventsApp(app, launch.browser = TRUE)
-
-  runEventsApp(app, launch.browser = rstudio::viewer)
+  app = StudSeminarsApp(init.userid = "test", init.password="test", lang="de")
+  viewApp(app)
 
 }
 
 
-StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(getwd(),"/schema"), yaml.dir =  paste0(getwd(),"/yaml"), rmd.dir = paste0(getwd(),"/rmd"),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
+StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), rmd.dir = paste0(main.dir,"/rmd"), main.dir=getwd(),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
   restore.point("StudSeminarsApp")
 
   library(loginPart)
@@ -27,6 +21,7 @@ StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
   glob$schemas = load.and.init.schemas(paste0(schema.dir, "/semdb.yaml"))
   glob$semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 
+  glob$main.dir = main.dir
   glob$yaml.dir = yaml.dir
   glob$rmd.dir = rmd.dir
   glob$schema.dir = schema.dir
@@ -35,10 +30,16 @@ StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
 
 
-  rmd.names = c("matchingnote","pre","post","round1","round2")
+  rmd.names = c("pre","post","round1","round2")
+  rmd.names = c(
+    paste0("studseminfo_",rmd.names),
+    paste0("stud_overview_",rmd.names),
+    paste0("studseminfo_matchingnote")
+  )
+
   glob$rmd.li = lapply(rmd.names, function(rmd.name) {
-    file = paste0(glob$rmd.dir,"/studseminfo_",rmd.name,"_",lang,".Rmd")
-    compile.rmd(file, out.type="shiny",use.commonmark = TRUE)
+    file = paste0(glob$rmd.dir,"/",rmd.name,"_",lang,".Rmd")
+    compile.rmd(file, out.type="shiny",use.commonmark = TRUE, fragment.only = TRUE)
   })
   names(glob$rmd.li) = rmd.names
 
@@ -68,19 +69,16 @@ StudSeminarsApp = function(db.dir = paste0(getwd(),"/db"), schema.dir = paste0(g
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
 
   login.fun = function(app=getApp(),userid,...) {
-    se = refresh.stud.app.data(userid=userid)
+    app$se = refresh.stud.app.data(userid=userid)
     ui = tabsetPanel(
       id = "studTabsetPanel",
+      tabPanel(title = app$glob$texts$studoverviewTab, value="overviewPanel", uiOutput("overviewUI")),
       tabPanel(title = app$glob$texts$studsemTab, value="semPanel", uiOutput("studsemUI")),
       tabPanel(title = app$glob$texts$studtopicTab, value="topicPanel", uiOutput("studtopicsUI")),
       tabPanel(title = app$glob$texts$studstudTab, value="studPanel", uiOutput("studformUI"))
     )
     setUI("studMainUI", ui)
-
-    if (!isTRUE(se$stud.exists)) {
-      updateTabsetPanel(session=app$session, "studTabsetPanel", selected="studPanel")
-    }
-    #show.stud.info.ui()
+    show.stud.overview.ui()
     show.stud.form.ui()
     show.stud.sem.ui()
   }
@@ -175,21 +173,15 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
 
   se$studmode = se$admin$studmode
 
-  se$assign = dbGet(se$db,"assign", nlist(semester),schema=app$glob$schemas$assign)
-
-  if (NROW(se$assign)>0) {
-    stud_sems =
-      filter(se$assign, userid==se$userid) %>%
-      arrange(assign_time)
-    if (NROW(stud_sems)==0) {
-      se$stud_sems=NULL
-    } else {
-      se$stud_sems = left_join(stud_sems,se$seminars, by=c("semid","semester"),copy=TRUE)
-    }
-  } else {
-    se$stud_sems = NULL
-  }
-
+  # Select the assigned seminars of the student
+  sql = "
+  SELECT * FROM assign
+  NATURAL LEFT JOIN semtopic
+  NATURAL LEFT JOIN seminars
+  WHERE (assign.userid = :userid AND
+        assign.semester = :semester)
+  "
+  se$stud_sems = dbGet(se$db, sql=sql, params=nlist(semester, userid))
 
 
   se
@@ -214,6 +206,8 @@ show.stud.form.ui = function(se=app$se, app=getApp()) {
 
 }
 
+
+
 save.studform = function(values, app=getApp(), se=app$se,...) {
   restore.point("save.studForm")
 
@@ -234,50 +228,71 @@ save.studform = function(values, app=getApp(), se=app$se,...) {
   show.stud.sem.ui(se=se)
 }
 
+show.stud.overview.ui = function(se=app$se, app=getApp()) {
+  restore.point("show.stud.overview.ui")
+
+  studmode = se$studmode
+
+  envir = c(se$admin, list(stud_sems = se$stud_sems,stud.exists=se$stud.exists))
+  cr = app$glob$rmd.li[[paste0("stud_overview_",studmode)]]
+  header = render.compiled.rmd(cr, envir=envir)
+  ui = fluidRow(column(offset=1, width=10,
+    header
+  ))
+  setUI("overviewUI", ui)
+
+}
+
+assigned.sems.table = function(stud_sems=se$stud_sems,cols=c("semname","teacher"), header=cols, topic.header="topic",topic.choice.label="Choose Topic",se=app$se, app=getApp()) {
+
+  restore.point("assigned.sems.table")
+  cols = unique(c(cols,"topic"))
+  header = c(header, topic.header)
+
+  df = stud_sems[,cols, drop=FALSE]
+
+  df$semname = as.weblink(link=stud_sems$weblink, label=df$semname)
+
+  topicBtns = extraSmallButtonVector(id=paste0("topicBtn",1:NROW(df)),label=topic.choice.label)
+  rows = is.na(stud_sems$topic) & !is.na(stud_sems$topics_date)
+  df$topic[rows] = topicBtns[rows]
+  rows = is.na(df$topic)
+  df$topic[rows] = "---"
+
+  html.table(df,header = header,bg.color = "#ffffff")
+}
+
+as.weblink = function(link, label, target=' targe="_blank"') {
+  restore.point("as.weblink")
+
+  if (length(link)==0) return(NULL)
+  has.link = nchar(link) > 0
+  str = paste0("<a href='",link,"'",target,">",label,"</a>")
+  str[!has.link] = label[!has.link]
+  str
+}
+
 show.stud.sem.ui = function(se=app$se, app=getApp()) {
   restore.point("show.stud.sem.ui")
 
+  compute.sem.df(se=se)
   studmode = se$studmode
-  if (studmode=="post") {
-    show.stud.sem.post.ui(se,app)
-  } else if (studmode=="round1" | studmode=="round2") {
-    show.stud.sem.round.ui(se,app)
-  } else {
-    show.stud.sem.pre.ui(se,app)
-  }
 
-}
+  envir = c(se$admin, nlist(stud_sems=se$stud_sems, stud.exists=se$stud.exists,se=se))
+  cr = app$glob$rmd.li[[paste0("studseminfo_",studmode)]]
+  ui = render.compiled.rmd(cr, envir=envir,out.type = "shiny",fragment.only = TRUE)
 
-show.stud.sem.pre.ui = function(se=app$se, app=getApp()) {
-  restore.point("show.stud.sem.pre.ui")
-  studmode = "pre"
-  envir = c(se$admin, list(stud_sems,se$stud_sems,stud.exists=se$stud.exists))
-  cr = app$glob$rmd.li[[studmode]]
-  header = render.compiled.rmd(cr, envir=envir)
-  ui = fluidRow(column(offset=1, width=10,
-    header
-  ))
+  buttonHandler("saveStudprefBtn",save.studpref)
+  add.studpref.handlers(num.sems=NROW(se$sem.df))
+
   setUI("studsemUI", ui)
-}
-
-
-show.stud.sem.post.ui = function(se=app$se, app=getApp()) {
-  restore.point("show.stud.sem.post.ui")
-  studmode = "post"
-  envir = c(se$admin, nlist(stud_sems=se$stud_sems,stud.exists=se$stud.exists))
-
-  cr = app$glob$rmd.li[[studmode]]
-  header = render.compiled.rmd(cr, envir=envir)
-  ui = fluidRow(column(offset=1, width=10,
-    header
-  ))
-  setUI("studsemUI", ui)
+  show.selsem.table(se=se)
+  show.sem.table(se=se)
 
 }
 
-
-show.stud.sem.round.ui = function(se=app$se, app=getApp()) {
-  restore.point("show.stud.sem.round.ui")
+compute.sem.df = function(se=app$se, app=getApp(), opts=app$opts) {
+  restore.point("compute.sem.df")
 
   studmode = se$studmode
   if (studmode=="round2")  {
@@ -285,23 +300,14 @@ show.stud.sem.round.ui = function(se=app$se, app=getApp()) {
   } else {
     round = 1
   }
-  lang = app$lang
-  glob = app$glob
-  opts = glob$opts
+
   sems = se$seminars
-
-  envir = c(se$admin, nlist(stud_sems=se$stud_sems, stud.exists=se$stud.exists))
-  cr = glob$rmd.li[[studmode]]
-  header = render.compiled.rmd(cr, envir=envir)
-  note = render.compiled.rmd(glob$rmd.li[["matchingnote"]], envir=se)
-
   cols = c("semid",intersect(union(opts$selSemCols,opts$allSemCols),colnames(sems)))
   sem.df = sems[,cols]
 
   # Add links to seminar titles
   if ("weblink" %in% colnames(sems)) {
-    rows = which(nchar(sems$weblink)>0)
-    sem.df$name[rows] = paste0('<a href="', sems$weblink[rows],'" target = "_blank">',sem.df$name[rows],'</a>')
+    sem.df$semname = as.weblink(link = sems$weblink,label = sem.df$semname)
   }
 
   sem.df$selected = FALSE
@@ -314,10 +320,22 @@ show.stud.sem.round.ui = function(se=app$se, app=getApp()) {
     sel.df = sem.df[sel.rows,]
     sel.df$pos = 1:NROW(sel.df)
     sel.df$joker = se$studpref$joker
+    sem.df$selected[sel.rows] = TRUE
   } else {
     sel.rows = integer(0)
     sel.df = sem.df[sel.rows,]
   }
+
+  se$sem.df = sem.df
+  se$sel.df = sel.df
+}
+
+show.stud.sem.round.ui = function(se=app$se, app=getApp()) {
+  restore.point("show.stud.sem.round.ui")
+  lang = app$lang
+  glob = app$glob
+  opts = glob$opts
+
   update.selTable(sel.df)
   update.semTable(sem.df, sel.rows=sel.rows)
 
@@ -342,34 +360,26 @@ show.stud.sem.round.ui = function(se=app$se, app=getApp()) {
 }
 
 
-update.selTable = function(sel.df, sel.row=NULL, app=getApp(), se=app$se) {
-  restore.point("update.selTable")
+show.selsem.table = function(sel.df=se$sel.df, sel.row=NULL, app=getApp(), se=app$se, opts=app$opts, lang=app$lang, header = opts$selSemColnames[[lang]], cols=app$opts$selSemCols) {
+  restore.point("show.selsem.table")
 
-  se$sel.df = sel.df
   if (NROW(sel.df)==0) {
     setUI("selSemUI",p("---"))
     return()
   }
-#  cat("\nsel.df: \n\n")
-#  print(sel.df)
 
-  widget.df = sel.widgets.df(sel.df)
-  html = hwrite.selTable(widget.df,sel.row=sel.row)
-#  cat("selTable html: \n\n", html)
-  setUI("selSemUI",HTML(html))
+  widget.df = sel.widgets.df(sel.df, cols=cols)
 
-}
-
-
-hwrite.selTable = function(widget.df, sel.row=1, app=getApp(), opts=app$opts, lang=app$lang) {
-  restore.point("hwrite.selTable")
-  header = opts$selSemColnames[[lang]]
   if (!app$glob$use_joker) {
     header = setdiff(header, c("joker","Joker"))
   }
 
-  html.table(widget.df,sel.row = sel.row, header=header, bg.color="#ffffff")
+  html = html.table(widget.df,sel.row = sel.row, header=header, bg.color="#ffffff")
+
+  setUI("selSemUI",HTML(html))
+
 }
+
 
 sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
   restore.point("sel.widgets.df")
@@ -394,7 +404,6 @@ sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
 
   }
 
-
   btns = paste0(upBtns,downBtns,removeBtns)
   if (app$glob$use_joker) {
     data.frame(Rank=rows,Joker =jokerBtns, btns,df[,cols])
@@ -404,23 +413,16 @@ sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
 }
 
 
-update.semTable = function(sem.df, sel.rows=which(sem.df$selected), app=getApp(), se=app$se) {
-  restore.point("update.semTable")
+show.sem.table = function(sem.df=se$sem.df, sel.rows=which(sem.df$selected), app=getApp(), se=app$se, header=app$opts$allSemColnames[[app$lang]], cols=app$opts$selSemCols) {
+  restore.point("show.sem.table")
 
   sem.df$selected[sel.rows] = TRUE
 
   se$sem.df = sem.df
 
-  widget.df = sem.widgets.df(sem.df)
-  html = hwrite.semTable(widget.df,sel.rows=sel.rows)
+  widget.df = sem.widgets.df(sem.df, cols=cols)
+  html =   html.table(widget.df,sel.row = sel.rows,header=header , bg.color="#ffffff", sel.color="#aaffaa")
   setUI("allSemUI",HTML(html))
-
-
-}
-
-hwrite.semTable = function(widget.df, sel.rows=NULL,app=getApp(), lang=app$lang, opts=app$opts) {
-  restore.point("hwrite.semTable")
-  html.table(widget.df,sel.row = sel.rows, header=opts$allSemColnames[[lang]], bg.color="#ffffff", sel.color="#aaffaa")
 }
 
 
@@ -435,17 +437,13 @@ sem.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
 }
 
 
-
 add.studpref.handlers = function(num.sems) {
   rows = 1:num.sems
-
   upBtnId = paste0("upBtn_",rows)
   downBtnId = paste0("downBtn_",rows)
   removeBtnId = paste0("removeBtn_",rows)
   addBtnId = paste0("addBtn_",rows)
   jokerBtnId =  paste0("jokerBtn_",rows)
-
-
   for (row in rows) {
     buttonHandler(upBtnId[row],updown.click, row=row,up=TRUE)
     buttonHandler(downBtnId[row],updown.click, row=row,up=FALSE)
@@ -453,7 +451,6 @@ add.studpref.handlers = function(num.sems) {
     buttonHandler(removeBtnId[row],remove.seminar.click, pos=row)
     buttonHandler(jokerBtnId[row],joker.seminar.click, pos=row)
   }
-
 }
 
 
@@ -467,30 +464,29 @@ updown.click = function(app=getApp(),value,row,up=TRUE,se=app$se,...) {
   sel.df = sel.df[order(sel.df$pos),]
   new.row = which(sel.df$pos==new.pos)
   sel.df$pos = rank(sel.df$pos)
-  update.selTable(sel.df, sel.row=new.row)
+  se$sel.df = sel.df
+  show.selsem.table(sel.df, sel.row=new.row)
 
-  #table = seminar.table(df=app$rdf)
-  #setUI("studMainUI", HTML(table))
 }
 
 add.seminar.click = function(row, app=getApp(),se=app$se,...) {
   restore.point("add.seminar.click")
-
-  sem.df = se$sem.df
-  sel.df = se$sel.df
+  cat("\nadd seminar click")
   # Seminar does already exist
-  if (row %in% sel.df$row) return()
+  if (row %in% se$sel.df$row) return()
   #
-  sel.df = rbind(sel.df,sem.df[row,])
-  sel.df$pos = 1:NROW(sel.df)
-  sem.df$selected[row] = TRUE
-  update.selTable(sel.df,sel.row = NROW(sel.df))
-  update.semTable(sem.df)
+  se$sel.df = rbind(se$sel.df,se$sem.df[row,])
+  se$sel.df$pos = 1:NROW(se$sel.df)
+  se$sem.df$selected[row] = TRUE
+
+  show.selsem.table(se=se,sel.row = NROW(se$sel.df))
+  show.sem.table(se=se)
 
 }
 
 remove.seminar.click = function(pos,app=getApp(),se=app$se,...) {
   restore.point("remove.seminar.click")
+  cat("\nremove seminar click")
 
   sem.df = se$sem.df
   sel.df = se$sel.df
@@ -500,25 +496,24 @@ remove.seminar.click = function(pos,app=getApp(),se=app$se,...) {
   rows = sel.df$pos > pos
   sel.df$pos[rows] = sel.df$pos[rows]-1
   sem.df$selected[row] = FALSE
-  update.selTable(sel.df,sel.row = NULL)
-  update.semTable(sem.df)
+  se$sem.df = sem.df
+  se$sel.df = sel.df
+
+  show.selsem.table(se=se,sel.row = NULL)
+  show.sem.table(se=se)
 }
 
 
 joker.seminar.click = function(pos,app=getApp(),se=app$se,...) {
-  sel.df = se$sel.df
   restore.point("joker.seminar.click")
 
   if (sel.df$joker[pos]) {
-    sel.df$joker[pos] = FALSE
+    se$sel.df$joker[pos] = FALSE
   } else {
-    sel.df$joker = FALSE
-    sel.df$joker[pos] = TRUE
+    se$sel.df$joker = FALSE
+    se$sel.df$joker[pos] = TRUE
   }
-#  cat("\nsel.df: \n\n")
-#  print(sel.df)
-
-  update.selTable(sel.df=sel.df,sel.row = NULL)
+  show.selsem.table(se=se,sel.row = NULL)
 }
 
 save.studpref = function(app=getApp(), se=app$se,...) {

@@ -42,7 +42,7 @@ seminars:
     semester: VARCHAR(20)
     active: BOOLEAN
     enabled: BOOLEAN
-    name: VARCHAR(1024)
+    semname: VARCHAR(1024)
     teacher: VARCHAR(255)
     slots: INTEGER
     semBAMA: VARCHAR(100)
@@ -57,7 +57,7 @@ seminars:
     - "CREATE INDEX seminars1 on seminars (groupid, semester, teacher)"
     - "CREATE INDEX seminars2 on seminars (semester)"
     - "CREATE INDEX seminars3 on seminars (teacher)"
-    - "CREATE INDEX seminars4 on seminars (name)"
+    - "CREATE INDEX seminars4 on seminars (semname)"
   defaults:
     filled_slots: 0
 

@@ -46,31 +46,68 @@ stop.without.error()
 
 <!-- START -->
 
-## WiWi-Seminarvergabe, Uni Ulm {{semester}} -- 2. Runde
-
-#< if !stud.exists
-
-Bevor Sie Präferenzen über Seminare angeben können, aktualisieren und speichern Sie zunächst Ihre Hintergrunddaten im Reiter `Profil`.
-
-#>
-
-Die Hauptrunde der Seminarvergabe wurde am {{round1_done_date}} abgeschlossen.
+### Seminarauswahl 2. Runde
 
 #< if NROW(stud_sems)>0
-Sie haben einen Platz in folgendem Seminar erhalten:
+Sie haben bereits einen Platz in folgendem Seminar erhalten:
 
 ```{r results = 'asis', echo=FALSE}
-cat(html.table(select(stud_sems, name, teacher, weblink),header = c("Seminar","Dozent","Link")))
+cat(
+  assigned.sems.table(stud_sems=stud_sems,header = c("Seminar","Dozent"), topic.header = "Thema")
+)
 ```
-Schauen Sie im Reiter `Themen`, ob und bis wann Sie für das Seminar Präferenzen über Themen angegeben können.
 
-Falls Sie an zwei Seminaren teilnehmen möchten, können Sie hier noch bis zum {{round2_date-1}} Präferenzen für Ihr zweites Seminar angeben. Die zentrale zweite Runde der Seminarplatzverteilung findet dann am {{round2_date}} statt.
+Falls Sie an zwei Seminaren teilnehmen möchten, können Sie hier noch bis zum Ihre {{round2_date-1}} Präferenzen für Ihr zweites Seminar angeben.
 #>
 
 #< if NROW(stud_sems)==0
 Sie haben leider in der ersten Runde keinen Seminarplatz erhalten.
 
-Sie hier noch bis zum {{round2_date-1}} Präferenzen für die zweite Vergaberunde angeben. Die zentrale zweite Runde der Seminarplatzverteilung findet dann am {{round2_date}} statt.
+Sie können hier noch bis zum {{round2_date-1}} im Reiter `Seminarwahl` Präferenzen für die zweite Vergaberunde angeben.
 #>
+
+
+Wählen Sie bitte aus der Liste aller Seminare diejenigen und nur diejenigen Seminare aus, an denen Sie noch teilnehmen würden, wenn Sie einen Platz erhalten.
+
+Sortieren Sie dann die ausgewählten Seminare gemäß Ihrer Wunschreihenfolge
+(bevorzugte Seminare weiter oben) und **speichern Sie dann per Knopfdruck ihre Präferenzen**.
+
+
+#< note "Details zur Seminarplatzvergabe (2. Runde)"
+- In der zweiten Runde werden restliche Seminarplätze vergeben, die in der ersten Runde noch nicht aufgefüllt wurden.
+
+- Eine Teilnahme macht im Prinzip nur Sinn, wenn Sie an 2 Seminaren dieses Semester teilnehmen möchten. Sie können kein besseres Seminar als in der 1. Runde erhalten.
+
+- Sie können so viele Seminare in Ihre Präferenzliste aufnehmen, wie Sie möchten. Sie bekommen in jeder Vergaberunde maximal einen Seminarplatz hieraus zugeteilt.
+
+- Sie sollten alle Seminare und nur diese Seminare aufnehmen, an denen Sie wirklich teilnehmen würden, wenn Sie einen Seminarplatz erhalten.
+
+- Wenn Sie einen Seminarplatz erhalten und später doch nicht teilnehmen, können Sie ggf. einen Malus bei zukünftigen Seminarvergaben erhalten.
+
+- Die Seminarplätze werden gemäß des studentenoptimalen <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithmus</a> zugeteilt.
+
+- Dies bedeutet, es ist in Ihrem besten Interesse
+(eine schwach dominante Strategie) Ihre
+Präferenzreihenfolge über die Seminare
+wahrheitsgetreu anzugeben.
+
+- Dies ist anders als z. B. bei der Studienplatzvergabe der ZVS, wo es z. B. Sinn machen könnte seine zweite Wahl aus strategischen Gründen auf Platz 1 zu setzen.
+
+- Bei unserem Vergabemechanismus ist für Sie niemals vorteilhaft, Ihre Präferenzen aus strategischen Gründen falsch anzugeben.
+#> end note
+
+
+### Ausgewählten Seminare und Rangfolge (Runde 2)
+
+{{uiOutput("selSemUI")}}
+
+{{actionButton("saveStudprefBtn","Präferenzliste speichern")}}
+{{bsAlert("saveStudprefAlert")}}
+
+### Alle angebotenen Seminare
+
+{{uiOutput("allSemUI")}}
+
+
 
 
