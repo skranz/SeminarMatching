@@ -34,7 +34,8 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   rmd.names = c(
     paste0("studseminfo_",rmd.names),
     paste0("stud_overview_",rmd.names),
-    paste0("studseminfo_matchingnote")
+    paste0("studseminfo_matchingnote"),
+    "studtopics"
   )
 
   glob$rmd.li = lapply(rmd.names, function(rmd.name) {
@@ -42,6 +43,7 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     compile.rmd(file, out.type="shiny",use.commonmark = TRUE, fragment.only = TRUE)
   })
   names(glob$rmd.li) = rmd.names
+
 
   glob$opts = opts = read.yaml(file=paste0(yaml.dir,"/settings.yaml"),keep.quotes = FALSE)
   glob$use_joker = isTRUE(opts$use_joker)
@@ -81,6 +83,7 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     show.stud.overview.ui()
     show.stud.form.ui()
     show.stud.sem.ui()
+    show.stud.topics.ui()
   }
 
   if (is.null(check.email.fun)) {
@@ -183,9 +186,37 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
   "
   se$stud_sems = dbGet(se$db, sql=sql, params=nlist(semester, userid))
 
+  # Remove already assigned seminars
+  if (NROW(se$stud_sems)>0) {
+    se$seminars = se$seminars[! se$seminars$semid %in% se$stud_sems$semid,]
+    se$studpref = se$studpref[! se$studpref$semid %in% se$stud_sems$semid,]
+
+  }
+
+  semids = se$stud_sems$semid
+  se$semtopics = lapply(semids, function(semid) {
+    df = dbGet(se$db,"semtopic", nlist(semester,semid))
+    df$topic_pos = rep(NA, NROW(df))
+    df
+  })
+  names(se$semtopics) = as.character(semids)
+
+  se$topicprefs = lapply(semids, function(semid) {
+    dbGet(se$db,"topicpref", nlist(semester,semid,userid))
+  })
+  names(se$topicprefs) = as.character(semids)
+
+  se$seltopics = lapply(seq_along(semids), function(i) {
+    tp = se$topicprefs[[i]]
+    st = se$semtopics[[i]]
+    df = st[match(tp$semid, st$semid),]
+    df$topic_pos = tp$topic_pos
+    df
+  })
+  names(se$seltopics) = as.character(semids)
+
 
   se
-
 }
 
 show.stud.form.ui = function(se=app$se, app=getApp()) {
@@ -305,6 +336,9 @@ compute.sem.df = function(se=app$se, app=getApp(), opts=app$opts) {
   cols = c("semid",intersect(union(opts$selSemCols,opts$allSemCols),colnames(sems)))
   sem.df = sems[,cols]
 
+
+
+
   # Add links to seminar titles
   if ("weblink" %in% colnames(sems)) {
     sem.df$semname = as.weblink(link = sems$weblink,label = sem.df$semname)
@@ -360,7 +394,7 @@ show.stud.sem.round.ui = function(se=app$se, app=getApp()) {
 }
 
 
-show.selsem.table = function(sel.df=se$sel.df, sel.row=NULL, app=getApp(), se=app$se, opts=app$opts, lang=app$lang, header = opts$selSemColnames[[lang]], cols=app$opts$selSemCols) {
+show.selsem.table = function(sel.df=se$sel.df, sel.row=NULL, app=getApp(), se=app$se, opts=app$opts,  header = app$glob$texts$selSemColnames, cols=app$opts$selSemCols) {
   restore.point("show.selsem.table")
 
   if (NROW(sel.df)==0) {
@@ -413,7 +447,7 @@ sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
 }
 
 
-show.sem.table = function(sem.df=se$sem.df, sel.rows=which(sem.df$selected), app=getApp(), se=app$se, header=app$opts$allSemColnames[[app$lang]], cols=app$opts$selSemCols) {
+show.sem.table = function(sem.df=se$sem.df, sel.rows=which(sem.df$selected), app=getApp(), se=app$se, header=app$glob$texts$allSemColnames, cols=app$opts$selSemCols) {
   restore.point("show.sem.table")
 
   sem.df$selected[sel.rows] = TRUE
@@ -536,3 +570,187 @@ max.date = function(vals) {
   if (!is.finite(m)) m = as.Date(NA)
   m
 }
+
+show.stud.topics.ui = function(se=app$se, app=getApp()) {
+  restore.point("show.stud.topics.ui")
+  stud_sems = se$stud_sems
+
+  if (NROW(stud_sems)==0) {
+    setUI("studtopicsUI", HTML("You have no seat in a seminar that allows to select topics with this software."))
+    return()
+  }
+
+  cr = app$glob$rmd.li[["studtopics"]]
+
+  tab.panels = lapply(1:NROW(stud_sems), function(i) {
+    restore.point("inner.show.stud.topics.ui")
+    sem = stud_sems[i,]
+    envir = list(sem = sem, semid=sem$semid)
+    content = render.compiled.rmd(cr, envir=envir)
+    tabPanel(title=sem$semname,value=sem$semid, tagList(content))
+  })
+
+  #ts = tabsetPanel(id="topicsTabset",tab.panels,value=stud_sems$semid[1])
+  ts = do.call("tabsetPanel",c(list(id="topicsTabset"),tab.panels))
+  setUI("studtopicsUI",ts)
+
+  for (i in 1:NROW(stud_sems)) {
+    sem = stud_sems[i,]
+    show.sel.topics.table(semid = sem$semid,se = se)
+    show.all.topics.table(semid = sem$semid,se = se)
+    add.topic.handlers(semid=sem$semid, num.topics=NROW(se$semtopics[[i]]))
+  }
+
+}
+
+
+show.sel.topics.table = function(semid, use.points=FALSE, se=app$se, app=getApp(), cols="topic", header=NULL, sel.row=NULL) {
+  restore.point("show.sel.topics.table")
+
+  df = se$seltopics[[as.character(semid)]]
+  ui.id = paste0("selTopicsTableUI_",semid)
+
+  if (is.null(cols)) {
+    cols = colnames(df)
+  }
+
+  if (NROW(df)==0) {
+    setUI(ui.id,p("---"))
+    return()
+  }
+
+  rows = 1:NROW(df)
+  upBtnId = paste0("upBtn_",rows,"__",semid)
+  downBtnId = paste0("downBtn_",rows,"__",semid)
+  removeBtnId = paste0("removeBtn_",rows,"__",semid)
+  pointsId = paste0("pointsInput_",rows,"__",semid)
+
+  upBtns = extraSmallButtonVector(id=upBtnId,label="",icon=icon("arrow-up",lib = "glyphicon"))
+  downBtns = extraSmallButtonVector(id=downBtnId, label="",icon=icon("arrow-down",lib="glyphicon"))
+  removeBtns = extraSmallButtonVector(id=removeBtnId, label="",icon=icon("remove",lib = "glyphicon"))
+
+  if (use.points) {
+    pointsInp = textInputVector(inputId=pointsId,label="",value = df$points, style="width: 4em;")
+  }
+
+  btns = paste0(upBtns,downBtns,removeBtns)
+  if (use.points) {
+    wdf = data.frame(Rank=rows, btns,Points =pointsInp,df[,cols])
+  } else {
+    wdf = data.frame(Rank=rows, btns,df[,cols])
+  }
+
+  if (is.null(header)) {
+    header = colnames(wdf)
+    header[2] = ""
+  }
+
+  html = html.table(wdf,sel.row=sel.row, header=header, bg.color="#ffffff")
+
+  setUI(ui.id,HTML(html))
+
+
+}
+
+
+show.all.topics.table = function(semid, se=app$se, cols="topic", header = NULL, app=getApp()) {
+
+  restore.point("show.all.topic.table")
+
+  sel.df = se$seltopics[[as.character(semid)]]
+  all.df = se$semtopics[[as.character(semid)]]
+  ui.id = paste0("allTopicsTableUI_",semid)
+
+  if (NROW(all.df)==0) {
+    setUI(ui.id,p("---"))
+    return()
+  }
+
+  if (is.null(cols))
+    cols = colnames(all.df)
+
+  if (is.null(header))
+    header = cols
+
+  sel.rows = match(sel.df$topic_ind, all.df$topic_ind)
+
+  rows = 1:NROW(all.df)
+  addBtnId = paste0("addTopicBtn_",semid,"_",rows)
+  addBtns = extraSmallButtonVector(id=addBtnId,label="",icon=icon("plus",lib = "glyphicon"))
+  addBtns[sel.rows] = ""
+  btns = paste0(addBtns)
+  widget.df = data.frame(row=rows,buttons=btns,all.df[,cols])
+
+  html =   html.table(widget.df,sel.row = sel.rows,header=header , bg.color="#ffffff", sel.color="#aaffaa")
+  setUI(ui.id,HTML(html))
+}
+
+add.topic.handlers = function(semid, num.topics) {
+  rows = 1:num.topics
+  addBtnId = paste0("addTopicBtn_",semid,"_",rows)
+  upBtnId = paste0("upBtn_",rows,"__",semid)
+  downBtnId = paste0("downBtn_",rows,"__",semid)
+  removeBtnId = paste0("removeBtn_",rows,"__",semid)
+  pointsId = paste0("pointsInput_",rows,"__",semid)
+
+  for (row in rows) {
+    buttonHandler(upBtnId[row],topic.updown.click, row=row,up=TRUE, semid=semid)
+    buttonHandler(downBtnId[row],topic.updown.click, row=row,up=FALSE, semid=semid)
+    buttonHandler(addBtnId[row],add.topic.click, row=row, semid=semid)
+    buttonHandler(removeBtnId[row],remove.topic.click, row=row, semid=semid)
+  }
+}
+
+
+topic.updown.click = function(app=getApp(),value,row,up=TRUE,semid, se=app$se,...) {
+  sel.df = se$seltopics[[as.character(semid)]]
+
+  restore.point("topic.updown.click")
+
+  new.pos = row + 1.5 - 3*up
+  sel.df$topic_pos[row] = new.pos
+  sel.df = sel.df[order(sel.df$topic_pos),]
+  new.row = which(sel.df$topic_pos==new.pos)
+  sel.df$topic_pos = rank(sel.df$topic_pos)
+  se$seltopics[[as.character(semid)]] = sel.df
+
+  show.sel.topics.table(semid=semid,sel.row = new.row)
+
+}
+
+add.topic.click = function(row, semid, app=getApp(),se=app$se,...) {
+  restore.point("add.topic.click")
+
+  sel.df = se$seltopics[[as.character(semid)]]
+  all.df = se$semtopics[[as.character(semid)]]
+
+
+  sel.df = bind_rows(sel.df,all.df[row,])
+  sel.df$topic_pos = 1:NROW(sel.df)
+
+  se$seltopics[[as.character(semid)]] = sel.df
+  show.sel.topics.table(semid=semid, sel.row=NROW(sel.df))
+  show.all.topics.table(semid=semid)
+
+}
+
+remove.topic.click = function(row,semid,app=getApp(),se=app$se,...) {
+  restore.point("remove.topic.click")
+  #cat("\nremove topic click")
+
+  sel.df = se$seltopics[[as.character(semid)]]
+  all.df = se$semtopics[[as.character(semid)]]
+
+  topic_pos = sel.df$topic_pos[row]
+  if (row < NROW(sel.df)) {
+    rows = (row+1):NROW(sel.df)
+    sel.df$topic_pos[rows] = sel.df$topic_pos[rows]-1
+  }
+  sel.df = sel.df[-row,]
+  se$seltopics[[as.character(semid)]] = sel.df
+
+  show.sel.topics.table(semid=semid)
+  show.all.topics.table(semid=semid)
+
+}
+
