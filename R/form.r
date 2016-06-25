@@ -287,13 +287,19 @@ clear.field.alert = function(name=field$name,field=NULL, form=NULL, prefix=form$
   show.field.alert(name=name,msg="", form=form, color=NULL, prefix=prefix,postfix=postfix, id=id)
 }
 
-show.field.alert = function(name=field$name, msg="",field=NULL, prefix=form$prefix, postfix=form$postfix, form=NULL, color="red",id = paste0(prefix,name,postfix,"__Alert")) {
+show.field.alert = function(name=field$name, msg="",field=NULL, prefix=form$prefix, postfix=form$postfix, form=NULL, color="red",id = paste0(prefix,name,postfix,"__Alert"), resize=NULL) {
+  restore.point("show.field.alert")
 
 
   if (!is.null(color))
     msg = colored.html(msg, color)
 
-  setUI(id,HTML(msg))
+  if (!is.null(resize)) {
+    dsetUI(id,HTML(msg))
+    resizeLayout(resize)
+  } else {
+    setUI(id,HTML(msg))
+  }
 }
 
 check.field.value = function(value, field, lang="en") {

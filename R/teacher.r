@@ -1,6 +1,7 @@
 
 
 examples.EditSeminarApp = function() {
+  library(shinyEventsUI)
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   app = EditSeminarsApp(init.userid = "test", init.password="test", lang="de")
   viewApp(app)
@@ -127,17 +128,76 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
       return()
     }
     se$groupid = se$groups$groupid[1]
-    setUI("mainUI",
-      tabsetPanel(id = "mainTabset",
-        tabPanel("Info",value = "infoTab", uiOutput("overviewUI")),
-        tabPanel("Seminar", value="semTab", uiOutput("semEditUI")),
-        tabPanel("Assignment", value="assignTab", uiOutput("assignUI")),
-        tabPanel("Report", value="reportTab", uiOutput("reportUI"))
-      )
+
+    style = tags$style(HTML('
+      .ui-layout-pane {
+      	padding:	2px;
+        padding-left: 10px;
+        padding-right: 10px;
+      	background:	#FFF;
+      	border:		none;
+      	overflow:	auto;
+      }
+      .ui-layout-north {
+       	overflow:	hidden;
+      }
+
+      '
+    ))
+
+    ui = tagList(
+      div(id="mainLayoutDiv", style="height:100vh; overflow: auto",
+      jqueryLayoutPanes(parent="#mainLayoutDiv",style=style,js.do.layout = FALSE,
+        west = div(
+          radioBtnGroup("mainBtnGroup", labels=c("Info","Seminars"),values = c("infoTab","semTab"),show.hide.containers = c("overviewDiv","seminarsDiv")),
+          div(id="overviewDiv",uiOutput("overviewUI")),
+          div(id="seminarsDiv",style = "visibility: hidden", uiOutput("seminarsUI"))
+        ),
+        center = jqueryLayoutPanes(parent="#centerLayoutDiv",style=style,js.do.layout = FALSE,
+          north = div(
+            uiOutput("activeSemUI"),
+            radioBtnGroup("seminarBtnGroup", labels=c("Edit","Participants","Topics","Reports"),values = c("editsemTab","membersTab","topicsTab","reportTab"),show.hide.containers = c("editsemDiv","membersDiv","topicsDiv","reportDiv")),
+            uiOutput("saveBtnUI"),
+            hr(style="margin: 0px; border-color: black;")
+          ),
+          center = div(
+            div(id="editsemDiv",uiOutput("editsemUI")),
+            hidden_div(id="membersDiv",uiOutput("membersUI")),
+            hidden_div(id="topicsDiv",uiOutput("topicsUI")),
+            hidden_div(id="reportDiv",uiOutput("reportUI"))
+          )
+        )
+      )),
+      tags$script('
+        var main__Layout = $("#mainLayoutDiv").layout({
+          defaults: {
+            resizable: true,
+            closable: false
+          },
+          west: {
+            size: 0.5
+          }
+        });
+        var center__Layout  = main__Layout.panes.center.layout({
+          defaults: {
+            resizable: false,
+            closable: false,
+            slideable: false,
+            spacing_open: 0
+          },
+          north: {
+            size: "auto"
+          }
+        });
+
+      ')
     )
 
+    setUI("mainUI",ui)
+    setUI("activeSemUI", h4("No seminar selected"))
     load.teacher.se(semester=se$semester)
-    show.edit.sem.main(se=se)
+    #radioBtnGroupHandler("mainBtnGroup",function(...){})
+    show.teacher.seminars(se=se)
     show.teacher.overview(se=se)
   }
 
@@ -162,7 +222,7 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   changeHandler("semMainSemesterInput", function(value,...) {
     semester = value
     load.teacher.se(semester=semester)
-    show.edit.sem.main()
+    show.teacher.seminars()
   })
 
   appInitHandler(function(session,...) {
@@ -173,9 +233,11 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   app$ui = tagList(
     useShinyjs(),
     extendShinyjs(text = jsCode),
-    fluidPage(
+    jqueryLayoutHeader(),
+    bootstrapPage(
       uiOutput("mainUI")
-    )
+    ),
+    tags$head(tags$style(HTML('body, html {height: 100%;})')))
   )
   app$lop = lop
   app
@@ -207,16 +269,16 @@ load.teacher.se = function(semester=se$semester,db=app$glob$semdb, app=getApp(),
 
 }
 
-show.edit.sem.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$glob$semdb, se=app$se, app=getApp(), semester=se[["semester"]]) {
-  restore.point("show.edit.sem.main")
+show.teacher.seminars = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$glob$semdb, se=app$se, app=getApp(), semester=se[["semester"]]) {
+  restore.point("show.teacher.seminars")
 
 
-  atable = edit.seminar.table(se$aseminars, prefix="a")
-  ptable = edit.seminar.table(se$pseminars, prefix="p")
+  atable = edit.seminar.table(id="atable",se$aseminars, prefix="a")
+  ptable = edit.seminar.table(id="ptable",se$pseminars, prefix="p")
 
 
   buttonHandler("createSeminarBtn",create.seminar.click)
-  ui = fluidRow(column(width=10, offset=1,
+  ui = tagList(
     h4(paste0("Seminars for group ",se$groupid)),
     selectInput("semMainSemesterInput",label="Semester", choices=app$glob$sets$semesters, selected=se$semester),
     h5(paste0("Activated Seminars for ",se$semester)),
@@ -225,11 +287,11 @@ show.edit.sem.main = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=a
     actionButton("createSeminarBtn","Create Seminar"),
     h5(paste0("Unactivated seminars and previous seminars (can be used as templates)")),
     HTML(ptable)
-  ))
+  )
 
 
-
-  setUI("semEditUI", ui)
+  setUI("seminarsUI", ui)
+  dsetUI("seminarsUI", ui)
 }
 
 add.edit.seminar.table.handler = function(rows,prefix="a", app=getApp()) {
@@ -258,7 +320,7 @@ add.edit.seminar.table.handler = function(rows,prefix="a", app=getApp()) {
   }
 }
 
-edit.seminar.table = function(df = se$seminars, prefix="a", se=app$se, app=getApp()) {
+edit.seminar.table = function(id = "seminarTable", df = se$seminars, prefix="a", se=app$se, app=getApp()) {
   restore.point("edit.seminar.table")
 
   if (NROW(df)==0) {
@@ -271,35 +333,18 @@ edit.seminar.table = function(df = se$seminars, prefix="a", se=app$se, app=getAp
 
   rows = 1:NROW(df)
   add.edit.seminar.table.handler(rows, prefix=prefix)
-
-  studsemBtnId = paste0(prefix,"studsemBtn_",rows)
-  studsemBtns = extraSmallButtonVector(id=studsemBtnId, label="students")
-  studsemBtns[!df$semester %in% app$glob$semesters.with.matchings] = ""
-
-  reportBtnId = paste0(prefix,"reportBtn_",rows)
-  reportBtns = extraSmallButtonVector(id=reportBtnId, label="report")
-  reportBtns[!df$semester %in% app$glob$semesters.with.matchings] = ""
-
-
-  editBtnId = paste0(prefix,"semEditBtn_",rows)
-  editBtns = extraSmallButtonVector(id=editBtnId, label="edit")
-
-  copyEditBtnId = paste0(prefix,"semCopyEditBtn_",rows)
-  copyEditBtns = extraSmallButtonVector(id=copyEditBtnId, label="new")
-
-  if (prefix=="p") {
-    deleteBtnId = paste0(prefix,"semDeleteBtn_",rows)
-    deleteBtns = extraSmallButtonVector(id=copyEditBtnId, label="delete")
-    deleteBtns[df$locked] = ""
-  } else {
-    deleteBtns = rep("", NROW(df))
-  }
-
-  btns = paste0(studsemBtns,reportBtns,editBtns,copyEditBtns, deleteBtns, sep=" \n")
-
   cols = setdiff(colnames(df),c("semid", "groupid","locked","active","enabled"))
-  wdf = data.frame(Action=btns, df[,cols])
-  html.table(wdf, bg.color="#ffffff")
+  wdf = data.frame(df[,cols])
+
+  tdClickHandler(id = id,auto.select = TRUE, remove.sel.row.selector= "#atable tr, #ptable tr", df=df, fun = function(tableId,data,df,...) {
+    args = list(...)
+    restore.point("mytdClickHandler")
+    cat("Table ", tableId, "was clicked in row ", data$row, " and column ", data$col)
+    seminar = as.list(df[data$row,])
+    set.current.seminar(seminar=seminar)
+  })
+  html.table(wdf, id=id, bg.color="#ffffff")
+
 }
 
 
@@ -315,6 +360,31 @@ create.seminar.click=function(se = app$se, app=getApp(),...) {
 
 }
 
+set.current.seminar = function(se = app$se, app=getApp(), seminar=NULL) {
+  restore.point("set.current.seminar")
+
+
+  se$seminar = seminar
+
+  se$semcrit = dbGet(se$db,"semcrit",list(semid=se$seminar$semid))
+
+  if (NROW(se$semcrit)<10) {
+    df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(se$semcrit), semid=se$seminar$semid)
+    df$semester = se$semester
+    se$semcrit = rbind(se$semcrit,df)
+  }
+
+  se$semtopic = dbGet(se$db,"semtopic",list(semid=se$seminar$semid))
+  if (NROW(se$semtopic)<30) {
+    df = empty.df.from.schema(app$glob$schemas$semtopic, 30-NROW(se$semtopic), semid=se$seminar$semid, semester=se$semester, size=1, userid=NA_character_)
+    se$semtopic = rbind(se$semtopic,df)
+  }
+  se$semtopic$ind = 1:NROW(se$semtopic)
+
+  dsetUI("activeSemUI", h4(paste(seminar$semester, seminar$semname)))
+
+  show.edit.seminar.ui(se=se, app=app)
+}
 
 edit.seminar.click=function(se = app$se, app=getApp(),mode="edit", prefix="a", row=1,...) {
   restore.point("edit.seminar.click")
@@ -380,32 +450,24 @@ show.edit.seminar.ui = function(se, app=getApp(), edit=isTRUE(!is.na(se$seminar$
   se$org.top.df = top.df
 
 
-  if (edit) {
-    header = h4("Edit Exististing Seminar")
-  } else {
-    header = h4("Create new seminar")
-  }
 
-  ui = fluidRow(column(width=10, offset=1,
-    header,
+  ui = tagList(
+    br(),
     form.ui,
     crit.ui,
-    topics.ui,
-    br(),
-    uiOutput("editSemAlert"),
-    actionButton("saveSemBtn","Check and Save"),
-    actionButton("exitEditSemBtn","Exit")
-  ))
-  clear.field.alert(id="editSemAlert")
+    topics.ui
+  )
 
 
   buttonHandler("saveSemBtn",save.sem.click)
-  buttonHandler("exitEditSemBtn", function(...) {
-    load.teacher.se(se=se)
-    show.edit.sem.main(se=se)
-  })
 
-  setUI("semEditUI",ui)
+  dsetUI("saveBtnUI",tagList(hr(style="margin: 1px;"),bsButton("saveSemBtn","Save Changes in Seminar"),uiOutput("editSemAlert"))
+)
+  resizeLayout("center__Layout")
+  clear.field.alert(id="editSemAlert")
+
+  dsetUI("editsemUI",ui)
+  setUI("editsemUI",ui)
 }
 
 save.sem.click = function(se=app$se, app=getApp(),...) {
@@ -421,7 +483,7 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
 
   restore.point("save.sem.click")
   if (!sres$ok) {
-    show.field.alert(msg="Could not save, since not all fields are correctly entered.",id="editSemAlert")
+    show.field.alert(msg="Could not save, since not all fields are correctly entered.",id="editSemAlert",resize="center__Layout")
     return()
   }
 
@@ -441,7 +503,7 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when saving into database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert")
+    show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
     return()
   }
   se$seminar = res$values
@@ -457,7 +519,7 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when updating database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert")
+    show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
     return()
   }
 
@@ -465,7 +527,7 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when updating database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert")
+    show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
     return()
   }
 
@@ -475,7 +537,7 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when updating database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert")
+    show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
     return()
   }
 
@@ -492,7 +554,7 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
       if (is(res,"try-error")) {
         dbRollback(se$db)
         msg = paste0("Error when updating database:<br> ",as.character(res))
-        show.field.alert(msg=msg,id="editSemAlert")
+        show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
         return()
       }
     }
@@ -500,7 +562,10 @@ save.sem.click = function(se=app$se, app=getApp(),...) {
 
   dbCommit(se$db)
 
-  show.field.alert(msg="Successfully saved.",id="editSemAlert", color=NULL)
+  show.field.alert(msg="Successfully saved.",id="editSemAlert", color=NULL, resize="center__Layout")
+  load.teacher.se(se=se)
+  show.teacher.seminars(se=se)
+
 
 }
 
@@ -552,10 +617,10 @@ show.studsem.ui = function(se, app=getApp()) {
   seminar = se$seminar
 
   if (NROW(se$semstuds)==0) {
-    ui = fluidRow(column(width=10, offset=1,
+    ui = tagList(
       p("There are no students yet inscribed in the seminar.")
-    ))
-    dsetUI("assignUI",ui)
+    )
+    dsetUI("membersUI",ui)
     updateTabsetPanel(session=app$session,inputId = "mainTabset",selected = "assignTab")
 
     return()
@@ -603,21 +668,23 @@ show.studsem.ui = function(se, app=getApp()) {
   )
   setUI("arInfo","")
 
+  emails.string = paste0(stud.df$email, collapse = ", ")
 
-
-  ui = fluidRow(column(width=10, offset=1,
+  ui = tagList(
     h3(se$seminar$semname," - ", se$seminar$teacher," - ", se$seminar$semester),
-    h4("Students"),
+    h4("Participants"),
     HTML(html.table(stud.df)),
+    h4("Participants Emails"),
+    shinyAce::aceEditor("studEmailListAce", value=emails.string, wordWrap = TRUE, height="4em"),
     ar.ui,
     topics.ui
-  ))
+  )
 
   buttonHandler("arAddButton",add.student.to.seminar)
   buttonHandler("arRemoveButton",remove.student.from.seminar)
 
-  setUI("assignUI",ui)
-  #dsetUI("assignUI",ui)
+  setUI("membersUI",ui)
+  #dsetUI("membersUI",ui)
   updateTabsetPanel(session=app$session,inputId = "mainTabset",selected = "assignTab")
 
 }
@@ -742,9 +809,9 @@ show.teacher.overview = function(se=app$se, app=getApp()) {
 
   cr = app$glob$rmd.li[["teacher_overview"]]
   header = render.compiled.rmd(cr, envir=envir)
-  ui = fluidRow(column(offset=1, width=10,
+  ui = tagList(
     HTML(header)
-  ))
+  )
   setUI("overviewUI", ui)
 }
 

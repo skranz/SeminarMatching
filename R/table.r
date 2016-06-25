@@ -1,5 +1,5 @@
 
-html.table = function(df, sel.row=NULL, show.header=TRUE, header=colnames(df), row.names=FALSE, border=TRUE, bg.color =c("#dddddd","#ffffff"), sel.color='#ffdc98', font.size="100%", round.digits=8, signif.digits=8,col.tooltips=NULL, ...) {
+html.table = function(df, id = random.string(), sel.row=NULL, show.header=TRUE, header=colnames(df), row.names=FALSE, border=TRUE, bg.color =c("#dddddd","#ffffff"), sel.color='#ffdc98', font.size="100%", round.digits=8, signif.digits=8,col.tooltips=NULL, ...) {
   restore.point("html.table")
   n = NROW(df)
 
@@ -10,7 +10,7 @@ html.table = function(df, sel.row=NULL, show.header=TRUE, header=colnames(df), r
   if (!is.null(sel.row)) {
     #row.bgcolor[sel.row]='#ffdc98'
     #row.bgcolor[sel.row]='#00ff00'
-    row.bgcolor[sel.row]=sel.color
+    #row.bgcolor[sel.row]=sel.color
   }
 
   if (show.header) {
@@ -29,18 +29,23 @@ html.table = function(df, sel.row=NULL, show.header=TRUE, header=colnames(df), r
   }
 
 
-  td.class = rep("data-frame-td", NROW(df))
+  td.class = rep("data-frame-td td-not-bottom", NROW(df))
   if (length(td.class)>0) {
-    td.class[length(td.class)]="data-frame-td-bottom"
+    td.class[length(td.class)]="data-frame-td td-bottom"
   }
+  #td.class = paste0(td.class," td-row-",1:NROW(df))
+  tr.class = paste0("tr-row-", 1:NROW(df))
+  if (length(sel.row)>0)
+    tr.class[sel.row] = paste0("tr-sel-row")
 
   cols = 1:NCOL(df)
-  code = paste0('"<td class=\\"",td.class,"\\" nowrap bgcolor=\\"",row.bgcolor,"\\">", (df[[',cols,']]),"</td>"', collapse=",")
-  code = paste0('paste0("<tr>",',code,',"</tr>", collapse="\\n")')
+  rows = 1:NROW(df)
+  code = paste0('"<td data-row = \\"",rows,"\\" data-col = \\"',cols,'\\" class=\\"",td.class,"\\" nowrap>", (df[[',cols,']]),"</td>"', collapse=",")
+  code = paste0('paste0("<tr class=\\"",tr.class,"\\" style =\\"background-color:",row.bgcolor,";\\">",',code,',"</tr>", collapse="\\n")')
   call = parse(text=code)
   main = eval(parse(text=code))
 
-  tab = paste0('<table class="data-frame-table">\n', head, main, "\n</table>")
+  tab = paste0('<table class="data-frame-table" id="',id,'">\n', head, main, "\n</table>")
 
   th.style='font-weight: bold; margin: 5px; padding: 5px; border: solid 1px black; text-align: center;'
   td.style='font-family: Verdana,Geneva,sans-serif; margin: 2px 4px 2px 4px; padding: 3px 5px 3px 5px; border: solid 1px black; text-align: left;'
@@ -51,15 +56,18 @@ html.table = function(df, sel.row=NULL, show.header=TRUE, header=colnames(df), r
 
   }
 
+  table.sel = paste0("#",id)
   tab = paste0("<style>",
-    " table.data-frame-table {	border-collapse: collapse;  display: block; overflow-x: auto;}\n",
-    " td.data-frame-td {", td.style,"}\n",
-    " td.data-frame-td-bottom {", td.style," border-bottom: solid 1px black;}\n",
-    " th.data-frame-th {", th.style,"}\n",
-    " tbody>tr:last-child>td {
+    " ", table.sel," {	border-collapse: collapse;  display: block; overflow-x: auto;}\n",
+    " ", table.sel, " td.data-frame-td {", td.style,"}\n",
+    " ", table.sel, " tr.tr-sel-row { background-color:", sel.color," !important;}\n",
+    " ", table.sel, " td-bottom {border-bottom: solid 1px black;}\n",
+    " ", table.sel, " th.data-frame-th {", th.style,"}\n",
+    " ", table.sel, " tbody>tr:last-child>td {
       border-bottom: solid 1px black;
     }\n",
-    "</style>",tab
+    "</style>",
+    tab
   )
 
   #writeLines(tab, "test.html")
@@ -68,4 +76,34 @@ html.table = function(df, sel.row=NULL, show.header=TRUE, header=colnames(df), r
   return(tab)
 }
 
+
+#' Handler for a click on a table row
+#' @param id id of the HTML img object
+#' @param fun the handler fun that will be called when the image is clicked
+#' @param ... additional arguments passed to the handler fun
+tdClickHandler = function(id=NULL, fun, ..., eventId=if(stop.propagation) "tdClickEvent" else "tdClickEventWithPropagation", css.selector=".data-frame-td", app=getApp(),no.authentication.required=FALSE, stop.propagation=TRUE, auto.select = FALSE, remove.sel.row.selector=NULL) {
+  restore.point("tdClickHandler")
+
+  sp = if (stop.propagation) "e.stopPropagation();" else ""
+  inner.js = paste0('
+    var table = $(this).closest("table");
+    var td = $(this);
+  ',sp)
+  if (auto.select) {
+    if (is.null(remove.sel.row.selector)) {
+      remove.sel = 'table.find("tr").removeClass("tr-sel-row");'
+    } else {
+      remove.sel = paste0('$("',remove.sel.row.selector,'").removeClass("tr-sel-row");')
+    }
+    inner.js = paste0(inner.js,'
+      var tr = $(this).closest("tr");
+      ',remove.sel,'
+      tr.addClass("tr-sel-row");
+    ')
+  }
+
+  shiny.value.code = paste0('{eventId: "',eventId,'", id: table.attr("id"), tdClass: td.attr("class"), data: td.data(), tdId: td.attr("id"),  tableId: table.attr("id"), tableClass: table.attr("class")}')
+
+  customEventHandler(eventId = eventId,css.locator = css.selector,event = "click",id = id,inner.js.code = inner.js, shiny.value.code = shiny.value.code, fun=fun,...)
+}
 
