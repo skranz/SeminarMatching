@@ -1,7 +1,11 @@
-
+# Teacher App for Seminar Matching
+# Global Variables
+# se main variable contains, state and info on all group seminars
+# cs current seminar, detailed info on currently active seminar
 
 examples.EditSeminarApp = function() {
   library(shinyEventsUI)
+  library(shinyAce)
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   app = EditSeminarsApp(init.userid = "test", init.password="test", lang="de")
   viewApp(app)
@@ -129,70 +133,7 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     }
     se$groupid = se$groups$groupid[1]
 
-    style = tags$style(HTML('
-      .ui-layout-pane {
-      	padding:	2px;
-        padding-left: 10px;
-        padding-right: 10px;
-      	background:	#FFF;
-      	border:		none;
-      	overflow:	auto;
-      }
-      .ui-layout-north {
-       	overflow:	hidden;
-      }
-
-      '
-    ))
-
-    ui = tagList(
-      div(id="mainLayoutDiv", style="height:100vh; overflow: auto",
-      jqueryLayoutPanes(parent="#mainLayoutDiv",style=style,js.do.layout = FALSE,
-        west = div(
-          radioBtnGroup("mainBtnGroup", labels=c("Info","Seminars"),values = c("infoTab","semTab"),show.hide.containers = c("overviewDiv","seminarsDiv")),
-          div(id="overviewDiv",uiOutput("overviewUI")),
-          div(id="seminarsDiv",style = "visibility: hidden", uiOutput("seminarsUI"))
-        ),
-        center = jqueryLayoutPanes(parent="#centerLayoutDiv",style=style,js.do.layout = FALSE,
-          north = div(
-            uiOutput("activeSemUI"),
-            radioBtnGroup("seminarBtnGroup", labels=c("Edit","Participants","Topics","Reports"),values = c("editsemTab","membersTab","topicsTab","reportTab"),show.hide.containers = c("editsemDiv","membersDiv","topicsDiv","reportDiv")),
-            uiOutput("saveBtnUI"),
-            hr(style="margin: 0px; border-color: black;")
-          ),
-          center = div(
-            div(id="editsemDiv",uiOutput("editsemUI")),
-            hidden_div(id="membersDiv",uiOutput("membersUI")),
-            hidden_div(id="topicsDiv",uiOutput("topicsUI")),
-            hidden_div(id="reportDiv",uiOutput("reportUI"))
-          )
-        )
-      )),
-      tags$script('
-        var main__Layout = $("#mainLayoutDiv").layout({
-          defaults: {
-            resizable: true,
-            closable: false
-          },
-          west: {
-            size: 0.5
-          }
-        });
-        var center__Layout  = main__Layout.panes.center.layout({
-          defaults: {
-            resizable: false,
-            closable: false,
-            slideable: false,
-            spacing_open: 0
-          },
-          north: {
-            size: "auto"
-          }
-        });
-
-      ')
-    )
-
+    ui = teacher.main.ui()
     setUI("mainUI",ui)
     setUI("activeSemUI", h4("No seminar selected"))
     load.teacher.se(semester=se$semester)
@@ -241,6 +182,78 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   )
   app$lop = lop
   app
+}
+
+teacher.main.ui = function(se) {
+  restore.point("teacher.main.ui")
+
+  json.opts = '
+    defaults: {
+      resizable: true,
+      closable: false
+    },
+    west: {
+      size: 0.5
+    }
+  '
+  style = tags$style(HTML('
+    .ui-layout-pane {
+    	padding:	2px;
+      padding-left: 10px;
+      padding-right: 10px;
+    	background:	#FFF;
+    	border:		none;
+    	overflow:	auto;
+    }
+    '
+  ))
+
+  ui = tagList(
+    div(id="mainLayoutDiv", style="height:100vh; overflow: auto",
+    jqueryLayoutPanes(id="mainLayout", parent="#mainLayoutDiv",style=style,json.opts=json.opts,
+      west = div(
+        radioBtnGroup("mainBtnGroup",
+          labels=c("Info","Seminars"),
+          values = c("infoTab","semTab"),
+          panes = c("overviewDiv","seminarsDiv")
+        ),
+        hr(style="margin: 0px; padding: 0px; border-color: grey;"),
+
+        div(id="overviewDiv",uiOutput("overviewUI")),
+        div(id="seminarsDiv",style = "visibility: hidden", uiOutput("seminarsUI"))
+      ),
+      center = frozenHeaderPane(parent.layout="mainLayout", parent.pane = "center",
+        head = div(
+          uiOutput("activeSemUI"),
+          div(id="semHeadDiv", style="display: none",
+            radioBtnGroup("seminarBtnGroup",
+              labels=c("Edit","Participants","Topics","Reports"),
+              values=c("editsem","stud","topics","report"),
+              panes=list(c("editsemDiv","editsemHeadDiv"),"studDiv","topicsDiv","reportDiv")
+            ),
+            div(id="editsemHeadDiv",
+              hr(style="margin: 1px;"),
+              bsButton("saveSemBtn","Save Changes in Seminar"),
+              uiOutput("editSemAlert")
+            ),
+            hr(style="margin: 0px; padding: 0px; border-color: grey;")
+          )
+        ),
+        content = div(
+          div(id="editsemDiv",uiOutput("editsemUI")),
+          hidden_div(id="studDiv",uiOutput("studUI")),
+          hidden_div(id="topicsDiv",uiOutput("topicsUI")),
+          hidden_div(id="reportDiv",uiOutput("reportUI"))
+        )
+      )
+    ))
+  )
+
+  radioBtnGroupHandler("seminarBtnGroup", function(value,se=app$se,app=getApp(),...) {
+     restore.point("seminarBtnGroup.change")
+     se$sem.pane = value
+  })
+  ui
 }
 
 load.teacher.se = function(semester=se$semester,db=app$glob$semdb, app=getApp(), se=app$se) {
@@ -294,32 +307,6 @@ show.teacher.seminars = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, d
   dsetUI("seminarsUI", ui)
 }
 
-add.edit.seminar.table.handler = function(rows,prefix="a", app=getApp()) {
-  restore.point("add.edit.seminar.table.handler")
-
-  n = length(rows)
-  if (isTRUE(app$num.edit.seminar.table.handler[prefix] >= n))
-    return()
-
-  if (!is.null(app$num.edit.seminar.table.handler[prefix]))
-    rows = (app$num.edit.seminar.table.handler[prefix]+1):n
-
-  app$num.edit.seminar.table.handler[prefix] = n
-  editBtnId = paste0(prefix,"semEditBtn_",rows)
-  copyEditBtnId = paste0(prefix,"semCopyEditBtn_",rows)
-  studsemBtnId = paste0(prefix,"studsemBtn_",rows)
-  reportBtnId = paste0(prefix,"reportBtn_",rows)
-
-  for (i in seq_along(rows)) {
-    row = rows[i]
-    buttonHandler(editBtnId[i],edit.seminar.click,row=row, prefix=prefix, mode="edit",if.handler.exists = "skip")
-    buttonHandler(copyEditBtnId[i],edit.seminar.click, row=row, prefix=prefix, mode="copyedit",if.handler.exists = "skip")
-    buttonHandler(studsemBtnId[i],studsem.click, row=row, prefix=prefix)
-    buttonHandler(reportBtnId[i],report.click, row=row, prefix=prefix)
-
-  }
-}
-
 edit.seminar.table = function(id = "seminarTable", df = se$seminars, prefix="a", se=app$se, app=getApp()) {
   restore.point("edit.seminar.table")
 
@@ -332,7 +319,6 @@ edit.seminar.table = function(id = "seminarTable", df = se$seminars, prefix="a",
   }
 
   rows = 1:NROW(df)
-  add.edit.seminar.table.handler(rows, prefix=prefix)
   cols = setdiff(colnames(df),c("semid", "groupid","locked","active","enabled"))
   wdf = data.frame(df[,cols])
 
@@ -351,244 +337,44 @@ edit.seminar.table = function(id = "seminarTable", df = se$seminars, prefix="a",
 create.seminar.click=function(se = app$se, app=getApp(),...) {
   restore.point("create.seminar.click")
 
-  se$seminar = empty.row.from.schema(app$glob$schemas$seminars, groupid=se$groupid, semester=se$semester, semester=se$semester)
+  cs$seminar = empty.row.from.schema(app$glob$schemas$seminars, groupid=se$groupid, semester=se$semester, semester=se$semester)
 
-  se$semcrit = empty.df.from.schema(app$glob$schemas$semcrit, 10)
-  se$semcrit$semester = se$semester
+  cs$semcrit = empty.df.from.schema(app$glob$schemas$semcrit, 10)
+  cs$semcrit$semester = se$semester
 
-  show.edit.seminar.ui(se=se, app=app)
-
-}
-
-set.current.seminar = function(se = app$se, app=getApp(), seminar=NULL) {
-  restore.point("set.current.seminar")
-
-
-  se$seminar = seminar
-
-  se$semcrit = dbGet(se$db,"semcrit",list(semid=se$seminar$semid))
-
-  if (NROW(se$semcrit)<10) {
-    df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(se$semcrit), semid=se$seminar$semid)
-    df$semester = se$semester
-    se$semcrit = rbind(se$semcrit,df)
-  }
-
-  se$semtopic = dbGet(se$db,"semtopic",list(semid=se$seminar$semid))
-  if (NROW(se$semtopic)<30) {
-    df = empty.df.from.schema(app$glob$schemas$semtopic, 30-NROW(se$semtopic), semid=se$seminar$semid, semester=se$semester, size=1, userid=NA_character_)
-    se$semtopic = rbind(se$semtopic,df)
-  }
-  se$semtopic$ind = 1:NROW(se$semtopic)
-
-  dsetUI("activeSemUI", h4(paste(seminar$semester, seminar$semname)))
-
-  show.edit.seminar.ui(se=se, app=app)
-}
-
-edit.seminar.click=function(se = app$se, app=getApp(),mode="edit", prefix="a", row=1,...) {
-  restore.point("edit.seminar.click")
-
-  if (prefix=="a") {
-    seminars = se$aseminars
-  } else {
-    seminars = se$pseminars
-  }
-
-  se$seminar = as.list(seminars[row,])
-
-  se$semcrit = dbGet(se$db,"semcrit",list(semid=se$seminar$semid))
-
-  if (NROW(se$semcrit)<10) {
-    df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(se$semcrit), semid=se$seminar$semid)
-    df$semester = se$semester
-    se$semcrit = rbind(se$semcrit,df)
-  }
-
-  se$semtopic = dbGet(se$db,"semtopic",list(semid=se$seminar$semid))
-  if (NROW(se$semtopic)<30) {
-    df = empty.df.from.schema(app$glob$schemas$semtopic, 30-NROW(se$semtopic), semid=se$seminar$semid, semester=se$semester, size=1, userid=NA_character_)
-    se$semtopic = rbind(se$semtopic,df)
-  }
-  se$semtopic$ind = 1:NROW(se$semtopic)
-
-
-
-  if (mode=="copyedit") {
-    se$seminar$semid = NA_integer_
-    se$seminar$active = FALSE
-    se$seminar$semester = se$semester
-    se$seminar$locked = FALSE
-
-    se$semcrit$semid = NA_integer_
-    se$semcrit$semester = se$semester
-
-  }
-
-  show.edit.seminar.ui(se=se, app=app)
-}
-
-
-show.edit.seminar.ui = function(se, app=getApp(), edit=isTRUE(!is.na(se$seminar$semid))) {
-  restore.point("show.edit.seminar.ui")
-
-  glob = app$glob
-  seminar = se$seminar
-
-  form = glob$semform
-  form.vals = form.default.values(glob$semform,values = seminar)
-  form.ui = form.ui.simple(glob$semform, values=form.vals,add.submit = FALSE)
-
-  topics.ui = crit.ui = NULL
-
-  crit.df = table.form.default.values(glob$semcritform, data=se$semcrit)
-  se$org.crit.df = crit.df
-  crit.ui = form.ui.handsone.table(form = glob$semcritform,data = crit.df)
-
-  top.df = table.form.default.values(glob$semtopicsform, data=se$semtopic)
-  topics.ui = form.ui.handsone.table(form = glob$semtopicsform,data = top.df, stretchH="last", height="500px")
-  se$org.top.df = top.df
-
-
-
-  ui = tagList(
-    br(),
-    form.ui,
-    crit.ui,
-    topics.ui
-  )
-
-
-  buttonHandler("saveSemBtn",save.sem.click)
-
-  dsetUI("saveBtnUI",tagList(hr(style="margin: 1px;"),bsButton("saveSemBtn","Save Changes in Seminar"),uiOutput("editSemAlert"))
-)
-  resizeLayout("center__Layout")
-  clear.field.alert(id="editSemAlert")
-
-  dsetUI("editsemUI",ui)
-  setUI("editsemUI",ui)
-}
-
-save.sem.click = function(se=app$se, app=getApp(),...) {
-  restore.point("save.sem.click")
-  glob  = app$glob
-
-  sres = get.form.values(glob$semform)
-
-  # We need the NULL value to return original table
-  # if there were no changes to the table
-  crit.df  = get.table.form.df(glob$semcritform, null.value = se$org.crit.df)
-  top.df = get.table.form.df(glob$semtopicsform, null.value = se$org.top.df)
-
-  restore.point("save.sem.click")
-  if (!sres$ok) {
-    show.field.alert(msg="Could not save, since not all fields are correctly entered.",id="editSemAlert",resize="center__Layout")
-    return()
-  }
-
-  if (is.null(se$seminar$enabled))
-      se$seminar$enabled = TRUE
-  se$seminar = copy.intersect(se$seminar,sres$values)
-
-  dbBegin(se$db)
-  # insert new seminar
-  if (is.na(se$seminar$semid)) {
-    res = try(dbInsert(se$db,"seminars",se$seminar,mode = "insert",schema=glob$schemas$seminars,get.key=TRUE))
-  # update existing seminar
-  } else {
-    res = try(dbInsert(se$db,"seminars",se$seminar,mode = "replace", schema=glob$schemas$seminars))
-  }
-
-  if (is(res,"try-error")) {
-    dbRollback(se$db)
-    msg = paste0("Error when saving into database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
-    return()
-  }
-  se$seminar = res$values
-
-  semid = se$seminar$semid
-
-  crit.df$pos = 1:NROW(crit.df)
-  crit.df$semid = semid
-  crit.df$semester = se$seminar$semester
-
-  #Rewrite criterion table
-  res = try(dbDelete(se$db,"semcrit", list(semid=semid)))
-  if (is(res,"try-error")) {
-    dbRollback(se$db)
-    msg = paste0("Error when updating database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
-    return()
-  }
-
-  res = try(dbInsert(se$db,"semcrit",crit.df,mode = "insert",schema=glob$schemas$semcrit))
-  if (is(res,"try-error")) {
-    dbRollback(se$db)
-    msg = paste0("Error when updating database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
-    return()
-  }
-
-  se$semcrit = as_data_frame(res$values)
-
-  res = try(dbDelete(se$db,"semtopic", list(semid=semid)))
-  if (is(res,"try-error")) {
-    dbRollback(se$db)
-    msg = paste0("Error when updating database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
-    return()
-  }
-
-  if (!is.null(top.df)) {
-    empty = is.na(top.df$topic) | nchar(str.trim(top.df$topic))==0
-    top.df = top.df[!empty,]
-    if (NROW(top.df)>0) {
-      top.df$ind = 1:NROW(top.df)
-      top.df$semid = semid
-      top.df$semester = se$seminar$semester
-      top.df$size = 1
-
-      res = try(dbInsert(se$db,"semtopic",top.df,mode = "insert",schema=glob$schemas$semtopic))
-      if (is(res,"try-error")) {
-        dbRollback(se$db)
-        msg = paste0("Error when updating database:<br> ",as.character(res))
-        show.field.alert(msg=msg,id="editSemAlert",resize="center__Layout")
-        return()
-      }
-    }
-  }
-
-  dbCommit(se$db)
-
-  show.field.alert(msg="Successfully saved.",id="editSemAlert", color=NULL, resize="center__Layout")
-  load.teacher.se(se=se)
-  show.teacher.seminars(se=se)
-
+  show.sem.edit.ui(se=se, app=app)
 
 }
 
+# cs contains already the data from the seminars table
+load.current.seminar = function(cs=se$cs, se=app$se, app=getApp()) {
+  restore.point("load.current.seminar")
 
-studsem.click=function(se = app$se, app=getApp(),prefix, row,...) {
-  restore.point("studsem.click")
+  # Load and adapt criteria
+  cs$semcrit = dbGet(se$db,"semcrit",list(semid=cs$semid))
 
-  if (prefix=="a") {
-    seminars = se$aseminars
-  } else {
-    seminars = se$pseminars
+  if (NROW(cs$semcrit)<10) {
+    df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(cs$semcrit), semid=cs$semid)
+    df$semester = cs$semester
+    cs$semcrit = rbind(cs$semcrit,df)
   }
 
-  se$seminar = as.list(seminars[row,])
-  se$semstuds = load.studsem(se=se)
+  # Load and adapt topics
+  cs$semtopic = dbGet(se$db,"semtopic",list(semid=cs$semid))
+  if (NROW(cs$semtopic)<30) {
+    df = empty.df.from.schema(app$glob$schemas$semtopic, 30-NROW(cs$semtopic), semid=cs$semid, semester=cs$semester, size=1, userid=NA_character_)
+    cs$semtopic = rbind(cs$semtopic,df)
+  }
+  cs$semtopic$ind = 1:NROW(cs$semtopic)
 
-  show.studsem.ui(se=se, app=app)
+  # Load participants
+  cs$semstuds = load.semstuds(cs=cs,se=se)
+  cs
 }
 
-
-load.studsem = function(semid=se$seminar$semid,semtopic=se$semtopic,db=se$db, se=NULL) {
+load.semstuds = function(semid=cs$semid,semtopic=cs$semtopic,db=se$db, cs=se$cs, se=app$se, app=getApp()) {
   restore.point("load.semstuds")
-  semester=se$seminar$semester
+  semester=cs$semester
   if (is.null(semid)) return(NULL)
 
   sql = "
@@ -604,54 +390,290 @@ load.studsem = function(semid=se$seminar$semid,semtopic=se$semtopic,db=se$db, se
   if (NROW(df)>0) {
     df$num = 1:NROW(df)
   } else {
-    df$num = integer(0)
+    return(NULL)
   }
   df
 }
 
 
-show.studsem.ui = function(se, app=getApp()) {
-  restore.point("show.semstud.ui")
+set.current.seminar = function(seminar, se = app$se, app=getApp()) {
+  restore.point("set.current.seminar")
+  prev.sem.id =se$cs[["sem.id"]]
+  cs = new.env()
+  cs$seminar = seminar
+  cs$semid = seminar$semid
+  cs$semester = seminar$semester
+
+  cs = load.current.seminar(cs=cs)
+  se$cs = cs
+  dsetUI("activeSemUI", h4(paste(cs$semester, cs$seminar$semname)))
+
+
+  show.sem.edit.ui(se=se, app=app)
+  if (is.null(se[["sem.pane"]])) {
+    restore.point("jncrb47z4rbfd")
+
+    setHtmlShow(id="semHeadDiv")
+  }
+  show.sem.stud.ui(se=se,cs=cs, app=app)
+  show.sem.topics.ui(se=se,cs=cs, app=app)
+  show.sem.report.ui(se=se,cs=cs, app=app)
+
+}
+
+edit.seminar.click=function(cs=se$cs, se = app$se, app=getApp(),mode="edit", prefix="a", row=1,...) {
+  restore.point("edit.seminar.click")
+
+  if (prefix=="a") {
+    seminars = se$aseminars
+  } else {
+    seminars = se$pseminars
+  }
+
+  cs$seminar = as.list(seminars[row,])
+
+  cs$semcrit = dbGet(se$db,"semcrit",list(semid=cs$semid))
+
+  if (NROW(cs$semcrit)<10) {
+    df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(cs$semcrit), semid=cs$semid)
+    df$semester = se$semester
+    cs$semcrit = rbind(cs$semcrit,df)
+  }
+
+  cs$semtopic = dbGet(se$db,"semtopic",list(semid=cs$semid))
+  if (NROW(cs$semtopic)<30) {
+    df = empty.df.from.schema(app$glob$schemas$semtopic, 30-NROW(cs$semtopic), semid=cs$semid, semester=se$semester, size=1, userid=NA_character_)
+    cs$semtopic = rbind(cs$semtopic,df)
+  }
+  cs$semtopic$ind = 1:NROW(cs$semtopic)
+
+
+
+  if (mode=="copyedit") {
+    cs$semid = NA_integer_
+    cs$active = FALSE
+    cs$semester = se$semester
+    cs$locked = FALSE
+
+    cs$semcrit$semid = NA_integer_
+    cs$semcrit$semester = se$semester
+
+  }
+
+  show.sem.edit.ui(se=se, app=app)
+}
+
+
+show.sem.edit.ui = function(cs = se$cs,se=NULL, app=getApp(), edit=isTRUE(!is.na(cs$semid))) {
+  restore.point("show.sem.edit.ui")
 
   glob = app$glob
-  seminar = se$seminar
 
-  if (NROW(se$semstuds)==0) {
-    ui = tagList(
-      p("There are no students yet inscribed in the seminar.")
-    )
-    dsetUI("membersUI",ui)
-    updateTabsetPanel(session=app$session,inputId = "mainTabset",selected = "assignTab")
+  seminar = cs$seminar
+  form = glob$semform
+  form.vals = form.default.values(glob$semform,values = seminar)
+  form.ui = form.ui.simple(glob$semform, values=form.vals,add.submit = FALSE)
 
+  topics.ui = crit.ui = NULL
+
+  crit.df = table.form.default.values(glob$semcritform, data=cs$semcrit)
+  se$org.crit.df = crit.df
+  crit.ui = form.ui.handsone.table(form = glob$semcritform,data = crit.df)
+
+  ui = tagList(
+    br(),
+    form.ui,
+    crit.ui
+  )
+
+  buttonHandler("saveSemBtn",save.sem.click)
+  clear.field.alert(id="editSemAlert")
+
+  dsetUI("editsemUI",ui)
+  setUI("editsemUI",ui)
+}
+
+save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
+  restore.point("save.sem.click")
+  glob  = app$glob
+
+  sres = get.form.values(glob$semform)
+
+  # We need the NULL value to return original table
+  # if there were no changes to the table
+  crit.df  = get.table.form.df(glob$semcritform, null.value = se$org.crit.df)
+  top.df = get.table.form.df(glob$semtopicsform, null.value = se$org.top.df)
+
+  restore.point("save.sem.click")
+  if (!sres$ok) {
+    show.field.alert(msg="Could not save, since not all fields are correctly entered.",id="editSemAlert")
     return()
   }
 
+  if (is.null(cs$seminar$enabled))
+      cs$seminar$enabled = TRUE
 
-  stud.df = table.form.default.values(glob$semstudform, data=se$semstuds)
-  se$org.semstuds.df = stud.df
+  cs$seminar = copy.intersect(cs$seminar,sres$values)
+
+  dbBegin(se$db)
+  # insert new seminar
+  if (is.na(cs$semid)) {
+    res = try(dbInsert(se$db,"seminars",cs$seminar,mode = "insert",schema=glob$schemas$seminars,get.key=TRUE))
+  # update existing seminar
+  } else {
+    res = try(dbInsert(se$db,"seminars",cs$seminar,mode = "replace", schema=glob$schemas$seminars))
+  }
+
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when saving into database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+  cs$seminar = res$values
+
+  semid = cs$semid
+
+  crit.df$pos = 1:NROW(crit.df)
+  crit.df$semid = semid
+  crit.df$semester = cs$semester
+
+  #Rewrite criterion table
+  res = try(dbDelete(se$db,"semcrit", list(semid=semid)))
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when updating database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+
+  res = try(dbInsert(se$db,"semcrit",crit.df,mode = "insert",schema=glob$schemas$semcrit))
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when updating database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+
+  cs$semcrit = as_data_frame(res$values)
+
+  dbCommit(se$db)
+
+  show.field.alert(msg="Successfully saved.",id="editSemAlert", color=NULL)
+  load.teacher.se(se=se)
+  show.teacher.seminars(se=se)
+
+
+}
+
+
+studsem.click=function(cs = se$cs, se = app$se, app=getApp(),prefix, row,...) {
+  restore.point("studsem.click")
+
+  if (prefix=="a") {
+    seminars = se$aseminars
+  } else {
+    seminars = se$pseminars
+  }
+
+  cs$seminar = as.list(seminars[row,])
+  cs$semstuds = load.semstuds(se=se)
+
+  show.sem.stud.ui(se=se, app=app)
+}
+
+show.sem.topics.ui = function(cs=se$cs, se=app$se, app=getApp()) {
+  restore.point("show.sem.topics.ui")
+
+
+  ui = tagList(
+    h4("Topic assignment is not yet implemented.")
+  )
+
+  setUI("topicsUI",ui)
+  dsetUI("topicsUI",ui)
+  return()
+
+  # distinguish whether students are already
+  # matched or not
+  glob=app$glob
+  # Topics
+  tdf =cs$semtopic
+  tdf = left_join(tdf, select(cs$semstuds,topic_ind, email) %>% filter(!is.na(topic_ind)),by="topic_ind")
+
+
+  top.df = table.form.default.values(glob$semtopicsform, data=tdf)
+
+  topics.ui = form.ui.handsone.table(form = glob$semtopicsform,data = top.df, stretchH="last", height="500px")
+  cs$org.top.df = top.df
+
+  ui = tagList(
+    topics.ui
+  )
+
+  setUI("topicsUI",ui)
+  dsetUI("topicsUI",ui)
+}
+
+save.sem.topics =  function(cs=se$cs, se=app$se, app=getApp(),...) {
+  glob  = app$glob
+  semid = cs$semid
+
+  top.df = get.table.form.df(glob$semtopicsform, null.value = cs$org.top.df)
+  restore.point("save.topics")
+
+  dbBegin(se$db)
+  # first delete all existing seminar topics
+  res = try(dbDelete(se$db,"semtopic", list(semid=semid)))
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when updating database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+
+  if (!is.null(top.df)) {
+    empty = is.na(top.df$topic) | nchar(str.trim(top.df$topic))==0
+    top.df = top.df[!empty,]
+    if (NROW(top.df)>0) {
+      top.df$ind = 1:NROW(top.df)
+      top.df$semid = semid
+      top.df$semester = cs$semester
+      top.df$size = 1
+
+      res = try(dbInsert(se$db,"semtopic",top.df,mode = "insert",schema=glob$schemas$semtopic))
+      if (is(res,"try-error")) {
+        dbRollback(se$db)
+        msg = paste0("Error when updating database:<br> ",as.character(res))
+        show.field.alert(msg=msg,id="editSemAlert")
+        return()
+      }
+    }
+  }
+
+  dbCommit(se$db)
+  show.field.alert(msg="Successfully saved.",id="editSemAlert", color=NULL)
+
+}
+
+
+show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
+  restore.point("show.semstud.ui")
+
+  glob = app$glob
+  if (NROW(cs$semstuds)==0) {
+    ui = tagList(
+      p("There are no students yet inscribed in the seminar.")
+    )
+    dsetUI("studUI",ui)
+    return()
+  }
+
+  stud.df = table.form.default.values(glob$semstudform, data=cs$semstuds)
+  cs$org.semstuds.df = stud.df
   #semstud.ui = form.ui.handsone.table(form = glob$semstudform,data = stud.df)
   # Choose columns
   stud.df = stud.df[,setdiff(colnames(stud.df),c("userid"))]
-
-  # Topics
-  tdf = dbGet(se$db,"semtopic",params = nlist(semid=se$seminar$semid, semester=se$seminar$semester))
-
-
-  if (NROW(tdf)>0) {
-    tdf = left_join(tdf, select(se$semstuds,topic_ind, name,email),by="topic_ind")
-
-    tdf = tdf[,setdiff(colnames(tdf),c("userid","semid","semester"))]
-    topics.ui = tagList(
-      h4("Topics"),
-      HTML(html.table(tdf))
-    )
-  } else {
-    topics.ui = tagList(
-      h4("Topics"),
-      p("There are no topics specified for the seminar")
-    )
-  }
-
 
   # Add and delete student ui
   ar.ui = tagList(
@@ -671,26 +693,22 @@ show.studsem.ui = function(se, app=getApp()) {
   emails.string = paste0(stud.df$email, collapse = ", ")
 
   ui = tagList(
-    h3(se$seminar$semname," - ", se$seminar$teacher," - ", se$seminar$semester),
     h4("Participants"),
     HTML(html.table(stud.df)),
     h4("Participants Emails"),
     shinyAce::aceEditor("studEmailListAce", value=emails.string, wordWrap = TRUE, height="4em"),
-    ar.ui,
-    topics.ui
+    ar.ui
   )
 
   buttonHandler("arAddButton",add.student.to.seminar)
   buttonHandler("arRemoveButton",remove.student.from.seminar)
 
-  setUI("membersUI",ui)
-  #dsetUI("membersUI",ui)
-  updateTabsetPanel(session=app$session,inputId = "mainTabset",selected = "assignTab")
-
+  setUI("studUI",ui)
+  dsetUI("studUI",ui)
 }
 
 
-add.student.to.seminar = function(email = NULL,seminar=se$seminar, semstuds=se$semstuds, app=getApp(),se=app$se,...) {
+add.student.to.seminar = function(email = NULL,seminar=cs$seminar, semstuds=cs$semstuds, app=getApp(),se=app$se, cs=se$cs,...) {
   if (is.null(email))
     email = getInputValue("arEmailInput")
 
@@ -702,9 +720,9 @@ add.student.to.seminar = function(email = NULL,seminar=se$seminar, semstuds=se$s
     return()
 
   }
-  student = dbGet(se$db,"students",params = list(semester=seminar$semester,email=email))
+  student = dbGet(se$db,"students",params = list(semester=cs$semester,email=email))
   if (is.null(student)) {
-    msg = colored.html(paste0("No student with email ", email, " is registered in semester ", seminar$semester,"."), color="red")
+    msg = colored.html(paste0("No student with email ", email, " is registered in semester ", cs$semester,"."), color="red")
     setUI("arInfo",HTML(msg))
     return()
   }
@@ -718,18 +736,18 @@ add.student.to.seminar = function(email = NULL,seminar=se$seminar, semstuds=se$s
 
   manual = list(
     editid = se$userid,
-    semid = seminar$semid,
+    semid = cs$semid,
     userid = student$userid,
-    semester = seminar$semester,
+    semester = cs$semester,
     added = TRUE,
     topic_ind = NA_integer_,
     edit_type = "ta",
     edit_time = as.POSIXct(Sys.time())
   )
   assign = list(
-    semid = seminar$semid,
+    semid = cs$semid,
     userid = student$userid,
-    semester = seminar$semester,
+    semester = cs$semester,
     assign_method = "ta",
     topic_ind = NA_integer_,
     assign_time = as.POSIXct(Sys.time())
@@ -741,11 +759,11 @@ add.student.to.seminar = function(email = NULL,seminar=se$seminar, semstuds=se$s
   dbCommit(se$db)
 
   # reload form
-  se$semstuds = load.studsem(se=se)
-  show.studsem.ui(se=se)
+  cs$semstuds = load.semstuds(cs=cs)
+  show.sem.stud.ui(se=se)
 }
 
-remove.student.from.seminar = function(email = NULL,seminar=se$seminar, semstuds=se$semstuds, app=getApp(),se=app$se,...) {
+remove.student.from.seminar = function(email = NULL,seminar=cs$seminar, semstuds=cs$semstuds, app=getApp(),se=app$se,cs=se$cs,...) {
   if (is.null(email))
     email = getInputValue("arEmailInput")
 
@@ -757,9 +775,9 @@ remove.student.from.seminar = function(email = NULL,seminar=se$seminar, semstuds
     return()
 
   }
-  student = dbGet(se$db,"students",params = list(semester=seminar$semester,email=email))
+  student = dbGet(se$db,"students",params = list(semester=cs$semester,email=email))
   if (is.null(student)) {
-    msg = colored.html(paste0("No student with email ", email, " is registered in semester ", seminar$semester,"."), color="red")
+    msg = colored.html(paste0("No student with email ", email, " is registered in semester ", cs$semester,"."), color="red")
     setUI("arInfo",HTML(msg))
     return()
   }
@@ -773,9 +791,9 @@ remove.student.from.seminar = function(email = NULL,seminar=se$seminar, semstuds
 
   manual = list(
     editid = se$userid,
-    semid = seminar$semid,
+    semid = cs$semid,
     userid = student$userid,
-    semester = seminar$semester,
+    semester = cs$semester,
     added = FALSE,
     topic_ind = NA_integer_,
     edit_type = "tr",
@@ -783,9 +801,9 @@ remove.student.from.seminar = function(email = NULL,seminar=se$seminar, semstuds
   )
 
   assign = list(
-    semid = seminar$semid,
+    semid = cs$semid,
     userid = student$userid,
-    semester = seminar$semester,
+    semester = cs$semester,
     assign_method = "ma",
     topic_ind = NA_integer_,
     assign_time = as.POSIXct(Sys.time())
@@ -793,12 +811,12 @@ remove.student.from.seminar = function(email = NULL,seminar=se$seminar, semstuds
 
   dbBegin(se$db)
   dbInsert(se$db,"manual",manual, schema = app$glob$schemas$manual)
-  dbDelete(se$db,"assign",params = list(userid=student$userid, semester=seminar$semester,semid=seminar$semid))
+  dbDelete(se$db,"assign",params = list(userid=student$userid, semester=cs$semester,semid=cs$semid))
   dbCommit(se$db)
 
   # reload form
-  se$semstuds = load.studsem(se=se)
-  show.studsem.ui(se=se)
+  cs$semstuds = load.semstuds(cs=cs)
+  show.sem.stud.ui(se=se)
 }
 
 
@@ -808,7 +826,9 @@ show.teacher.overview = function(se=app$se, app=getApp()) {
   envir = c(se$admin, list(today=as.Date(Sys.time())))
 
   cr = app$glob$rmd.li[["teacher_overview"]]
-  header = render.compiled.rmd(cr, envir=envir)
+  .GlobalEnv$knit_print.Date = function(x,...) {format(x, format="%a. %d.%m.%Y")}
+
+  header = render.compiled.rmd(cr, envir=envir, use.print="knit")
   ui = tagList(
     HTML(header)
   )
@@ -816,22 +836,11 @@ show.teacher.overview = function(se=app$se, app=getApp()) {
 }
 
 
-report.click=function(se = app$se, app=getApp(),prefix, row,...) {
-  restore.point("report.click")
-
-
-
-
-  if (prefix=="a") {
-    seminars = se$aseminars
-  } else {
-    seminars = se$pseminars
-  }
-
-  se$seminar = as.list(seminars[row,])
+show.sem.report.ui =function(cs = se$cs,se = app$se, app=getApp()) {
+  restore.point("show.sem.report.ui")
 
   round = 1
-  env = as.environment(list(semester=se$seminar$semester, semid=se$seminar$semid, semdb=se$db,round=1))
+  env = as.environment(list(semester=cs$semester, semid=cs$semid, semdb=se$db,round=1))
   parent.env(env) = environment()
   rmd = app$glob$reports.rmd[[1]]
 
@@ -839,7 +848,6 @@ report.click=function(se = app$se, app=getApp(),prefix, row,...) {
   if (is(html,"try-error")) {
     html = as.character(html)
   }
+  dsetUI("reportUI",HTML(html))
   setUI("reportUI",HTML(html))
-  updateTabsetPanel(session=app$session,inputId = "mainTabset",selected = "reportTab")
-
 }
