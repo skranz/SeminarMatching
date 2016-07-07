@@ -990,9 +990,7 @@ show.sem.report.ui =function(cs = se$cs,se = app$se, app=getApp()) {
 
   html = try(knit.rmd.in.temp(rmd,envir = env, fragment.only = TRUE, use.commonmark=TRUE))
   if (is(html,"try-error")) {
-
-    html = as.character(html)
-    html = p("No data on studet preferences for this seminar available.")
+    html = "No data on studet preferences for this seminar available."
   }
   dsetUI("reportUI",HTML(html))
   setUI("reportUI",HTML(html))
