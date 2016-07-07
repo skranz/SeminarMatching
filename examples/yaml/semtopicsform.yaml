@@ -3,7 +3,7 @@ lang: de
 lang_de:
   label: Seminarthemen
   help: |
-    Sie müssen die Themen nur eingeben, wenn Sie diese Software
+    Sie können hier Themen eingeben, wenn Sie diese Software
     auch für autmatische Themenvergabe nutzen wollen. Falls Sie
     ein Thema doppelt vergeben wollen, geben Sie das Thema zweimal ein.
     Um mehr als 30 Themen einzugeben, nutzen Sie die rechte Maustaste
@@ -11,7 +11,7 @@ lang_de:
 lang_en:
   label: Topics
   help: |
-    You only have to enter the seminar topics if you also
+    You can enter here seminar topics if you also
     want to assign topics automatically. If you want multiple Slots
     for a topic, please enter the topic multiple times.
     If you want more than 30 topics use the right mouse button
@@ -29,3 +29,9 @@ fields:
       label: Thema
     lang_en:
       label: Topic
+  email:
+    lang_de:
+      label: Student (Email)
+    lang_en:
+      label: Student (Email)
+    readonly: TRUE

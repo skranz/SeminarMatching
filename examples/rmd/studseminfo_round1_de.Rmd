@@ -3,7 +3,7 @@
 library(rmdtools)
 library(SeminarMatching)
 
-setwd("D:/libraries/SeminarMatching/semedit_app/rmd")
+setwd("D:/libraries/SeminarMatching/semapps/shared/rmd")
 db.dir = paste0("../db")
 semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 seminars = dbGet(semdb,"seminars")
@@ -16,7 +16,7 @@ params = NULL
 #cat(paste0(names(res),"=",res, collapse=", "))
 
 today = as.Date(Sys.time())
-semester = "SS15"
+semester = "SS16"
 
 params = list(
   today = today,
@@ -38,7 +38,7 @@ copy.into.env(params)
 }
 #whisker_print.data.frame = table.knit_print.data.frame
 
-view.rmd(file = file, envir=params,chunks.like.whisker=FALSE)
+view.rmd(file = file, envir=params,chunks.like.whisker=TRUE)
 
 
 stop.without.error()
@@ -46,16 +46,52 @@ stop.without.error()
 
 <!-- START -->
 
-## WiWi-Seminarvergabe, Uni Ulm {{semester}} -- Hauptrunde
+### Seminarauswahl Hauptrunde
 
-#< if !stud.exists
-Bevor Sie im Reiter `Seminarwahl` Präferenzen über Seminare angeben können, aktualisieren und speichern Sie zunächst Ihre Hintergrunddaten im Reiter `Profil`.
-#>
+Sie können hier noch bis zum {{round1_date-1}} Ihre Präferenzliste über Seminare angeben. Wählen Sie bitte aus der Liste aller Seminare diejenigen und nur diejenigen Seminare aus, an denen Sie teilnehmen würden, wenn Sie einen Platz erhalten.
 
-Sie können **bis zum {{round1_date-1}}** im Reiter `Seminarwahl` Ihre Präferenzen über WiWi Seminare eintragen. Am {{round1_date}}, um 3:00 nachts, werden die Seminarplätze dann zentral zugeteilt. Schauen Sie dann hier nach, welchen Seminarplatz Sie erhalten haben. Sie können dann ggf. Ihre Präferenzen über die Seminarthemen angeben.
+Sortieren Sie dann die ausgewählten Seminare gemäß Ihrer Wunschreihenfolge
+(bevorzugte Seminare weiter oben) und **speichern Sie dann per Knopfdruck ihre Präferenzen**.
 
-#< if !is.na(round2_date)
-Wenn Sie an zwei Seminaren teilnehmen möchten, können Sie dann vom {{round1_date}} bis zum {{round2_date-1}} Präferenzen für Ihr zweites Seminar angeben.
-#>
 
-**Vergessen Sie nicht Ihre Präferenzliste zu speichern!**
+#< note "Details zur Seminarplatzvergabe"
+
+- Sie können so viele Seminare in Ihre Präferenzliste aufnehmen, wie Sie möchten.
+
+- Sie bekommen Hauptvergaberunde maximal einen Seminarplatz hieraus zugeteilt. Wenn Sie an zwei Seminaren teilnehmen möchten, müssen Sie auch an der zweiten Vergaberunde im Anschluss teilnehmen.
+
+- Sie sollten alle Seminare und nur diese Seminare aufnehmen, an denen Sie wirklich teilnehmen würden, wenn Sie einen Seminarplatz erhalten.
+
+- Wenn Sie einen Seminarplatz erhalten und später doch nicht teilnehmen, können Sie ggf. einen Malus bei zukünftigen Seminarvergaben erhalten.
+
+- Die Seminarplätze werden gemäß des studentenoptimalen <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithmus</a> zugeteilt.
+
+- Dies bedeutet, es ist in Ihrem besten Interesse
+(eine schwach dominante Strategie) Ihre
+Präferenzreihenfolge über die Seminare
+wahrheitsgetreu anzugeben.
+
+- Dies ist anders als z. B. bei der Studienplatzvergabe der ZVS, wo es z. B. Sinn machen könnte seine zweite Wahl aus strategischen Gründen auf Platz 1 zu setzen.
+
+- Bei unserem Vergabemechanismus ist für Sie niemals vorteilhaft, Ihre Präferenzen aus strategischen Gründen falsch anzugeben.
+
+- Die Zuteilung der Seminare erfolgt automatisch am {{round1_date}}. Sie sehen hiernach ob und welchen Seminarplatz Sie erhalten haben.
+#> end note
+
+
+### Ausgewählten Seminare und Rangfolge
+
+{{uiOutput("selSemUI")}}
+
+{{checkboxInput("partInRound2Checkbox","Ich möchte an zwei Seminaren teilnehmen und diese Präferenzen für die zweite Runde übernehmen. (Präferenzen können später noch angepasst werden.)",value = FALSE)}}
+
+{{actionButton("saveStudprefBtn","Präferenzliste speichern")}}
+{{bsAlert("saveStudprefAlert")}}
+
+### Alle angebotenen Seminare
+
+{{uiOutput("allSemUI")}}
+
+
+
+

@@ -7,7 +7,7 @@ examples.EditSeminarApp = function() {
   library(shinyEventsUI)
   library(shinyAce)
   setwd("D:/libraries/SeminarMatching/semapps/shared")
-  app = EditSeminarsApp(init.userid = "test", init.password="test", lang="de")
+  app = EditSeminarsApp(init.userid = "test", init.password="test", lang="en")
   viewApp(app)
 
 }
@@ -83,6 +83,10 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   form$sets = glob$sets
   glob$semstudform = form
 
+  form = load.and.init.form(file =paste0(yaml.dir,"/staffform.yaml"),lang = lang,prefix = "group_")
+  form$sets = glob$sets
+  glob$staffform = form
+
 
   rmd.names = c("teacher_overview")
   glob$rmd.li = lapply(rmd.names, function(rmd.name) {
@@ -113,7 +117,7 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     app$se = se
     se$db = app$glob$semdb
     se$userid = userid
-    se$groups = dbGet(se$db,"groupstaff",list(userid=userid))
+    se$user = dbGet(se$db,"groupstaff",list(userid=userid),schema = app$glob$schemas[["groupstaff"]])
     se$semester = glob$cur_admin$semester
     se$cur_semester = se$semester
     se$admin = glob$cur_admin
@@ -124,14 +128,17 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
       return()
     }
     # check if user is allowed to edit seminars
-    if (NROW(se$groups)==0) {
+    if (NROW(se$user)==0) {
       show.html.warning("mainUI",paste0("The user ", userid, " has not been given any rights to edit seminars in any group."))
       return()
-    } else if (sum(se$groups$edit_sem)==0) {
+    } else if (sum(se$user$edit_sem)==0) {
       show.html.warning("mainUI",paste0("The user ", userid, " has not been given any rights to edit seminars in any group."))
       return()
     }
-    se$groupid = se$groups$groupid[1]
+    se$groupid = se$user$groupid[1]
+    if (isTRUE(se$user$admin)) {
+      se$staff = dbGet(se$db,"groupstaff",list(groupid=se$groupid),schema = app$glob$schemas[["groupstaff"]])
+    }
 
     ui = teacher.main.ui()
     setUI("mainUI",ui)
@@ -140,6 +147,7 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     #radioBtnGroupHandler("mainBtnGroup",function(...){})
     show.teacher.seminars(se=se)
     show.teacher.overview(se=se)
+    show.staff.ui(se=se)
   }
 
   if (is.null(check.email.fun)) {
@@ -213,14 +221,15 @@ teacher.main.ui = function(se) {
     jqueryLayoutPanes(id="mainLayout", parent="#mainLayoutDiv",style=style,json.opts=json.opts,
       west = div(
         radioBtnGroup("mainBtnGroup",
-          labels=c("Info","Seminars"),
-          values = c("infoTab","semTab"),
-          panes = c("overviewDiv","seminarsDiv")
+          labels=c("Info","Seminars","Group Staff"),
+          values = c("infoTab","semTab","semStaff"),
+          panes = c("overviewDiv","seminarsDiv","staffDiv")
         ),
         hr(style="margin: 0px; padding: 0px; border-color: grey;"),
 
         div(id="overviewDiv",uiOutput("overviewUI")),
-        div(id="seminarsDiv",style = "visibility: hidden", uiOutput("seminarsUI"))
+        div(id="seminarsDiv",style = "visibility: hidden", uiOutput("seminarsUI")),
+        div(id="staffDiv",style = "visibility: hidden", uiOutput("staffUI"))
       ),
       center = frozenHeaderPane(parent.layout="mainLayout", parent.pane = "center",
         head = div(
@@ -233,13 +242,14 @@ teacher.main.ui = function(se) {
             ),
             div(id="editsemHeadDiv",
               hr(style="margin: 1px;"),
-              bsButton("saveSemBtn","Save Changes in Seminar"),
+              bsButton("saveSemBtn","Save"),
+              bsButton("delSemBtn","Delete Seminar"),
               uiOutput("editSemAlert")
             ),
             hr(style="margin: 0px; padding: 0px; border-color: grey;")
           )
         ),
-        content = div(
+        content = div(id="semContentDiv",
           div(id="editsemDiv",uiOutput("editsemUI")),
           hidden_div(id="studDiv",uiOutput("studUI")),
           hidden_div(id="topicsDiv",uiOutput("topicsUI")),
@@ -255,6 +265,8 @@ teacher.main.ui = function(se) {
   })
   ui
 }
+
+
 
 load.teacher.se = function(semester=se$semester,db=app$glob$semdb, app=getApp(), se=app$se) {
   restore.point("load.teacher.se")
@@ -282,22 +294,24 @@ load.teacher.se = function(semester=se$semester,db=app$glob$semdb, app=getApp(),
 
 }
 
-show.teacher.seminars = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$glob$semdb, se=app$se, app=getApp(), semester=se[["semester"]]) {
+show.teacher.seminars = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, db=app$glob$semdb, se=app$se, app=getApp(), semester=se[["semester"]], semid=NA) {
   restore.point("show.teacher.seminars")
 
 
-  atable = edit.seminar.table(id="atable",se$aseminars, prefix="a")
-  ptable = edit.seminar.table(id="ptable",se$pseminars, prefix="p")
+  atable = edit.seminar.table(id="atable",se$aseminars, prefix="a", semid=semid)
+  ptable = edit.seminar.table(id="ptable",se$pseminars, prefix="p", semid=semid)
 
 
   buttonHandler("createSeminarBtn",create.seminar.click)
+  buttonHandler("createSeminarFromBtn",create.seminar.from.click)
   ui = tagList(
     h4(paste0("Seminars for group ",se$groupid)),
     selectInput("semMainSemesterInput",label="Semester", choices=app$glob$sets$semesters, selected=se$semester),
     h5(paste0("Activated Seminars for ",se$semester)),
     HTML(atable),
     br(),
-    actionButton("createSeminarBtn","Create Seminar"),
+    actionButton("createSeminarBtn","New seminar"),
+    actionButton("createSeminarFromBtn","New seminar from template"),
     h5(paste0("Unactivated seminars and previous seminars (can be used as templates)")),
     HTML(ptable)
   )
@@ -307,7 +321,7 @@ show.teacher.seminars = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, d
   dsetUI("seminarsUI", ui)
 }
 
-edit.seminar.table = function(id = "seminarTable", df = se$seminars, prefix="a", se=app$se, app=getApp()) {
+edit.seminar.table = function(id = "seminarTable", df = se$seminars, prefix="a", se=app$se, app=getApp(), semid=NULL) {
   restore.point("edit.seminar.table")
 
   if (NROW(df)==0) {
@@ -329,22 +343,12 @@ edit.seminar.table = function(id = "seminarTable", df = se$seminars, prefix="a",
     seminar = as.list(df[data$row,])
     set.current.seminar(seminar=seminar)
   })
-  html.table(wdf, id=id, bg.color="#ffffff")
+
+  sel.row = which(is.true(df$semid == semid))
+  html.table(wdf, id=id, bg.color="#ffffff",sel.row = sel.row)
 
 }
 
-
-create.seminar.click=function(se = app$se, app=getApp(),...) {
-  restore.point("create.seminar.click")
-
-  cs$seminar = empty.row.from.schema(app$glob$schemas$seminars, groupid=se$groupid, semester=se$semester, semester=se$semester)
-
-  cs$semcrit = empty.df.from.schema(app$glob$schemas$semcrit, 10)
-  cs$semcrit$semester = se$semester
-
-  show.sem.edit.ui(se=se, app=app)
-
-}
 
 # cs contains already the data from the seminars table
 load.current.seminar = function(cs=se$cs, se=app$se, app=getApp()) {
@@ -359,6 +363,8 @@ load.current.seminar = function(cs=se$cs, se=app$se, app=getApp()) {
     cs$semcrit = rbind(cs$semcrit,df)
   }
 
+  # topics are currently not used
+  if (FALSE) {
   # Load and adapt topics
   cs$semtopic = dbGet(se$db,"semtopic",list(semid=cs$semid))
   if (NROW(cs$semtopic)<30) {
@@ -366,7 +372,7 @@ load.current.seminar = function(cs=se$cs, se=app$se, app=getApp()) {
     cs$semtopic = rbind(cs$semtopic,df)
   }
   cs$semtopic$ind = 1:NROW(cs$semtopic)
-
+  }
   # Load participants
   cs$semstuds = load.semstuds(cs=cs,se=se)
   cs
@@ -395,10 +401,132 @@ load.semstuds = function(semid=cs$semid,semtopic=cs$semtopic,db=se$db, cs=se$cs,
   df
 }
 
+can.seminar.be.deleted = function(cs=se$cs, se = app$se, app=getApp(),...) {
+  restore.point("can.seminar.be.deleted")
+
+  cs.sem.num = get.sem.number(cs$semester)
+  se.sem.num = get.sem.number(se$semester)
+  if (cs.sem.num < se.sem.num) {
+    return(list(ok=FALSE,msg="You cannot delete a seminar from previous semesters."))
+  } else if (cs.sem.num == se.sem.num) {
+    if (isTRUE(Sys.Date() <= se$admin$round1_done_date)) {
+      return(list(ok=FALSE,msg="You cannot delete a seminar since the seminar matching has already taken place this semester."))
+    }
+    if (isTRUE(Sys.Date() <= se$admin$stud_start_date)) {
+      return(list(ok=FALSE,msg="You cannot delete a seminar after the seminar choice has already been activated for students. You still can deactivate the seminar, however. Then students cannot put it in their preference list anymore."))
+    }
+  }
+
+
+  if (isTRUE(cs$seminar$active)) {
+    return(list(ok=FALSE,msg="An activated seminar cannot be deleted. First deactivate and save it. Then delete the seminar."))
+  }
+
+
+  return(list(ok=TRUE, msg=""))
+}
+
+
+
+
+delete.seminar.click=function(cs=se$cs, se = app$se, app=getApp(),...) {
+  restore.point("delete.seminar.click")
+  can.del = can.seminar.be.deleted(cs=cs, se=se)
+  if (!can.del$ok) {
+    show.field.alert(msg=can.del$msg,id="editSemAlert")
+    return()
+  }
+
+  semid = cs$semid
+  dbBegin(se$db)
+
+
+  res = try(dbDelete(se$db,"seminars", list(semid=semid)))
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when modifying database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+  res = try(dbDelete(se$db,"semtopic", list(semid=semid)))
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when modifying database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+  res = try(dbDelete(se$db,"semcrit", list(semid=semid)))
+  if (is(res,"try-error")) {
+    dbRollback(se$db)
+    msg = paste0("Error when modifying database:<br> ",as.character(res))
+    show.field.alert(msg=msg,id="editSemAlert")
+    return()
+  }
+  dbCommit(se$db)
+
+  show.field.alert(msg="Successfully saved.",id="editSemAlert", color=NULL)
+
+  se$cs = NULL
+  set.no.seminar(se=se)
+  load.teacher.se(se=se)
+  show.teacher.seminars(se=se, semid = NA)
+}
+
+
+create.seminar.click=function(se = app$se, app=getApp(),...) {
+  restore.point("create.seminar.click")
+  cs = new.env()
+  cs$seminar = empty.row.from.schema(app$glob$schemas$seminars, groupid=se$groupid, semester=se$semester, semester=se$semester)
+
+  cs$semcrit = empty.df.from.schema(app$glob$schemas$semcrit, 10)
+  cs$semcrit$semester = se$semester
+
+
+  set.new.seminar(cs=cs,se=se)
+
+}
+
+
+create.seminar.from.click=function(cs=se$cs, se = app$se, app=getApp(),...) {
+  restore.point("create.seminar.from.click")
+
+  cs = as.environment(as.list(cs))
+  set.new.seminar(cs=cs,se=se)
+
+}
+
+
+set.no.seminar = function(se = app$se, app=getApp()) {
+  se$cs = NULL
+  dsetUI("activeSemUI", h4(paste(cs$semester, "No Seminar Selected")))
+  setHtmlHide(id=c("semHeadDiv","editSemHeadDiv","semContentDiv"))
+}
+
+set.new.seminar = function(cs, se = app$se, app=getApp()) {
+  restore.point("set.new.seminar")
+  prev.semid =se$cs[["semid"]]
+  cs$semid = cs$seminar$semid = NA
+  cs$semester = cs$seminar$semester = cs$semcrit$semester = se$semester
+  if (!is.null(cs$semtopic))
+    cs$semtopic$semester = cs$semester
+
+  se$cs = cs
+  dsetUI("activeSemUI", h4(paste(cs$semester, "New Seminar")))
+
+  show.sem.edit.ui(se=se, app=app)
+  setHtmlShow(id="semContentDiv")
+  if (is.null(se[["sem.pane"]])) {
+    setHtmlShow(id="semHeadDiv")
+  }
+
+  setUI("topicsUI",h4("The seminar is not yet created."))
+  setUI("studUI",h4("The seminar is not yet created."))
+  setUI("reportUI",h4("The seminar is not yet created."))
+}
 
 set.current.seminar = function(seminar, se = app$se, app=getApp()) {
   restore.point("set.current.seminar")
-  prev.sem.id =se$cs[["sem.id"]]
+  prev.semid =se$cs[["semid"]]
   cs = new.env()
   cs$seminar = seminar
   cs$semid = seminar$semid
@@ -410,6 +538,7 @@ set.current.seminar = function(seminar, se = app$se, app=getApp()) {
 
 
   show.sem.edit.ui(se=se, app=app)
+  setHtmlShow(id="semContentDiv")
   if (is.null(se[["sem.pane"]])) {
     restore.point("jncrb47z4rbfd")
 
@@ -472,7 +601,10 @@ show.sem.edit.ui = function(cs = se$cs,se=NULL, app=getApp(), edit=isTRUE(!is.na
   seminar = cs$seminar
   form = glob$semform
   form.vals = form.default.values(glob$semform,values = seminar)
+  #cat("show.sem.edit.ui form.vals:\n")
+  #print(form.vals)
   form.ui = form.ui.simple(glob$semform, values=form.vals,add.submit = FALSE)
+
 
   topics.ui = crit.ui = NULL
 
@@ -487,10 +619,16 @@ show.sem.edit.ui = function(cs = se$cs,se=NULL, app=getApp(), edit=isTRUE(!is.na
   )
 
   buttonHandler("saveSemBtn",save.sem.click)
+  buttonHandler("delSemBtn",delete.seminar.click)
   clear.field.alert(id="editSemAlert")
 
-  dsetUI("editsemUI",ui)
+  #dsetUI("editsemUI",ui)
   setUI("editsemUI",ui)
+  evalJS("Shiny.bindAll();") # need for form to be updated
+
+  #cat("get.form.values:\n")
+  #sres = get.form.values(glob$semform)
+
 }
 
 save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
@@ -502,7 +640,6 @@ save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
   # We need the NULL value to return original table
   # if there were no changes to the table
   crit.df  = get.table.form.df(glob$semcritform, null.value = se$org.crit.df)
-  top.df = get.table.form.df(glob$semtopicsform, null.value = se$org.top.df)
 
   restore.point("save.sem.click")
   if (!sres$ok) {
@@ -512,12 +649,16 @@ save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
 
   if (is.null(cs$seminar$enabled))
       cs$seminar$enabled = TRUE
+  if (is.na(cs$seminar$enabled))
+      cs$seminar$enabled = TRUE
 
   cs$seminar = copy.intersect(cs$seminar,sres$values)
 
   dbBegin(se$db)
+  new.sem = is.na(cs$semid)
   # insert new seminar
-  if (is.na(cs$semid)) {
+
+  if (new.sem) {
     res = try(dbInsert(se$db,"seminars",cs$seminar,mode = "insert",schema=glob$schemas$seminars,get.key=TRUE))
   # update existing seminar
   } else {
@@ -532,7 +673,7 @@ save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
   }
   cs$seminar = res$values
 
-  semid = cs$semid
+  cs$semid = semid = cs$seminar$semid
 
   crit.df$pos = 1:NROW(crit.df)
   crit.df$semid = semid
@@ -561,8 +702,11 @@ save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
 
   show.field.alert(msg="Successfully saved.",id="editSemAlert", color=NULL)
   load.teacher.se(se=se)
-  show.teacher.seminars(se=se)
+  show.teacher.seminars(se=se, semid = cs$semid)
 
+  if (new.sem) {
+    set.current.seminar(seminar = cs$seminar)
+  }
 
 }
 
@@ -846,8 +990,181 @@ show.sem.report.ui =function(cs = se$cs,se = app$se, app=getApp()) {
 
   html = try(knit.rmd.in.temp(rmd,envir = env, fragment.only = TRUE, use.commonmark=TRUE))
   if (is(html,"try-error")) {
+
     html = as.character(html)
+    html = p("No data on studet preferences for this seminar available.")
   }
   dsetUI("reportUI",HTML(html))
   setUI("reportUI",HTML(html))
+}
+
+
+load.teacher.se = function(semester=se$semester,db=app$glob$semdb, app=getApp(), se=app$se) {
+  restore.point("load.teacher.se")
+
+
+  se$semester = semester
+  se$seminars = dbGet(db,"seminars",list(groupid=se$groupid),schema=app$glob$schemas$seminars)
+
+
+  if (!is.null(se$seminars)) {
+    se$seminars$locked =se$seminars$semester %in% app$glob$semesters.with.matchings
+
+    # Activated and unactivated seminars
+    se$aseminars = filter(se$seminars, semester==se$semester, active==TRUE)
+    se$pseminars = filter(se$seminars, semester!=se$semester | active==FALSE)
+    se$pseminars=se$pseminars[-get.sem.number(se$pseminars$semester),]
+  }
+
+  se$admin = get.current.admin(semester=se$semester)
+
+  se$today = as.Date(Sys.time())
+  se$has.assignment = !is.na(se$admin$round1_done_date) | !is.na(se$admin$round2_done_date)
+
+  app$se = se
+
+}
+
+
+show.staff.ui = function(se=app$se, app=getApp(), sel.row=NULL) {
+  restore.point("show.staff.ui")
+
+  glob = app$glob
+  if (!isTRUE(se$user$admin)) {
+    setUI("staffUI",h4(paste0("You have no permission to change the staff of group ", se$groupid)))
+    return()
+  }
+  form = glob$staffform
+  form.vals = form.default.values(glob$staffform,values = se$sel.staff)
+  form.ui = form.ui.simple(glob$staffform, values=form.vals,add.submit = FALSE)
+
+  df = se$staff
+
+  color = ifelse(df$boss,"#ccccff", "#ffffff")
+
+  staff.table = html.table(se$staff, id="staffTable", bg.color=color,sel.row = sel.row)
+
+  tdClickHandler(id = "staffTable",auto.select = TRUE,df=se$staff, fun = function(tableId,data,...,se=app$se, app=getApp()) {
+    args = list(...)
+    restore.point("staffTableClick")
+    cat("Table ", tableId, "was clicked in row ", data$row, " and column ", data$col)
+    se$sel.staff = as.list(df[data$row,])
+    show.staff.ui(se=se, sel.row=data$row)
+    #set.current.seminar(seminar=seminar)
+  })
+
+
+  ui = tagList(
+    h4("Staff that is allowed to change seminars"),
+    HTML(staff.table),
+    actionButton("addStaffBtn","Add to Staff"),
+    actionButton("changeStaffBtn","Change Permissions"),
+    actionButton("delStaffBtn","Remove from Staff"),
+    uiOutput("staffAlert"),
+    br(),
+    form.ui
+  )
+
+  buttonHandler("addStaffBtn",add.staff.click)
+  buttonHandler("delStaffBtn",delete.staff.click)
+  buttonHandler("changeStaffBtn",change.staff.click)
+
+  clear.field.alert(id="staffAlert")
+
+  setUI("staffUI",ui)
+  evalJS("Shiny.bindAll();") # need for form to be updated
+
+}
+
+
+
+add.staff.click = function(...,se=app$se,app=getApp()) {
+
+  sres = get.form.values(app$glob$staffform)
+  restore.point("add.staff.click")
+  if (!sres$ok) {
+    show.field.alert(msg="Not all fields are correctly entered.",id="staffAlert")
+    return()
+  }
+  vals = sres$values
+  all = dbGet(se$db,"groupstaff")
+  if (vals$email %in% all$email) {
+    group.id = all$groupid[which(all$email==values$email)[1]]
+    show.field.alert(msg=paste0("The user with email ", vals$email, " is already member of the group ", group.id,". He must be first deleted before he can be added to this group."),id="staffAlert")
+    return()
+  }
+  vals$userid = vals$email
+  vals$groupid = se$groupid
+  vals$boss = FALSE
+
+  res = dbInsert(se$db,"groupstaff",vals = vals,schema = app$glob$schemas$groupstaff)
+  restore.point("add.staff.click2")
+
+  se$staff = rbind(se$staff, res$values)
+  se$sel.staff = NULL
+  show.staff.ui()
+}
+
+change.staff.click = function(...,se=app$se,app=getApp()) {
+
+  sres = get.form.values(app$glob$staffform)
+  restore.point("change.staff.click")
+  if (!sres$ok) {
+    show.field.alert(msg="Not all fields are correctly entered.",id="staffAlert")
+    return()
+  }
+  vals = sres$values
+  all = se$staff
+  row = match(vals$email, all$email)
+  if (is.na(row)) {
+    show.field.alert(msg=paste0("The user with email ", vals$email, " is not yet member of the group ", group.id,". Click the add button instead."),id="staffAlert")
+    return()
+  }
+  if (isTRUE(all$boss[row])) {
+    show.field.alert(msg=paste0("You cannot change permissions for that user."),id="staffAlert")
+    return()
+  }
+  vals$userid = vals$email
+  vals$groupid = se$groupid
+  vals$boss = all$boss[row]
+
+  res = dbInsert(se$db,"groupstaff",vals = vals,schema = app$glob$schemas$groupstaff,mode = "replace")
+  restore.point("change.staff.click2")
+
+  se$staff[row,] =res$values
+  se$sel.staff = NULL
+  show.staff.ui()
+}
+
+delete.staff.click = function(...,se=app$se,app=getApp()) {
+
+  sres = get.form.values(app$glob$staffform)
+  restore.point("change.staff.click")
+  if (!sres$ok) {
+    show.field.alert(msg="Not all fields are correctly entered.",id="staffAlert")
+    return()
+  }
+  vals = sres$values
+  all = se$staff
+  row = match(vals$email, all$email)
+  if (is.na(row)) {
+    show.field.alert(msg=paste0("The user with email ", vals$email, " is no member of the group ", group.id),id="staffAlert")
+    return()
+  }
+  if (isTRUE(all$boss[row])) {
+    show.field.alert(msg=paste0("That user cannot be deleted from the group."),id="staffAlert")
+    return()
+  }
+
+  vals$userid = vals$email
+  vals$groupid = se$groupid
+  vals$boss = all$boss[row]
+
+  res = dbDelete(se$db,"groupstaff",params=list(userid=vals$userid))
+  restore.point("change.staff.click2")
+
+  se$staff = se$staff[-row,,drop=FALSE]
+  se$sel.staff = NULL
+  show.staff.ui()
+
 }

@@ -135,7 +135,8 @@ topicpref:
     userid: VARCHAR(255)
     semester: VARCHAR(20)
     topic_ind: INTEGER
-    pos: INTEGER
+    topic_pos: INTEGER
+    points: INTEGER
   indexes:
     - "CREATE INDEX topicpref on topicpref (semester,semid,userid,topic_ind)"
     - "CREATE INDEX topicpref2 on topicpref (semid,userid,topic_ind)"

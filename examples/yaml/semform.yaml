@@ -1,10 +1,10 @@
 fields:
-  semester:
-    lang_de:
-      label: Semester in dem Seminar stattfindet
-    lang_en:
-      label: Semester in which Seminar stattfindet
-    readonly: TRUE
+#  semester:
+#    lang_de:
+#      label: Semester in dem Seminar stattfindet
+#    lang_en:
+#      label: Semester in which Seminar stattfindet
+#    readonly: TRUE
     #choice_set: semesters
   active:
     lang_de:
@@ -21,7 +21,10 @@ fields:
       choices:
         'No': FALSE
         'Yes': TRUE
-  name:
+      help: |
+        You must activate the seminar so that students can see it when they
+        state their preferences over seminars.
+  semname:
     lang_de:
       label: Titel des Seminars
       help: Geben Sie den Seminartitel ein
@@ -39,7 +42,7 @@ fields:
     lang_de:
       label: Niveau (Bachelor / Master) des Seminars
     lang_en:
-      label: Level of Seminar
+      label: Level of Seminar (Bacheler / Master)
     choice_set: semBAMA
   area:
     lang_de:
@@ -57,7 +60,10 @@ fields:
       help: Geben Sie die Anzahl der Seminarplätze ein.
     lang_en:
       label: Number of Slots
-      help: Please enter the number of seminar slots
+      help: |
+        Please enter the number of seminar slots,
+        i.e. the maximum number of students that can
+        participate in the seminar.
     numeric: TRUE
   weblink:
     lang_de:
@@ -106,6 +112,7 @@ fields:
       label: Automatically match topics
       help: |
         Do you want to use this software to automatically assign topcis?
+        This feature is not yet implemented.
       choices:
         No: FALSE
         Yes: TRUE
@@ -131,6 +138,7 @@ fields:
       label: Date of automatic topic choice
       help: |
         When should the automatic topic choice take place?
+        (Not yet implemented)
     type: date
     optional: TRUE
   latecomer_date:
@@ -149,7 +157,7 @@ fields:
       help: |
         Last date at which late comers can inscribe themselves
         to remaining seminar. If you leave the field empty,
-        late comers can not inscribe to the seminar.
+        late comers cannot inscribe to the seminar.
     type: date
     optional: TRUE
 

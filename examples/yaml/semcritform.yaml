@@ -58,7 +58,54 @@ lang_de:
 
     - Wenn Sie mehr als 10 Prioritäten nutzen möchten, drücken Sie die rechte
     Maustaste in der Tabelle um neue Zeilen im Kontextmenu hinzuzufügen.
+lang_en:
+  label: Priorities over Students
+  note_title: Info about Priorities
+  note: |
+    You can assign priority points to students that satisfy different criteria.
+    Students with more points get priority for a seminar seat.
+    For example, you could give priority to students of a particular field of
+    study.
 
+    To the priority points a random number between 0 and 10 is added, that
+    determines the complete priority of a student.
+
+    In the field `Slots` you can restrict the priority points to particular
+    seminar slots. The input format is `from:to`, e.g. `1:5` for slots 1 to 5.
+
+    ### Example
+
+    Assume you want to reserve the first 10 seminar slots for Bachelor WiWi
+    students, with specialization area "Controlling und Unternehmensführung".
+    You should create the following row in the priority table
+
+      - Points: `100`
+      - Slots: `1:10`
+      - Subject: `WiWi`
+      - Specialization: `Unternehmensführung und Controlling (BA)`
+
+    Since other students can get at most 10 points, students that satisfy
+    these criteria will always get priority on the first 10 slots.
+
+    For the remaining seminar slots, all students will be treated equally.
+
+    ### Weitere Anmerkungen
+
+    - If you create several rows that specify priority points, the points
+      of the rows will simply be added for students that satisfy the
+      criteria of multiple rows.
+
+    - You can also enter negative points to give a malus for some group.
+
+    - If there is a justified reason, you can also give a bonus or malus to
+      a single student, by entering his or her email adress.
+
+    - If you want to deactivate a priority, simple clear the field points.
+
+    - If you want to use more than 10 priority criteria add additional rows,
+      by pressing the right mouse button on the table. (Or if you are a Mac
+      user with a single mouse button, do what you usually do if somebody
+      tells you to press the right mouse button...)
 
 fields:
   points:
@@ -104,7 +151,7 @@ fields:
     lang_de:
       label: Schwerpunkt
     lang_en:
-      label: Specializ.
+      label: Specialization
     condition: >
       (studSubject == "WiWi" | studSubject2 == "WiWi"') &
       (

@@ -47,27 +47,4 @@ stop.without.error()
 
 <!-- START -->
 
-## WiWi-Seminarvergabe, Uni Ulm {{semester}} -- Ergebnis und Nachzügler
-
-Die Hauptrunden der Seminarvergabe für das {{semester}} sind abgeschlossen.
-
-#< if NROW(stud_sems) == 0
-Sie haben keinen Seminarplatz erhalten.
-#>
-#< if NROW(stud_sems) == 1
-Sie haben einen Platz in folgendem Seminar erhalten:
-#>
-#< if NROW(stud_sems) == 2
-Sie haben einen Platz in folgenden Seminaren erhalten:
-#>
-#< if NROW(stud_sems) >= 1
-```{r results = 'asis'}
-html.table(select(stud_sems, name, teacher, weblink),header = c("Seminar","Dozent","Link"))
-```
-#>
-
-#< if studmode == "latecomer"
-Unten sehen Sie noch eine Liste von Seminaren mit noch offenen Plätzen für Nachzügler.
-#>
-
-
+Die Hauptrunden der Seminarvergabe für das {{semester}} sind abgeschlossen. Im Reiter `Überblick` sehen Sie, welche Seminarplätze Sie erhalten haben.

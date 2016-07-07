@@ -1,0 +1,89 @@
+
+```{r include=FALSE}
+library(rmdtools)
+library(SeminarMatching)
+
+setwd("D:/libraries/SeminarMatching/semapps/shared/rmd")
+db.dir = paste0("../db")
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+seminars = dbGet(semdb,"seminars")
+
+
+file="studseminfo_round1_de.Rmd"
+
+cat.rmd.params(file)
+params = NULL
+#cat(paste0(names(res),"=",res, collapse=", "))
+
+today = as.Date(Sys.time())
+semester = "SS16"
+
+params = list(
+  today = today,
+  round1_date = today-1,  
+  stud_start_date = today-10,
+  round1_done_date = today-1,
+  stud.exists = TRUE,
+  round2_date = today,
+  stud_sems = seminars,
+  round2_done_date = today,
+  last_latecomer_date = today+5,
+  semester = semester
+)
+copy.into.env(params)
+.GlobalEnv$knit_print.Date = function(x,...) {
+  restore.point("whisker_print.date")
+
+  format(x, format="%a. %d.%m.%Y")
+}
+#whisker_print.data.frame = table.knit_print.data.frame
+
+view.rmd(file = file, envir=params,chunks.like.whisker=TRUE)
+
+
+stop.without.error()
+```
+
+<!-- START -->
+
+Sie können hier noch bis zum {{sem$topics_date-1}} Ihre Präferenzliste über Themen für das **Seminar {{sem$semname}}** angeben. Wählen Sie die Themen gemäß Ihrer Wunschreihenfolge aus und ändern Sie ggf. noch die Reihenfolge.
+
+**Speichern Sie dann per Knopfdruck ihre Präferenzen.**
+
+
+#< note "Details zur Themenvergabe"
+
+- Sie sollten möglichst alle Themen gemäß Ihrer Wunschreihenfolge sortieren.
+
+
+- Alle gerankten Themen werden gemäß des "Random Serial Dictorship" Mechanismus vergeben. Dies bedeutet es wird zufällig die Reihenefolge ausgelost, in der Studierende sich ihr Thema aussuchen können. Jeder Studierende erhält dann das vom ihm am stärksten gewünschte Thema, aus den verbleibenden Themen, die noch nicht an einen Studierenden weiter vorne in der Reihe vergeben wurden.
+Dies entspricht dem Studierenden-optimalen <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithmus</a>, der bei der Seminarvergabe genutzt wird, unter der Annahme dass die Themen zufällig und gleiche Präferenzen über Studierende haben.
+
+
+- Sollten Sie manche Themen nicht in Ihre Präferenzliste aufgenommen haben, und sollte kein Thema in ihrer Liste mehr frei sein, erhalten Sie ganz am Ende aus den nicht vergebenen Themen eines zufällig zugeteilt. (Wenn Sie hier, durchaus begründet, adverse Selektion befürchten, sollten sie lieber alle Themen in ihre Präferenzliste aufnehmen.)
+
+- Bei diesem Vergabenmechanismus, ist es in Ihrem besten Interesse
+(eine schwach dominante Strategie) Ihre
+Präferenzreihenfolge über die Themen
+wahrheitsgetreu anzugeben und eine vollständige Präferenzliste zu erstellen.
+
+- Dies ist anders als z. B. bei der Studienplatzvergabe der ZVS, wo es z. B. Sinn machen könnte seine zweite Wahl aus strategischen Gründen auf Platz 1 zu setzen.
+
+- Bei unserem Vergabemechanismus ist es für Sie nicht vorteilhaft, Ihre Präferenzen aus strategischen Gründen falsch anzugeben. (Der Beweis, dass dies nicht vorteilhaft ist, nimmt an, dass Sie keine kollusiven Absprachen mit ihren Kommillitonen treffen. Es ist aber nicht klar, ob und wie Sie als Gruppe den Vergabemechanismus zu ihren Vorteil manipulieren können. Sie können es aber gerne versuchen...)
+
+#> end note
+
+
+### Ausgewählte Themen, Rangfolge und Punkte
+{{uiOutput(paste0("selTopicsTableUI_",semid))}}
+
+{{actionButton(paste0("saveTopicBtn_",sem$semid),"Präferenzliste speichern")}}
+{{bsAlert(paste0("saveTopicAlert_",sem$semid))}}
+
+### Alle Seminarthemen
+
+{{uiOutput(paste0("allTopicsTableUI_",semid))}}
+
+
+
+

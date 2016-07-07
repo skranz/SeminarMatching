@@ -3,7 +3,7 @@
 library(rmdtools)
 library(SeminarMatching)
 
-setwd("D:/libraries/SeminarMatching/semedit_app/rmd")
+setwd("D:/libraries/SeminarMatching/semapps/shared/rmd")
 db.dir = paste0("../db")
 semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 seminars = dbGet(semdb,"seminars")
@@ -16,7 +16,7 @@ params = NULL
 #cat(paste0(names(res),"=",res, collapse=", "))
 
 today = as.Date(Sys.time())
-semester = "SS15"
+semester = "SS16"
 
 params = list(
   today = today,
@@ -51,11 +51,7 @@ stop.without.error()
 #< if NROW(stud_sems)>0
 Sie haben bereits einen Platz in folgendem Seminar erhalten:
 
-```{r results = 'asis', echo=FALSE}
-cat(
-  assigned.sems.table(stud_sems=stud_sems,header = c("Seminar","Dozent"), topic.header = "Thema")
-)
-```
+**{{paste0(stud_sems$semname, collape=", ")}}**
 
 Falls Sie an zwei Seminaren teilnehmen möchten, können Sie hier noch bis zum Ihre {{round2_date-1}} Präferenzen für Ihr zweites Seminar angeben.
 #>

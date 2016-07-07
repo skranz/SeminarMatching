@@ -40,7 +40,7 @@ num.prefs = NROW(df)
 num.matched = sum(df$matched)
 ```
 
-### `r seminar$name` `r semester`
+### `r seminar$semname` `r semester`
 
 This is a report for the main matching round.
 

@@ -1,0 +1,55 @@
+fields:
+  email:
+    lang_de:
+      label: Email
+      help: |
+        Emailadresse des Mitarbeiters.
+    lang_en:
+      label: Email
+      help: Email of colleague.
+  edit_sem:
+    lang_de:
+      label: Sem. bearbeiten
+      help: |
+        Mitarbeiter kann Seminare Ihrer Gruppe erstellen, verändern und löschen.
+      choices:
+        Ja: TRUE
+        Nein: FALSE
+    lang_en:
+      label: Edit Seminars
+      help: |
+        Is allowed to create, edit or delete seminars.
+      choices:
+        Yes: TRUE
+        No: FALSE
+  notify:
+    lang_de:
+      label: Nachricht
+      help: |
+        Mitarbeiter erhält Email-Nachricht, wenn Seminare bearbeitet wurden
+        oder Deadlines anstehen.
+      choices:
+        Ja: TRUE
+        Nein: FALSE
+    lang_en:
+      label: Notify
+      help: |
+        Receives email notification if a seminar of the group has been edited.
+      choices:
+        Yes: TRUE
+        No: FALSE
+  admin:
+    lang_de:
+      label: Group Admin
+      help: |
+        Admin kann hier Rechte für Mitarbeiter ihrer Gruppe bearbeiten.
+      choices:
+        Nein: FALSE
+        Ja: TRUE
+    lang_en:
+      label: Group Admin
+      help: |
+        Admin can edit here permissions for your group.
+      choices:
+        No: FALSE
+        Yes: TRUE

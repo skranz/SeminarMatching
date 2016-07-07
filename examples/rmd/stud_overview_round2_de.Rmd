@@ -61,7 +61,7 @@ Sie haben einen Platz in folgendem Seminar erhalten:
 
 ```{r results = 'asis', echo=FALSE}
 cat(
-  assigned.sems.table(stud_sems=stud_sems,header = c("Seminar","Dozent"), topic.header = "Thema")
+  assigned.sems.table(stud_sems=stud_sems,header = c("Seminar","Dozent"), topic.header = "Thema", topic.choice.label = "Thema wählen...")
 )
 ```
 

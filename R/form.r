@@ -220,6 +220,7 @@ get.form.values = function(form=get.form(),fields=form$fields,field.names=names(
     id = paste0(prefix,name,postfix)
     getInputValue(id)
   })
+  #cat("get.form.values:\n ", paste0(names(values),": ",values,collapse="\n"))
   restore.point("get.form.values")
 
 

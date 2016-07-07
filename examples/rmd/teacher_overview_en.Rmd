@@ -82,6 +82,7 @@ Today is **{{today}}**. The currently active semester for the seminar matching i
 ** WARNING: The seminar matching did not take place as scheduled. Please run the seminar matching manually **
 #>
 #>
-- From {{round1_date}} onwards: Assigned students can submit preferences over seminar topics. Each seminar instructor can decide whether topics will be assigned by this software and can set individual deadlines for the topic assignment. 
+
+- **Not yet implemented** From {{round1_date}} onwards: Assigned students can submit preferences over seminar topics. Each seminar instructor can decide whether topics will be assigned by this software and can set individual deadlines for the topic assignment. 
 
 
