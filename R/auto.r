@@ -18,6 +18,18 @@ get.current.admin = function(semester=get.default.semester(db=semdb, schemas=sch
 }
 
 examples = function() {
+  setwd("D:/libraries/SeminarMatching/semapps/shared")
+  db.dir = paste0(getwd(),"/db")
+  yaml.dir = paste0(getwd(),"/yaml")
+  n = 30
+  semester = "SS16"
+
+  delete.random.students(db.dir=db.dir, semester=semester)
+
+  res = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
+
+
+  run.seminar.tasks("round1")
   run.auto.tasks()
 }
 
@@ -29,6 +41,11 @@ run.auto.tasks = function(main.dir = getwd(), log.file=paste0(main.dir,"/log/aut
   if (is.null(admin)) return()
 
   tasks = find.auto.tasks(admin=admin, main.dir=main.dir)
+  run.seminar.tasks(tasks=tasks, admin=admin, main.dir=main.dir, log.file=log.file)
+}
+
+run.seminar.tasks = function(tasks, admin=get.current.admin(main.dir=main.dir), main.dir = getwd(), log.file=paste0(main.dir,"/log/auto_run.log")) {
+  restore.point("run.seminar.tasks")
   dirs = make.dirs(main.dir)
 
   if ("round1" %in% tasks) {

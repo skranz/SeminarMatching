@@ -9,7 +9,6 @@ examples.EditSeminarApp = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   app = EditSeminarsApp(init.userid = "test", init.password="test", lang="en")
   viewApp(app)
-
 }
 
 example.create.db = function() {
@@ -637,14 +636,23 @@ save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
 
   sres = get.form.values(glob$semform)
 
-  # We need the NULL value to return original table
-  # if there were no changes to the table
-  crit.df  = get.table.form.df(glob$semcritform, null.value = se$org.crit.df)
+
 
   restore.point("save.sem.click")
   if (!sres$ok) {
     show.field.alert(msg="Could not save, since not all fields are correctly entered.",id="editSemAlert")
     return()
+  }
+
+  # We need the NULL value to return original table
+  # if there were no changes to the table
+  crit.df  = get.table.form.df(glob$semcritform, null.value = se$org.crit.df)
+  for (r in seq_len(NROW(crit.df))) {
+    res = try(parse.semcrit.slots(crit.df$slots[r]))
+    if (is(res,"try-error")) {
+      show.field.alert(msg=paste0("Your slot definition '", crit.df$slots[r],"' in criterium row ",r," is not valid. Examples for correct definitions are '5:10' or '2,3,4,5'. Leave the field empty if the criterion shall count for all slots."), id="editSemAlert")
+      return()
+    }
   }
 
   if (is.null(cs$seminar$enabled))

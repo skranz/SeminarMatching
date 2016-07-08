@@ -166,8 +166,9 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
   se$stud = load.student.from.db(userid=userid, semester=semester,se=se)
 
   se$seminars = dbGet(se$db,"seminars",list(semester=semester,active=TRUE),schema=app$glob$schemas$seminars)
-  se$seminars = mutate(se$seminars, free_slots = slots-filled_slots)
-
+  if (NROW(se$seminars) > 0) {
+    se$seminars = mutate(se$seminars, free_slots = slots-filled_slots)
+  }
   se$studpref = dbGet(se$db,"studpref", list(userid=userid, semester=semester), schema=app$glob$schemas$studpref, orderby="pos ASC")
 
 
@@ -305,6 +306,12 @@ as.weblink = function(link, label, target=' targe="_blank"') {
 
 show.stud.sem.ui = function(se=app$se, app=getApp()) {
   restore.point("show.stud.sem.ui")
+
+  if (NROW(se$seminars)==0) {
+    setUI("studsemUI", p("No seminars registred for the current semester"))
+    return()
+  }
+
 
   compute.sem.df(se=se)
   studmode = se$studmode
