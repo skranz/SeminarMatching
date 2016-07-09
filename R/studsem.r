@@ -7,7 +7,7 @@ examples.StudSeminarsApp = function() {
 }
 
 
-StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), rmd.dir = paste0(main.dir,"/rmd"), main.dir=getwd(),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
+StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), rmd.dir = paste0(main.dir,"/rmd"), main.dir=getwd(),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, smtp=NULL, lang="en") {
   restore.point("StudSeminarsApp")
 
   library(loginPart)
@@ -98,11 +98,11 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     }
   }
 
-  lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "studMainUI")
+  lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "studMainUI", smtp=smtp)
   set.lop(lop)
   lop.connect.db(lop=lop)
   lop$login$ui = lop.login.ui(lop)
-  lop$smtp = lop.get.smtp()
+  #lop$smtp = lop.get.smtp()
 
   appInitHandler(function(session,...) {
 

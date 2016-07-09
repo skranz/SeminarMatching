@@ -11,4 +11,4 @@ LazyData: TRUE
 Depends: matchingR, stringtools, restorepoint, dplyr, codeUtils,
          shiny, shinyEvents, shinyEventsUI, shinyPart, DT, YamlObjects, hwriter,
          loginPart, shinyjs, RSQLite, DBI, dbmisc, markdown, data.table,
-         rmdtools, shinyBS
+         rmdtools, shinyBS, rhandsontable, ggplot2
