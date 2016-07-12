@@ -1,0 +1,99 @@
+
+```{r include=FALSE}
+library(rmdtools)
+library(SeminarMatching)
+
+setwd("D:/libraries/SeminarMatching/semapps/shared/rmd")
+db.dir = paste0("../db")
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+seminars = dbGet(semdb,"seminars")
+
+
+file="studseminfo_round1_de.Rmd"
+
+cat.rmd.params(file)
+params = NULL
+#cat(paste0(names(res),"=",res, collapse=", "))
+
+today = as.Date(Sys.time())
+semester = "SS16"
+
+params = list(
+  today = today,
+  round1_date = today-1,  
+  stud_start_date = today-10,
+  round1_done_date = today-1,
+  stud.exists = TRUE,
+  round2_date = today,
+  stud_sems = seminars,
+  round2_done_date = today,
+  last_latecomer_date = today+5,
+  semester = semester
+)
+copy.into.env(params)
+.GlobalEnv$knit_print.Date = function(x,...) {
+  restore.point("whisker_print.date")
+
+  format(x, format="%a. %d.%m.%Y")
+}
+#whisker_print.data.frame = table.knit_print.data.frame
+
+view.rmd(file = file, envir=params,chunks.like.whisker=TRUE)
+
+
+stop.without.error()
+```
+
+<!-- START -->
+
+### Fragen und Antworten zur Seminarplatzvergabe
+
+- F: Wie werden die Seminarplätze zugeteilt?
+  
+  - A: Die Seminarplätze werden gemäß des studentenoptimalen <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithmus</a> zugeteilt. Es ist hierbei eine dominante Strategie Ihre wahren Präferenzen über die Seminare anzugeben. Ihre Prioritäten über Seminarplätze werden zufällig bestimmt, Dozenten können aber höhere Prioritäten z. B. für Studierender gewisser Schwerpunktfächer vergeben.
+
+- F: Ich brauche unbedingt noch ein Seminar. Wie kann ich garantiert einen Seminarplatz erhalten?
+
+  - A: Sie müssen alle Seminare in Ihre Präferenzliste aufnehmen. Es gab bislang immer noch Seminare mit freien Plätzen. Sollten tatsächlich doch mal alle Seminarplätze ausgebucht sein, werden wir versuchen, die Gesamtzahl der Seminarplätze aufzustocken. Wenn Sie nicht alle Seminare in ihre Präferenzliste aufnehmen, kann es jedoch sein, dass sie keinen Seminarplatz erhalten. Je weniger Seminare Sie bereit sind zu besuchen, desto höher ist die Gefahr keinen Seminarplatz zu erhalten. 
+  
+- F: Wie kann ich garantieren mein Wunschseminar zu erhalten?
+  - A: Dies ist nicht möglich. Wenn mehr Studierende einen Seminarplatz in ihrem Wunschseminar wünschen, als dort Plätze angeboten werden, kann Ihnen dort kein Seminarplatz garantiert werden. Es kann genauso nicht garantiert werden, dass Sie einen Platz in einem ihrer Top 3, Top 5, Top 10 usw. Seminare erhalten. 
+
+- F: Habe ich eine geringere Chance mein Wunschseminar zu bekommen, wenn ich eine längere Präferenzliste angebe?
+
+  - A: Nein. Eine längere Präferenzliste reduziert nicht die Wahrscheinlichkeit eines Ihrer Wunschseminare zu bekommen. Es erhöht aber die Wahrscheinlichkeit überhaupt einen Seminarplatz zu bekommen.
+  
+- F: Kann es strategisch Sinn machen, z. B. mein zweitliebstes Seminar auf Platz 1 zu ranken, um die Chancen auf einen Seminarplatz zu erhöhen?
+
+  - A: Nein. Bei dem Studierenden-Optimalen Gale-Shapley Algorithmus ist es immer vorteilhaft ihrer Seminare gemäß ihrer wahren Präferenzen zu sortieren. Dies ist anders als, z. B. bei der Studienplatzvergabe durch die ZVS, wo es ggf. vorteilhaft sein kann, die Präferenzen strategisch falsch anzugeben. D.h. bei dem von uns verwendeten Gale-Shapley Algorithmus brauchen sie sich nicht den Kopf zerbrechen, wie hoch ihre Chancen sind jeweils einen Seminarplatz zu erhalten. Geben Sie einfach alle Seminare an, die sie bereit wären zu hören, und sortieren Sie die Seminare gemäß Ihrer Wunschreihenfolge: es ist mathematisch bewiesen, dass dies eine optimale Strategie ist.
+
+- F: Sollten nicht z. B. Studierende eines Schwerpunktfaches höhere Chancen haben einen Seminarplatz in Ihren Schwerpunkt zu erhalten?
+
+  - A: Dozenten können, soweit inhaltlich gerechtfertigt, solche Prioritäten vergeben. Dies hat aber keinen Einfluss auf die Gestaltung Ihrer Präferenzliste. Hier ist es stets optimal Ihre wahren Präferenzen über die Seminare anzugeben, unabhängig davon ob sie ggf. bei einem Seminar höhere Priorität haben.
+  
+- F: Sieht der Dozent auf welchen Platz ich sein Seminar gerankt habe?
+
+  - A: Ein Dozent erfährt nicht, wie sie persönlich sein Seminar gerankt haben. 
+
+- F: Wann sehe ich ob und welchen Seminarplatz ich erhalten habe?
+
+  - A: Die Hauptrunde der Seminarzuteilung erfolgt automatisch in der Nacht des {{round1_date}}. Sie sehen hiernach ob und welchen Seminarplatz Sie erhalten haben.
+  
+- F: Was ist wenn ich an zwei Seminaren teilnehmen möchte?
+
+  - A: In der Hauptvergaberunde erhält jeder Studierender max. einen Seminarplatz. Falls Sie an zwei Seminaren teilnehmen möchten, können Sie vom {{round1_date}} bis zum  {{round2_date-1}} ihre Präferenzen für den zweiten Seminarplatz angeben. Am {{round2_date}} findet die zweite automatische Vergaberunde statt, in der nicht vergebene Seminarplätze vergeben werden.
+  
+- F: Was ist wenn ich doch nicht an dem mir zugeteilten Seminar teilnehmen möchte?
+
+  - A: Bitte geben Sie nur diejenigen Seminare in Ihrer Präferenzliste an, an denen Sie teilnehmen würden. Wenn Sie einen zugeteilten Seminarplatz später absagen, ist dies sehr unsoziales Verhalten gegenüber Ihren Kommillitonen, denen Sie einen Seminarplatz weggenommen haben. Wir prüfen inwiefern eine unbegründete Absage auch zu einem formalen Malus, ggf. in der Form geringerer Priorität bei zukünftiger Seminarvergabe führen kann.
+  
+- F: Was ist wenn ich den Termin der Seminarvergabe verpasst habe und hier nicht rechtzeitig meine Präferenzliste eingetragen habe?
+
+  - A: Ziel der zentralisierten Seminarvergabe ist die Seminarplätze auf faire und effiziente Art und Weise zu verteilen. Hierfür ist es allerdings notwendig, dass Sie Ihre Seminarpräferenzen bis zum Stichtag eintragen. Falls die zweite Vergaberunde noch nicht stattgefunden hat, können Sie sich hier noch für einen verbliebenen Platz bewerben. Wenn die zweite Vergaberunde auch vorbei ist, haben sie leider endgültig die Seminarplatzvergabe dieses Semester verpasst.
+
+- F: Wie werden die Seminarthemen vergeben?
+  - A: Die Vergabe der Seminarthemen erfolgt noch dezentral durch die jeweiligen Dozenten.
+
+- F: Meine Präferenzen über die Seminare hängen aber davon ab, welche Themen ich jeweils in den Seminaren erhalten würde...
+  - A: Aus logistischen Gründen, haben wir uns gegen eine gleichzeitige Zuteilung von Seminaren und Themen entschieden. Sonst müssten beispielsweise alle Studierenden ihre Präferenzen über alle Themen von allen Seminaren angeben, was sehr aufwendig wäre. Deshalb müssen Sie zunächst Präferenzen über Seminare abgeben ohne ihr später zugeteiltes Thema genau zu kennen. Dies ist aber üblich bei Seminarplatzvergaben.
+

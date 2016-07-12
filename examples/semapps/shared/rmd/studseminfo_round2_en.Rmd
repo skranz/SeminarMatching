@@ -9,7 +9,7 @@ semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 seminars = dbGet(semdb,"seminars")
 
 
-file="studseminfo_round1_de.Rmd"
+file="studseminfo_round1_en.Rmd"
 
 cat.rmd.params(file)
 params = NULL
@@ -46,29 +46,38 @@ stop.without.error()
 
 <!-- START -->
 
-### Seminarauswahl Hauptrunde
 
-Sie können hier noch bis zum {{round1_date-1}} Ihre Präferenzliste über Seminare angeben. Wählen Sie bitte aus der Liste aller Seminare diejenigen und nur diejenigen Seminare aus, an denen Sie teilnehmen würden, wenn Sie einen Platz erhalten.
+### Seminar Selection 2nd Round
 
-Sortieren Sie dann die ausgewählten Seminare gemäß Ihrer Wunschreihenfolge
-(bevorzugte Seminare weiter oben) und **speichern Sie dann per Knopfdruck ihre Präferenzen**.
+#< if NROW(stud_sems)>0
+You already got a slot in the following seminar:
 
-{{actionButton("saveStudprefBtn","Präferenzliste speichern")}}
+**{{paste0(stud_sems$semname, collape=", ")}}**
+
+If you want to participate in 2 seminars, you can enter here your preferences for a second seminar until {{round2_date-1}}.
+#>
+
+#< if NROW(stud_sems)==0
+You did not get a seminar slot in the main matching round. You can here enter preferences for the second matching round until {{round2_date-1}}.
+#>
+
+Pick and sort the selected seminars according to your preferences (more prefered seminars on top) and **Save your preferences by pressing the button**.
+
+{{actionButton("saveStudprefBtn","Save seminar preferences")}}
               
 {{uiOutput("studSemAlert")}}
 
-### Ausgewählten Seminare und Rangfolge
+### Selected Seminars and Preference Order
 
 {{uiOutput("selSemUI")}}
 
-### Alle angebotenen Seminare
+### All seminars
 
 {{uiOutput("allSemUI")}}
 
-Kurzanleitung:
+Short manual:
 
-+ Klicken Sie auf den "+" Knopf um ein Seminar aus der Liste aller Seminare auszuwählen.
-+ Mit dem "x" Knopf können Sie ein ausgewähltes Seminar wieder entfernen.
-+ Mit den Pfeilknöpfen, können Sie die Reihenfolge der Seminare in Ihrer Präferenzliste ändern.
-+ Drücken Sie auf den Knopf "Präferenzliste speichern" um Ihre Seminarpräferenzen abzuspeichern.
-
++ Press the "+" button to select a seminar from the list of all seminars
++ Press the "x" button to remove a selected seminar.
++ Use the arrow buttons to change your preference order over selected seminars.
++ Press the "Save seminar preferences" button to save your preference list.

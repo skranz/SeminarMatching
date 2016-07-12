@@ -50,4 +50,4 @@ stop.without.error()
 
 <!-- START -->
 
-Die Seminarwahl für das {{semester}} wird erst am **{{stud_start_date}} freigegeben**.
+The seminar choice for {{semester}} will be available from **{{stud_start_date}}**.

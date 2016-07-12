@@ -1,0 +1,97 @@
+
+```{r include=FALSE}
+library(rmdtools)
+library(SeminarMatching)
+
+setwd("D:/libraries/SeminarMatching/semapps/shared/rmd")
+db.dir = paste0("../db")
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+seminars = dbGet(semdb,"seminars")
+
+
+file="studseminfo_round1_de.Rmd"
+
+cat.rmd.params(file)
+params = NULL
+#cat(paste0(names(res),"=",res, collapse=", "))
+
+today = as.Date(Sys.time())
+semester = "SS16"
+
+params = list(
+  today = today,
+  round1_date = today-1,  
+  stud_start_date = today-10,
+  round1_done_date = today-1,
+  stud.exists = TRUE,
+  round2_date = today,
+  stud_sems = seminars,
+  round2_done_date = today,
+  last_latecomer_date = today+5,
+  semester = semester
+)
+copy.into.env(params)
+.GlobalEnv$knit_print.Date = function(x,...) {
+  restore.point("whisker_print.date")
+
+  format(x, format="%a. %d.%m.%Y")
+}
+#whisker_print.data.frame = table.knit_print.data.frame
+
+view.rmd(file = file, envir=params,chunks.like.whisker=TRUE)
+
+
+stop.without.error()
+```
+
+<!-- START -->
+
+### Questions and answers concerning the seminar matching
+
+- F: How will the seminar slots be assigned?
+  
+  - A: Seminar slots are assigned with the student optimal <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithm</a>. With this algorithm it is an optimal strategy for you, to state your true preferences over seminars. Your priorities over seminar slots will be randomly assigned. Lecturers can set higher priorities e.g. for students with particular fields of specialization.
+
+
+- F: How can I guarantee to get a seminar slot in some seminar?
+
+  - A: To guarantee a seminar slot, you have to add all seminars in your preference list. So far, there have always been seminars with free slots remaining. Should it be the case that all seminars are filled, we will try to increase the number of seminar slots. If you don't add all seminars to your preference list, it can be that you won't get a seminar slot. The fewer seminars you are willing to participate the higher the risk that you don't get a seminar slot.
+
+- F: Can I guarantee to get a slot of one of my topped ranked seminar?
+  - A: There is no such guarantee. If more students want your topped ranked seminars than there a slots, not everybody can get a seminar slot.
+
+- F: Are my chances to get my favorite seminar reduced if I add more seminars to my preference list?
+
+  - A: No. A longer preference list does not reduce your probability to get a seminar at the top of your list. A longer list just increases your probability to get some seminar. 
+  
+- F: Could it be strategically advantageous, e.g. to rank my second most desired seminar on position 1?
+  - A: No. Given that we use the student-optimal Gale-Shapley Algorithmn it is always beneficial to state your true preferences over seminars.
+
+- F: Wouldn't it be fair if students with some specialization have a higher chance to get a seminar in their field of specialization.
+
+  - A: If justified, lectures can give priorities to students of some specialization.
+  
+- F: Does a lecturer see how I have ranked his seminar?
+
+  - A: No.
+
+- F: When do I know the result of the seminar assignment?
+
+  - A: The main round of the seminar matching takes place on {{round1_date}}.
+  
+- F: What if I want to participate in 2 seminars?
+  - A: In the main matching round, each student gets at most one seminar slot. If you want to participate in two seminars, können Sie vom {{round1_date}} bis zum  {{round2_date-1}} ihre Präferenzen für den zweiten Seminarplatz angeben. Am {{round2_date}} findet die zweite automatische Vergaberunde statt, in der nicht vergebene Seminarplätze vergeben werden.
+  
+- F: Was ist wenn ich doch nicht an dem mir zugeteilten Seminar teilnehmen möchte?
+
+  - A: Bitte geben Sie nur diejenigen Seminare in Ihrer Präferenzliste an, an denen Sie teilnehmen würden. Wenn Sie einen zugeteilten Seminarplatz später absagen, ist dies sehr unsoziales Verhalten gegenüber Ihren Kommillitonen, denen Sie einen Seminarplatz weggenommen haben. Wir prüfen inwiefern eine unbegründete Absage auch zu einem formalen Malus, ggf. in der Form geringerer Priorität bei zukünftiger Seminarvergabe führen kann.
+  
+- F: Was ist wenn ich den Termin der Seminarvergabe verpasst habe und hier nicht rechtzeitig meine Präferenzliste eingetragen habe?
+
+  - A: Ziel der zentralisierten Seminarvergabe ist die Seminarplätze auf faire und effiziente Art und Weise zu verteilen. Hierfür ist es allerdings notwendig, dass Sie Ihre Seminarpräferenzen bis zum Stichtag eintragen. Falls die zweite Vergaberunde noch nicht stattgefunden hat, können Sie sich hier noch für einen verbliebenen Platz bewerben. Wenn die zweite Vergaberunde auch vorbei ist, haben sie leider endgültig die Seminarplatzvergabe dieses Semester verpasst.
+
+- F: Wie werden die Seminarthemen vergeben?
+  - A: Die Vergabe der Seminarthemen erfolgt noch dezentral durch die jeweiligen Dozenten.
+
+- F: Meine Präferenzen über die Seminare hängen aber davon ab, welche Themen ich jeweils in den Seminaren erhalten würde...
+  - A: Aus logistischen Gründen, haben wir uns gegen eine gleichzeitige Zuordnung von Seminaren und Themen entschieden. Sonst müssten beispielsweise alle Studierenden ihre Präferenzen über alle Themen von allen Seminaren angeben, was sehr aufwendig wäre. Deshalb müssen Sie zunächst Präferenzen über Seminare abgeben ohne ihr später zugeteiltes Thema genau zu kennen. Dies ist aber üblich bei Seminarplatzvergaben.

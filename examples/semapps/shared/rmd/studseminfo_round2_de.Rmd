@@ -68,42 +68,24 @@ Wählen Sie bitte aus der Liste aller Seminare diejenigen und nur diejenigen Sem
 Sortieren Sie dann die ausgewählten Seminare gemäß Ihrer Wunschreihenfolge
 (bevorzugte Seminare weiter oben) und **speichern Sie dann per Knopfdruck ihre Präferenzen**.
 
+{{actionButton("saveStudprefBtn","Präferenzliste speichern")}}
 
-#< note "Details zur Seminarplatzvergabe (2. Runde)"
-- In der zweiten Runde werden restliche Seminarplätze vergeben, die in der ersten Runde noch nicht aufgefüllt wurden.
+{{actionButton("copyStudprefBtn","Präferenzliste aus Hauptrunde übernehmen")}}
 
-- Eine Teilnahme macht im Prinzip nur Sinn, wenn Sie an 2 Seminaren dieses Semester teilnehmen möchten. Sie können kein besseres Seminar als in der 1. Runde erhalten.
+              
+{{uiOutput("studSemAlert")}}
 
-- Sie können so viele Seminare in Ihre Präferenzliste aufnehmen, wie Sie möchten. Sie bekommen in jeder Vergaberunde maximal einen Seminarplatz hieraus zugeteilt.
-
-- Sie sollten alle Seminare und nur diese Seminare aufnehmen, an denen Sie wirklich teilnehmen würden, wenn Sie einen Seminarplatz erhalten.
-
-- Wenn Sie einen Seminarplatz erhalten und später doch nicht teilnehmen, können Sie ggf. einen Malus bei zukünftigen Seminarvergaben erhalten.
-
-- Die Seminarplätze werden gemäß des studentenoptimalen <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithmus</a> zugeteilt.
-
-- Dies bedeutet, es ist in Ihrem besten Interesse
-(eine schwach dominante Strategie) Ihre
-Präferenzreihenfolge über die Seminare
-wahrheitsgetreu anzugeben.
-
-- Dies ist anders als z. B. bei der Studienplatzvergabe der ZVS, wo es z. B. Sinn machen könnte seine zweite Wahl aus strategischen Gründen auf Platz 1 zu setzen.
-
-- Bei unserem Vergabemechanismus ist für Sie niemals vorteilhaft, Ihre Präferenzen aus strategischen Gründen falsch anzugeben.
-#> end note
-
-
-### Ausgewählten Seminare und Rangfolge (Runde 2)
+### Ausgewählten Seminare und Rangfolge
 
 {{uiOutput("selSemUI")}}
-
-{{actionButton("saveStudprefBtn","Präferenzliste speichern")}}
-{{bsAlert("saveStudprefAlert")}}
 
 ### Alle angebotenen Seminare
 
 {{uiOutput("allSemUI")}}
 
+Kurzanleitung:
 
-
-
++ Klicken Sie auf den "+" Knopf um ein Seminar aus der Liste aller Seminare auszuwählen.
++ Mit dem "x" Knopf können Sie ein ausgewähltes Seminar wieder entfernen.
++ Mit den Pfeilknöpfen, können Sie die Reihenfolge der Seminare in Ihrer Präferenzliste ändern.
++ Drücken Sie auf den Knopf "Präferenzliste speichern" um Ihre Seminarpräferenzen abzuspeichern.

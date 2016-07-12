@@ -13,8 +13,11 @@ studtopicTab:
   de: "Themenwahl"
   en: "Topics"
 studstudTab:
-  de: "Profil"
-  en: "Profile"
+  de: "Ihre Daten"
+  en: "Your Profile"
+studhelpTab:
+  de: "Hilfe"
+  en: "Help"
 
 
 rankingSaveBtnLabel:
@@ -24,6 +27,11 @@ rankingSaveBtnLabel:
 rankingSaveSuccess:
   de: "Ihre Seminarpräferenzen wurden gespeichert."
   en: "Your seminar preferences have been saved."
+
+rankingNotYetSaved:
+  de: "*Geänderte Präferenzen noch nicht gespeichert*"
+  en: "*Changed preferences not yet saved*"
+
 
 allSemColnames:
   de: ["","","Dozent","Titel","Bereiche"]

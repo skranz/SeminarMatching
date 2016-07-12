@@ -6,16 +6,16 @@ semesters: [SS15,WS1516,SS16,WS1617,SS17,WS178,SS18,
 
 area:
  - '---'
- - 'Econ'
+ - 'Controlling'
+ - 'Economics'
  - 'Finance'
  - 'Informatik'
+ - 'Nachhaltigkeit'
+ - 'Recht'
  - 'RW & WP'
  - 'TPM'
- - 'Versicherung'
- - 'Insurance'
- - 'Management'
- - 'Controlling'
- - 'Nachhaltigkeit'
+ - 'Versicherung / Insurance'
+
 
 specBA:
  - '---'
@@ -40,8 +40,8 @@ semBAMA: ['Bachelor','Master','Bachelor & Master']
 studBAMA: ['Bachelor','Master']
 
 subjects:
-  ['WiWi','WiMa','Finance','Wi-Physik',
-   'Wi-Chemie','Nachhaltige UF', 'anderes / other']
+  ['WiWi','WiMa','Finance','NUF','Wi-Physik',
+   'Wi-Chemie', 'anderes / other']
 subjects2:
-  ['---', 'WiWi','WiMa','Finance','Wi-Physik',
-   'Wi-Chemie','Nachhaltige UF','anderes / other']
+  ['---', 'WiWi','WiMa','Finance','NUF','Wi-Physik',
+   'Wi-Chemie','anderes / other']

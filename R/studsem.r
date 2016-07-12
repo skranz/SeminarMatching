@@ -34,7 +34,7 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   rmd.names = c(
     paste0("studseminfo_",rmd.names),
     paste0("stud_overview_",rmd.names),
-    paste0("studseminfo_matchingnote"),
+    paste0("studsem_help"),
     "studtopics"
   )
 
@@ -75,15 +75,18 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     ui = tabsetPanel(
       id = "studTabsetPanel",
       tabPanel(title = app$glob$texts$studoverviewTab, value="overviewPanel", uiOutput("overviewUI")),
+      tabPanel(title = app$glob$texts$studstudTab, value="studPanel", uiOutput("studformUI")),
       tabPanel(title = app$glob$texts$studsemTab, value="semPanel", uiOutput("studsemUI")),
       tabPanel(title = app$glob$texts$studtopicTab, value="topicPanel", uiOutput("studtopicsUI")),
-      tabPanel(title = app$glob$texts$studstudTab, value="studPanel", uiOutput("studformUI"))
+      tabPanel(title = app$glob$texts$studhelpTab, value="helpPanel", uiOutput("studhelpUI"))
+
     )
     setUI("studMainUI", ui)
     show.stud.overview.ui()
     show.stud.form.ui()
     show.stud.sem.ui()
     show.stud.topics.ui()
+    show.stud.help.ui()
   }
 
   if (is.null(check.email.fun)) {
@@ -415,7 +418,7 @@ show.selsem.table = function(sel.df=se$sel.df, sel.row=NULL, app=getApp(), se=ap
     header = setdiff(header, c("joker","Joker"))
   }
 
-  html = html.table(widget.df,sel.row = sel.row, header=header, bg.color="#ffffff")
+  html = html.table(id="selSemTable",widget.df,sel.row = sel.row, header=header, bg.color="#ffffff")
 
   setUI("selSemUI",HTML(html))
 
@@ -462,7 +465,7 @@ show.sem.table = function(sem.df=se$sem.df, sel.rows=which(sem.df$selected), app
   se$sem.df = sem.df
 
   widget.df = sem.widgets.df(sem.df, cols=cols)
-  html =   html.table(widget.df,sel.row = sel.rows,header=header , bg.color="#ffffff", sel.color="#aaffaa")
+  html =   html.table(id="allSemTable",widget.df,sel.row = sel.rows,header=header , bg.color="#ffffff", sel.color="#aaffaa")
   setUI("allSemUI",HTML(html))
 }
 
@@ -507,7 +510,7 @@ updown.click = function(app=getApp(),value,row,up=TRUE,se=app$se,...) {
   sel.df$pos = rank(sel.df$pos)
   se$sel.df = sel.df
   show.selsem.table(sel.df, sel.row=new.row)
-
+  show.field.alert(msg=app$glob$texts$rankingNotYetSaved,id="studSemAlert")
 }
 
 add.seminar.click = function(row, app=getApp(),se=app$se,...) {
@@ -522,7 +525,7 @@ add.seminar.click = function(row, app=getApp(),se=app$se,...) {
 
   show.selsem.table(se=se,sel.row = NROW(se$sel.df))
   show.sem.table(se=se)
-
+  show.field.alert(msg=app$glob$texts$rankingNotYetSaved,id="studSemAlert",color = "red")
 }
 
 remove.seminar.click = function(pos,app=getApp(),se=app$se,...) {
@@ -542,6 +545,7 @@ remove.seminar.click = function(pos,app=getApp(),se=app$se,...) {
 
   show.selsem.table(se=se,sel.row = NULL)
   show.sem.table(se=se)
+  show.field.alert(msg=app$glob$texts$rankingNotYetSaved,id="studSemAlert",color = "red")
 }
 
 
@@ -555,6 +559,7 @@ joker.seminar.click = function(pos,app=getApp(),se=app$se,...) {
     se$sel.df$joker[pos] = TRUE
   }
   show.selsem.table(se=se,sel.row = NULL)
+  show.field.alert(msg=app$glob$texts$rankingNotYetSaved,id="studSemAlert",color = "red")
 }
 
 save.studpref = function(app=getApp(), se=app$se,...) {
@@ -565,11 +570,11 @@ save.studpref = function(app=getApp(), se=app$se,...) {
 
   if (NROW(se$sel.df)>0) {
     sel.df = arrange(se$sel.df,pos)
-    studpref = data_frame(semid=se$sem.df$semid[sel.df$row], userid=se$userid,semester=se$semester, pos=sel.df$pos, joker=sel.df$joker)
+    studpref = data_frame(semid=se$sem.df$semid[sel.df$row], userid=se$userid,semester=se$semester, pos=sel.df$pos, joker=sel.df$joker, round=se$admin$selection.round)
     dbInsert(se$db, "studpref",studpref, schema=app$glob$schemas$studpref)
   }
   dbCommit(se$db)
-  createAlert(app$session, "saveStudprefAlert", title=NULL, content=app$glob$texts$rankingSaveSuccess)
+  show.field.alert(msg=app$glob$texts$rankingSaveSuccess,id="studSemAlert",color="black")
 }
 
 max.date = function(vals) {
@@ -759,5 +764,14 @@ remove.topic.click = function(row,semid,app=getApp(),se=app$se,...) {
   show.sel.topics.table(semid=semid)
   show.all.topics.table(semid=semid)
 
+}
+
+
+show.stud.help.ui = function(se=app$se, app=getApp()) {
+  restore.point("show.stud.help.ui")
+  cr = app$glob$rmd.li[["studsem_help"]]
+  envir = as.environment(se$admin)
+  content = render.compiled.rmd(cr, envir=envir)
+  setUI("studhelpUI",content)
 }
 
