@@ -252,12 +252,16 @@ save.studform = function(values, app=getApp(), se=app$se,...) {
   se$stud$semester = se$semester
   se$stud$userid = se$userid
 
+  old.stud.exists = isTRUE(se[["stud.exists"]])
   dbBegin(se$db)
-  dbInsert(se$db,"students", se$stud,mode = if (isTRUE(se[["stud.exists"]]) "replace" else "insert")
+  dbInsert(se$db,"students", se$stud,mode = if (old.stud.exists) "replace" else "insert")
   dbCommit(se$db)
   se$stud.exists = TRUE
 
   show.form.alert(form=form,msg=form$texts$submitSuccess, color=NULL)
+  if (!old.stud.exists) {
+    show.stud.sem.ui(se=se)
+  }
 }
 
 show.stud.overview.ui = function(se=app$se, app=getApp()) {
@@ -308,10 +312,13 @@ show.stud.sem.ui = function(se=app$se, app=getApp()) {
   restore.point("show.stud.sem.ui")
 
   if (NROW(se$seminars)==0) {
-    setUI("studsemUI", p("No seminars registred for the current semester"))
+    setUI("studsemUI", p("No seminars registered for the current semester"))
     return()
   }
-
+  if (!isTRUE(se[["stud.exists"]])) {
+    setUI("studsemUI", p(app$glob$texts$firstEnterData))
+    return()
+  }
 
   compute.sem.df(se=se)
   studmode = se$studmode
