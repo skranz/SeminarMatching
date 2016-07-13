@@ -6,7 +6,7 @@ examples.AdminSeminarApp = function() {
 
 }
 
-AdminSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), report.dir = paste0(main.dir,"/reports"), rmd.dir =  paste0(main.dir,"/rmd"),  main.dir = getwd(),  init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Administration", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en") {
+AdminSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), report.dir = paste0(main.dir,"/reports"), rmd.dir =  paste0(main.dir,"/rmd"),  main.dir = getwd(),  init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Administration", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en", smtp=NULL) {
   restore.point("AdminSeminarsApp")
 
   library(shinyjs)
@@ -107,7 +107,7 @@ AdminSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0
   set.lop(lop)
   lop.connect.db(lop=lop)
   lop$login$ui = lop.login.ui(lop)
-  lop$smtp = lop.get.smtp()
+  lop$smtp = smtp
 
 
 
