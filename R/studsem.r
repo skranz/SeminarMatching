@@ -47,7 +47,6 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
 
   glob$opts = opts = read.yaml(file=paste0(yaml.dir,"/settings.yaml"),keep.quotes = FALSE)
   glob$use_joker = isTRUE(opts$use_joker)
-  lang = opts$start_lang
 
   texts = read.yaml(file=paste0(yaml.dir,"/texts.yaml"),keep.quotes = FALSE)
   glob$texts = lapply(texts,function(text) text[[lang]])
