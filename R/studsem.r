@@ -77,7 +77,7 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
       tabPanel(title = app$glob$texts$studoverviewTab, value="overviewPanel", uiOutput("overviewUI")),
       tabPanel(title = app$glob$texts$studstudTab, value="studPanel", uiOutput("studformUI")),
       tabPanel(title = app$glob$texts$studsemTab, value="semPanel", uiOutput("studsemUI")),
-      tabPanel(title = app$glob$texts$studtopicTab, value="topicPanel", uiOutput("studtopicsUI")),
+      #tabPanel(title = app$glob$texts$studtopicTab, value="topicPanel", uiOutput("studtopicsUI")),
       tabPanel(title = app$glob$texts$studhelpTab, value="helpPanel", uiOutput("studhelpUI"))
 
     )
@@ -251,16 +251,14 @@ save.studform = function(values, app=getApp(), se=app$se,...) {
 
   se$stud[names(values)] = values
   se$stud$semester = se$semester
-  se$stud.exists = TRUE
   se$stud$userid = se$userid
 
   dbBegin(se$db)
-  dbDelete(se$db,"students", se$stud[c("userid","semester")])
-  dbInsert(se$db,"students", se$stud)
+  dbInsert(se$db,"students", se$stud,mode = if (se$stud.exists) "replace" else "insert")
   dbCommit(se$db)
+  se$stud.exists = TRUE
 
   show.form.alert(form=form,msg=form$texts$submitSuccess, color=NULL)
-  show.stud.sem.ui(se=se)
 }
 
 show.stud.overview.ui = function(se=app$se, app=getApp()) {
