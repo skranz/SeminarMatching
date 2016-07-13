@@ -253,7 +253,7 @@ save.studform = function(values, app=getApp(), se=app$se,...) {
   se$stud$userid = se$userid
 
   dbBegin(se$db)
-  dbInsert(se$db,"students", se$stud,mode = if (se$stud.exists) "replace" else "insert")
+  dbInsert(se$db,"students", se$stud,mode = if (isTRUE(se[["stud.exists"]]) "replace" else "insert")
   dbCommit(se$db)
   se$stud.exists = TRUE
 
