@@ -30,6 +30,12 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
 
 
+  glob$fun.env = new.env()
+  fun.file = paste0(main.dir,"/r/studsem_fun.R")
+  if (file.exists(fun.file)) {
+    source(file = fun.file, glob$fun.env)
+  }
+
   rmd.names = c("pre","post","round1","round2")
   rmd.names = c(
     paste0("studseminfo_",rmd.names),
@@ -569,6 +575,18 @@ joker.seminar.click = function(pos,app=getApp(),se=app$se,...) {
 save.studpref = function(app=getApp(), se=app$se,...) {
   restore.point("save.stud.prefs")
 
+  fun.env = app$glob$fun.env
+
+  if (!is.null(fun.env$check.studsem)) {
+    check = fun.env$check.studsem(se=se, student=se$stud, sems=se$sel.df)
+  } else {
+    check = list(ok = TRUE, msg=app$glob$texts$rankingSaveSuccess)
+  }
+  if (!check$ok) {
+    show.field.alert(msg=check$msg,id="studSemAlert",color="red")
+    return()
+  }
+
   dbBegin(se$db)
   dbDelete(se$db, "studpref",list(userid=se$userid, semester=se$semester))
 
@@ -578,7 +596,7 @@ save.studpref = function(app=getApp(), se=app$se,...) {
     dbInsert(se$db, "studpref",studpref, schema=app$glob$schemas$studpref)
   }
   dbCommit(se$db)
-  show.field.alert(msg=app$glob$texts$rankingSaveSuccess,id="studSemAlert",color="black")
+  show.field.alert(msg=check$msg,id="studSemAlert",color="black")
 }
 
 max.date = function(vals) {

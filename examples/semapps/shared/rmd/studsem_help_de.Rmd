@@ -54,7 +54,7 @@ stop.without.error()
 
 - F: Ich brauche unbedingt noch ein Seminar. Wie kann ich garantiert einen Seminarplatz erhalten?
 
-  - A: Sie müssen alle Seminare in Ihre Präferenzliste aufnehmen. Es gab bislang immer noch Seminare mit freien Plätzen. Sollten tatsächlich doch mal alle Seminarplätze ausgebucht sein, werden wir versuchen, die Gesamtzahl der Seminarplätze aufzustocken. Wenn Sie nicht alle Seminare in ihre Präferenzliste aufnehmen, kann es jedoch sein, dass sie keinen Seminarplatz erhalten. Je weniger Seminare Sie bereit sind zu besuchen, desto höher ist die Gefahr keinen Seminarplatz zu erhalten. 
+  - A: Sie müssen alle Seminare ihres Niveaus (Bachelor bzw. Master) in Ihre Präferenzliste aufnehmen. Es gab bislang immer noch Bachelor und Master Seminare mit freien Plätzen. Sollten tatsächlich doch mal alle Seminarplätze ausgebucht sein, werden wir versuchen, die Gesamtzahl der Seminarplätze aufzustocken. Wenn Sie nicht alle Seminare in ihre Präferenzliste aufnehmen, kann es jedoch sein, dass sie keinen Seminarplatz erhalten. Je weniger Seminare Sie bereit sind zu besuchen, desto höher ist die Gefahr keinen Seminarplatz zu erhalten. 
   
 - F: Wie kann ich garantieren mein Wunschseminar zu erhalten?
   - A: Dies ist nicht möglich. Wenn mehr Studierende einen Seminarplatz in ihrem Wunschseminar wünschen, als dort Plätze angeboten werden, kann Ihnen dort kein Seminarplatz garantiert werden. Es kann genauso nicht garantiert werden, dass Sie einen Platz in einem ihrer Top 3, Top 5, Top 10 usw. Seminare erhalten. 

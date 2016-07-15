@@ -1,6 +1,7 @@
-start_lang: de
 use_joker: FALSE
 
 
-selSemCols: [teacher, semname, area]
-allSemCols: [teacher, semname, area]
+selSemCols: [semBAMA, teacher, semname, area]
+allSemCols: [semBAMA, teacher, semname, area]
+
+allSemSort: [semBAMA, teacher, semname]

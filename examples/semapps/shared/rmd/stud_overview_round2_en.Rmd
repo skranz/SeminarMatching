@@ -46,13 +46,12 @@ stop.without.error()
 
 <!-- START -->
 
-## WiWi-Seminarvergabe, Uni Ulm {{semester}} -- 2. Runde
+## WiWi-Seminarmatching, Ulm University {{semester}} -- 2nd Round
 
 #< if !stud.exists
-
-Bevor Sie Präferenzen über Seminare angeben können, aktualisieren und speichern Sie zunächst Ihre Hintergrunddaten im Reiter `Profil`.
-
+Please update your personal data in the tab "Your Data" before you can state your preferences over seminars.
 #>
+
 
 Die Hauptrunde der Seminarvergabe für das {{semester}} wurde am {{round1_done_date}} abgeschlossen.
 

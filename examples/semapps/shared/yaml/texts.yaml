@@ -32,11 +32,20 @@ rankingNotYetSaved:
   de: "*Geänderte Präferenzen noch nicht gespeichert*"
   en: "*Changed preferences not yet saved*"
 
+firstEnterData:
+  de: |
+    Sie müssen zunächst Ihre Hintergrunddaten speichern,
+    bzw. für dieses Semester updaten,
+    bevor Sie Ihre Seminarpräferenzen angeben können.
+  en: |
+    You must first save your personal data or update it
+    for the current semester,
+    before you can state your seminar preferences.
 
 allSemColnames:
-  de: ["","","Dozent","Titel","Bereiche"]
-  en: ["","","Lecturer","Title", "Areas"]
+  de: ["","","Niveau", "Dozent","Titel","Bereiche"]
+  en: ["","","Level", "Lecturer","Title", "Areas"]
 
 selSemColnames:
-  de: ["Pos","Joker", "","Dozent","Titel","Bereiche"]
-  en: ["Pos","Joker", "","Lecturer","Title", "Areas"]
+  de: ["Pos","Joker", "","Niveau", "Dozent","Titel","Bereiche"]
+  en: ["Pos","Joker", "","Level","Lecturer","Title", "Areas"]

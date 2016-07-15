@@ -54,4 +54,4 @@ stop.without.error()
 
 The seminar selection for {{semester}} starts on **{{stud_start_date}}**. From then **until  {{round1_date-1}}** you must enter your seminar preferences in the tab "Seminars". The automated matching then takes place on {{round1_date}} at 3:00 in the night.
 
-Sie können bereits Ihr Profil im Reiter `Profil` eingeben bzw. für dieses Semester aktualisieren.
+You can already update your personal data in the tab "Your Data" for this semester.

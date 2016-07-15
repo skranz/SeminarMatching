@@ -47,25 +47,23 @@ stop.without.error()
 
 <!-- START -->
 
-## WiWi-Seminarvergabe, Uni Ulm {{semester}}
+## WiWi-Seminarmatching, Ulm University {{semester}}
 
-Beide Runden der Seminarvergabe für das {{semester}} sind abgeschlossen.
+Both seminar matching rounds for {{semester}} are finished.
 
 #< if NROW(stud_sems) == 0
-Sie haben keinen Seminarplatz erhalten.
+You did not get a seminar slot.
 #>
 #< if NROW(stud_sems) == 1
-Sie haben einen Platz in folgendem Seminar erhalten:
+You got a slot in the following seminar:
 #>
 #< if NROW(stud_sems) == 2
-Sie haben einen Platz in folgenden Seminaren erhalten:
+You got a slot in the following seminar:
 #>
 #< if NROW(stud_sems) >= 1
 ```{r results = 'asis', echo=FALSE}
 cat(
-  assigned.sems.table(stud_sems=stud_sems,header = c("Seminar","Dozent"), topic.header = "Thema", topic.choice.label = "Thema wählen...")
+  assigned.sems.table(stud_sems=stud_sems,header = c("Seminar","Lecturer"), topic.header = "Topic", topic.choice.label = "Topic selection not active")
 )
 ```
 #>
-
-Schauen Sie im Reiter `Themen`, ob und bis wann Sie für das Seminar Präferenzen über Themen angegeben können.
