@@ -61,6 +61,10 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   glob$cur_admin = get.current.admin(main.dir=main.dir)
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
 
+  texts = read.yaml(file=paste0(yaml.dir,"/texts.yaml"),keep.quotes = FALSE)
+  glob$texts = lapply(texts,function(text) text[[lang]])
+
+
   glob$semesters.with.matchings = get.semesters.that.have.matchings(db=glob$semdb)
 
   form = load.and.init.form(file=paste0(yaml.dir,"/semform.yaml"), prefix="semform_")
@@ -162,6 +166,7 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   }
 
   lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "mainUI")
+
   lop$login$userid.label = glob$texts$useridLabel
   lop$login$password.label = glob$texts$passwordLabel
   lop$login$login.title = glob$texts$loginTitle
