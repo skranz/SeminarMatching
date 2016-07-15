@@ -312,7 +312,13 @@ show.teacher.seminars = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, d
     actionButton("createSeminarBtn","New seminar"),
     actionButton("createSeminarFromBtn","New seminar from template"),
     h5(paste0("Unactivated seminars and previous seminars (can be used as templates)")),
-    HTML(ptable)
+    HTML(ptable),
+    HTML(
+"<h5>Help</h5><ul>
+<li>Click on a seminar to select it.</li>
+<li>Only activated seminars will be later shown to students. Click on a seminar, change the field 'Active', and save changes, to activate or deactivate a seminar.</li>
+<li>To copy and adapt a selected seminar, use the button 'New seminar from template'.</li>
+</ul>")
   )
 
 
