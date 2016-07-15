@@ -304,7 +304,7 @@ assigned.sems.table = function(stud_sems=se$stud_sems,cols=c("semname","teacher"
   html.table(df,header = header,bg.color = "#ffffff")
 }
 
-as.weblink = function(link, label, target=' targe="_blank"') {
+as.weblink = function(link, label, target=' target="_blank"') {
   restore.point("as.weblink")
 
   if (length(link)==0) return(NULL)
@@ -460,11 +460,11 @@ sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
 
   btns = paste0(upBtns,downBtns,removeBtns)
 
-  # Add weblink
-  if ("semname" %in% cols & has.col(df,"weblink")) {
-    has.link = nchar(df$weblink) >0
-    df$semname[has.link] = paste0("<a href='",df$weblink,"' target = '_blank'>",df$semname,"<a>")[has.link]
-  }
+  # # Add weblink
+  # if ("semname" %in% cols & has.col(df,"weblink")) {
+  #   has.link = nchar(df$weblink) >0
+  #   df$semname[has.link] = paste0("<a href='",df$weblink,"' target = '_blank'>",df$semname,"<a>")[has.link]
+  # }
 
   if (app$glob$use_joker) {
     data.frame(Rank=rows,Joker =jokerBtns, btns,df[,cols])
@@ -493,11 +493,11 @@ sem.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
   restore.point("sem.widgets.df")
   rows = 1:NROW(df)
 
-  # Add weblink
-  if ("semname" %in% cols & has.col(df,"weblink")) {
-    has.link = nchar(df$weblink) >0
-    df$semname[has.link] = paste0("<a href='",df$weblink,"' target = '_blank'>",df$semname,"<a>")[has.link]
-  }
+  # # Add weblink
+  # if ("semname" %in% cols & has.col(df,"weblink")) {
+  #   has.link = nchar(df$weblink) >0
+  #   df$semname[has.link] = paste0("<a href='",df$weblink,"' target = '_blank'>",df$semname,"<a>")[has.link]
+  # }
 
   addBtnId = paste0("addBtn_",rows)
   addBtns = extraSmallButtonVector(id=addBtnId,label="",icon=icon("plus",lib = "glyphicon"))
