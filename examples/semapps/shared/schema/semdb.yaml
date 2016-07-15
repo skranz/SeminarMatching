@@ -105,7 +105,8 @@ semcrit:
     points: NUMERIC
     slots: TEXT
     subject: VARCHAR(255)
-    spec: VARCHAR(255)
+    specBA: VARCHAR(255)
+    specMA: VARCHAR(255)
     email: VARCHAR(255)
     points_pair_first: VARCHAR(255)
   indexes:

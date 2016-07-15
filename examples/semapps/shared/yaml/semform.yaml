@@ -73,11 +73,17 @@ fields:
     optional: TRUE
   descr:
     lang_de:
-      label: Kurzbeschreibung (Optional)
+      label: Kurze Anmerkung für Studies  (optional)
+      help: |
+        Sie können hier eine *kurze* Anmerkung für Studenten schreiben,
+        z. B. "Anrechenbar für 13b".
     lang_en:
-      label: Short description (optional)
+      label: Short note for students (optional)
+      help: |
+        You can add a *brief* note for students, e.g.
+        "Anrechenbar für 13b".
     input: ace
-    height: 100
+    height: 40
     optional: TRUE
   pairs:
     lang_de:

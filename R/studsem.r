@@ -1,13 +1,13 @@
 examples.StudSeminarsApp = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   restore.point.options(display.restore.point = FALSE)
-  app = StudSeminarsApp(init.userid = "test", init.password="test", lang="en")
+  app = StudSeminarsApp(init.userid = "test", init.password="test", lang="de", userid.label="Nutzername (Email):", password.label = "Passwort:")
   viewApp(app)
 
 }
 
 
-StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), rmd.dir = paste0(main.dir,"/rmd"), main.dir=getwd(),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, smtp=NULL, lang="en") {
+StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), rmd.dir = paste0(main.dir,"/rmd"), main.dir=getwd(),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, smtp=NULL, lang="en", userid.label="Userid (Email)", password.label = "Password") {
   restore.point("StudSeminarsApp")
 
   library(loginPart)
@@ -106,7 +106,11 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     }
   }
 
+
   lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "studMainUI", smtp=smtp)
+  lop$login$userid.label = userid.label
+  lop$login$password.label = password.label
+
   set.lop(lop)
   lop.connect.db(lop=lop)
   lop$login$ui = lop.login.ui(lop)
@@ -594,7 +598,7 @@ save.studpref = function(app=getApp(), se=app$se,...) {
   fun.env = app$glob$fun.env
 
   if (!is.null(fun.env$check.studsem)) {
-    check = fun.env$check.studsem(se=se, student=se$stud, sems=se$sel.df)
+    check = fun.env$check.studsem(se=se, student=se$stud, sems=se$sel.df, lang=app$lang)
   } else {
     check = list(ok = TRUE, msg=app$glob$texts$rankingSaveSuccess)
   }

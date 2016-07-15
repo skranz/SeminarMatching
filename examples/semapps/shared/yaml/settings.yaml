@@ -1,7 +1,7 @@
 use_joker: FALSE
 
 
-selSemCols: [semBAMA, teacher, semname, area]
-allSemCols: [semBAMA, teacher, semname, area]
+selSemCols: [semBAMA, teacher, semname, area, descr]
+allSemCols: [semBAMA, teacher, semname, area, descr]
 
 allSemSort: [semBAMA, teacher, semname]

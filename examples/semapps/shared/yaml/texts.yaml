@@ -43,9 +43,9 @@ firstEnterData:
     before you can state your seminar preferences.
 
 allSemColnames:
-  de: ["","","Niveau", "Dozent","Titel","Bereiche"]
-  en: ["","","Level", "Lecturer","Title", "Areas"]
+  de: ["","","Niveau", "Dozent","Titel","Bereiche","Anmerkung"]
+  en: ["","","Level", "Lecturer","Title", "Areas","Note"]
 
 selSemColnames:
-  de: ["Pos","Joker", "","Niveau", "Dozent","Titel","Bereiche"]
-  en: ["Pos","Joker", "","Level","Lecturer","Title", "Areas"]
+  de: ["Pos","Joker", "","Niveau", "Dozent","Titel","Bereiche","Anmerkung"]
+  en: ["Pos","Joker", "","Level","Lecturer","Title", "Areas","Note"]

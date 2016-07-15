@@ -494,6 +494,7 @@ create.seminar.click=function(se = app$se, app=getApp(),...) {
 
 create.seminar.from.click=function(cs=se$cs, se = app$se, app=getApp(),...) {
   restore.point("create.seminar.from.click")
+  if (is.null(cs)) return()
 
   cs = as.environment(as.list(cs))
   set.new.seminar(cs=cs,se=se)

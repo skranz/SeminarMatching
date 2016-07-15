@@ -1,4 +1,4 @@
-height: 200
+height: 300
 lang: de
 lang_de:
   label: Prioritäten für Studierende
@@ -13,8 +13,6 @@ lang_de:
     folgende Punkte:
 
       - Eine Zufallszahl zwischen 0 und 10.
-      - 100 Punkte wenn für das Seminar der Joker gesetzt wurde.
-        (Nur relevant falls die Jokernutzung bei der Seminarvergabe aktiviert wird.)
 
     Im Feld `Slots` können Sie die Priorität auf bestimmte Seminarplätze beschränken.
     Das Eingabefortmat ist `von:bis`, z. B. `1:5` für Plätze 1 bis 5.
@@ -82,14 +80,14 @@ lang_en:
       - Points: `100`
       - Slots: `1:10`
       - Subject: `WiWi`
-      - Specialization: `Unternehmensführung und Controlling (BA)`
+      - BA Specialization: `Unternehmensführung und Controlling (BA)`
 
     Since other students can get at most 10 points, students that satisfy
     these criteria will always get priority on the first 10 slots.
 
     For the remaining seminar slots, all students will be treated equally.
 
-    ### Weitere Anmerkungen
+    ### Further comments
 
     - If you create several rows that specify priority points, the points
       of the rows will simply be added for students that satisfy the
@@ -146,20 +144,46 @@ fields:
     choices: ['']
     choice_set: subjects
 
-  spec:
+  specBA:
     optional: TRUE
     lang_de:
-      label: Schwerpunkt
+      label: BA Schwerpunkt
     lang_en:
-      label: Specialization
+      label: BA Specialization
     condition: >
       (studSubject == "WiWi" | studSubject2 == "WiWi"') &
       (
         (studBAMA == "Bachelor" & studSpecBA == "{{spec}}") |
         (studBAMA == "Master" & (studSpecMA == "{{spec}}" | studSpecMA2 == "{{spec}}")
       )
-    choices: ['']
-    choice_set: [specBA, specMA]
+    choices:
+     - ''
+     - 'Economics (BA)'
+     - 'Finanz- und Versicherungswirtschaft (BA)'
+     - 'Informatik (BA)'
+     - 'Rechnungswesen und Wirtschaftsprüfung (BA)'
+     - 'Technologie und Prozessmanagement (BA)'
+     - 'Unternehmensführung und Controlling (BA)'
+  specMA:
+    optional: TRUE
+    lang_de:
+      label: MA Schwerpunkt
+    lang_en:
+      label: MA Specialization
+    condition: >
+      (studSubject == "WiWi" | studSubject2 == "WiWi"') &
+      (
+        (studBAMA == "Master" & (studSpecMA == "{{spec}}" | studSpecMA2 == "{{spec}}")
+      )
+    choices:
+     - ''
+     - 'Economics (MA)'
+     - 'Finanzwirtschaft (MA)'
+     - 'Informatik (MA)'
+     - 'Rechnungswesen und Wirtschaftsprüfung (MA)'
+     - 'Technologie und Prozessmanagement (MA)'
+     - 'Versicherungswirtschaft (MA)'
+     - 'Unternehmensführung und Controlling (MA)'
   #heard_sem:
   #  lang_de:
   #    label: Schon Seminar ... gehört

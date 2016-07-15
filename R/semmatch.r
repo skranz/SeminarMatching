@@ -288,6 +288,7 @@ students.satisfy.semcrit = function(sc, students, studpref, conds) {
 }
 
 parse.semcrit.slots = function(slots) {
+  slots = str.trim(slots)
   has.slots = nchar(slots)>0
 
   sv = vector("list", length(slots))
