@@ -162,6 +162,12 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   }
 
   lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "mainUI")
+  lop$login$userid.label = glob$texts$useridLabel
+  lop$login$password.label = glob$texts$passwordLabel
+  lop$login$login.title = glob$texts$loginTitle
+  lop$login$login.help = glob$texts$loginHelp
+
+
   set.lop(lop)
   lop.connect.db(lop=lop)
   lop$login$ui = lop.login.ui(lop)

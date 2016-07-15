@@ -1,7 +1,7 @@
 examples.StudSeminarsApp = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   restore.point.options(display.restore.point = FALSE)
-  app = StudSeminarsApp(init.userid = "test", init.password="test", lang="de", userid.label="Nutzername (Email):", password.label = "Passwort:")
+  app = StudSeminarsApp(init.userid = "test", init.password="test", lang="de")
   viewApp(app)
 
 }
@@ -108,8 +108,11 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
 
 
   lop = loginPart(db.arg = logindb.arg, login.fun=login.fun, check.email.fun=check.email.fun, email.text.fun = email.text.fun, app.url=app.url, app.title=app.title,init.userid=init.userid, init.password=init.password,container.id = "studMainUI", smtp=smtp)
-  lop$login$userid.label = userid.label
-  lop$login$password.label = password.label
+  lop$login$userid.label = glob$texts$useridLabel
+  lop$login$password.label = glob$texts$passwordLabel
+  lop$login$login.title = glob$texts$loginTitle
+  lop$login$login.help = glob$texts$loginHelp
+
 
   set.lop(lop)
   lop.connect.db(lop=lop)
