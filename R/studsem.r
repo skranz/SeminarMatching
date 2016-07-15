@@ -353,7 +353,7 @@ compute.sem.df = function(se=app$se, app=getApp(), opts=app$opts) {
   }
 
   sems = se$seminars
-  cols = c("semid",intersect(union(opts$selSemCols,opts$allSemCols),colnames(sems)))
+  cols = c("semid",intersect(unique(c("weblink", opts$selSemCols,opts$allSemCols)),colnames(sems)))
   sem.df = sems[,cols]
 
 
@@ -459,6 +459,13 @@ sel.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
   }
 
   btns = paste0(upBtns,downBtns,removeBtns)
+
+  # Add weblink
+  if ("semname" %in% cols & has.col(df,"weblink")) {
+    has.link = nchar(df$weblink) >0
+    df$semname[has.link] = paste0("<a href='",df$weblink,"' target = '_blank'>",df$semname,"<a>")[has.link]
+  }
+
   if (app$glob$use_joker) {
     data.frame(Rank=rows,Joker =jokerBtns, btns,df[,cols])
   } else {
@@ -474,6 +481,8 @@ show.sem.table = function(sem.df=se$sem.df, sel.rows=which(sem.df$selected), app
 
   se$sem.df = sem.df
 
+
+
   widget.df = sem.widgets.df(sem.df, cols=cols)
   html =   html.table(id="allSemTable",widget.df,sel.row = sel.rows,header=header , bg.color="#ffffff", sel.color="#aaffaa")
   setUI("allSemUI",HTML(html))
@@ -483,6 +492,13 @@ show.sem.table = function(sem.df=se$sem.df, sel.rows=which(sem.df$selected), app
 sem.widgets.df = function(df, cols=app$opts$selSemCols, app=getApp()) {
   restore.point("sem.widgets.df")
   rows = 1:NROW(df)
+
+  # Add weblink
+  if ("semname" %in% cols & has.col(df,"weblink")) {
+    has.link = nchar(df$weblink) >0
+    df$semname[has.link] = paste0("<a href='",df$weblink,"' target = '_blank'>",df$semname,"<a>")[has.link]
+  }
+
   addBtnId = paste0("addBtn_",rows)
   addBtns = extraSmallButtonVector(id=addBtnId,label="",icon=icon("plus",lib = "glyphicon"))
   addBtns[df$selected] = ""

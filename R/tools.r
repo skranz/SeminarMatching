@@ -1,3 +1,7 @@
+has.col = function(df, col) {
+  col %in% names(df)
+}
+
 replace.na = function(x, replace.value = 0) {
   x[is.na(x)] = replace.value
   x
