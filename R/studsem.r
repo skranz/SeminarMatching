@@ -378,10 +378,16 @@ compute.sem.df = function(se=app$se, app=getApp(), opts=app$opts) {
 
   if (NROW(se$studpref)>0) {
     sel.rows = match(se$studpref$semid, sem.df$semid)
-    sel.df = sem.df[sel.rows,]
-    sel.df$pos = 1:NROW(sel.df)
-    sel.df$joker = se$studpref$joker
-    sem.df$selected[sel.rows] = TRUE
+    sel.rows = na.omit(sel.rows)
+    if (length(sel.rows)>0) {
+      sel.df = sem.df[sel.rows,]
+      sel.df$pos = 1:NROW(sel.df)
+      sel.df$joker = se$studpref$joker
+      sem.df$selected[sel.rows] = TRUE
+    } else {
+      sel.rows = integer(0)
+      sel.df = sem.df[sel.rows,]
+    }
   } else {
     sel.rows = integer(0)
     sel.df = sem.df[sel.rows,]
