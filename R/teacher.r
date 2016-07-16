@@ -326,9 +326,9 @@ show.teacher.seminars = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, d
     HTML(ptable),
     HTML(
 "<h5>Help</h5><ul>
-<li>Click on a seminar to select it.</li>
-<li>Only activated seminars will be later shown to students. Click on a seminar, change the field 'Active', and save changes, to activate or deactivate a seminar.</li>
-<li>To copy and adapt a selected seminar, use the button 'New seminar from template'.</li>
+<li>Click on a seminar to select it. In the right panel you can edit it or see particpants. (Edit screen may take some time to load.) </li>
+<li>Only activated seminars will be later shown to students. To activate or deactivate a seminar, click on a seminar, change in the edit mode the field 'Active', and save changes.</li>
+<li>To create a new seminar using the selected seminar as template, use the button 'New seminar from template'.</li>
 </ul>")
   )
 
