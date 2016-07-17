@@ -1113,7 +1113,7 @@ add.staff.click = function(...,se=app$se,app=getApp()) {
   vals = sres$values
   all = dbGet(se$db,"groupstaff")
   if (vals$email %in% all$email) {
-    group.id = all$groupid[which(all$email==values$email)[1]]
+    group.id = all$groupid[which(all$email==vals$email)[1]]
     show.field.alert(msg=paste0("The user with email ", vals$email, " is already member of the group ", group.id,". He must be first deleted before he can be added to this group."),id="staffAlert")
     return()
   }
