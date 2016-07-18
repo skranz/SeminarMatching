@@ -183,6 +183,12 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
   se$seminars = dbGet(se$db,"seminars",list(semester=semester,active=TRUE),schema=app$glob$schemas$seminars)
   if (NROW(se$seminars) > 0) {
     se$seminars = mutate(se$seminars, free_slots = slots-filled_slots)
+
+    # sort seminars
+    if (!is.null(app$opts$allSemSort)) {
+      se$seminars = arrange_(se$seminars, .dots = app$opts$allSemSort)
+    }
+
   }
   se$studpref = dbGet(se$db,"studpref", list(userid=userid, semester=semester), schema=app$glob$schemas$studpref, orderby="pos ASC")
 
