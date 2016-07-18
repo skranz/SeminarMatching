@@ -1,4 +1,4 @@
-textInputVector = function(inputId, label=NULL, value="", readonly = rep(FALSE, length(inputId)), style="" ){
+textInputVector = function(inputId, label=NULL, value="", readonly = rep(FALSE, length(inputId)), style="", autocomplete = "off" ){
 #   code = paste0('
 # <div class="form-group shiny-input-container" style="',style,'">
 #   <label for="',inputId,'">',label,'</label>
@@ -7,8 +7,7 @@ textInputVector = function(inputId, label=NULL, value="", readonly = rep(FALSE, 
 #   ')
 
   code = paste0('
-  <input id="',inputId,'" type="text" style="',style,'" class="form-control" value="',value,'"', ifelse(readonly,' readonly',''),'/>
-  ')
+  <input id="',inputId,'" type="text" style="',style,'" class="form-control" value="',value,'"', ifelse(readonly,' readonly',''),' autocomplete="',autocomplete,'"/>')
 
   code
 }

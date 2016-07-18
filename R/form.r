@@ -463,7 +463,7 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
   if (input == "text") {
     if (is.null(value)) value = ""
     if (is.na(value) & na.is.empty) value= ""
-    if (widget.as.character | readonly) {
+    if (TRUE | widget.as.character | readonly) {
       res[[1]] = textInputVector(id, label=label, value=value, readonly=readonly)
       if (!widget.as.character)
         res[[1]] = HTML(res[[1]])
