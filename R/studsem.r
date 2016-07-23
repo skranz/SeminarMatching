@@ -140,7 +140,7 @@ load.student.from.db = function(userid=se$userid, semester=NULL, app=getApp(), s
   all = dbGet(se$db,"students",list(userid=userid),
     schema=app$glob$schemas$students)
 
-  if (NROW(all)==0) return(list(userid=userid, email=userid, semester=se$semester))
+  if (NROW(all)==0) return(list(userid=userid, email=userid, semester=se$semester, random_points=runif(1,0,10)))
 
   .sem = semester
   stud = filter(all, semester==.sem)
@@ -153,6 +153,20 @@ load.student.from.db = function(userid=se$userid, semester=NULL, app=getApp(), s
   sem.num = get.sem.number(all$semester)
   .sem = all$semester[which.max(sem.num)]
   stud = filter(all, semester==.sem)[1,]
+
+  # redraw random points for this semester
+
+  if (isTRUE(app$opts$random_points_negative_autocor)) {
+    # give a bonus if last time random points were below 5
+    if (stud$random_points < 5) {
+      stud$random_points = runif(1,5-stud$random_points,10)
+    # give a malus if last time random points were above 5
+    } else {
+      stud$random_points = runif(1,0,15-stud$random_points)
+    }
+  } else {
+    stud$random_points = runif(1,0,10)
+  }
 
   se$stud.exists = FALSE
   se$stud = stud
@@ -270,6 +284,7 @@ save.studform = function(values, app=getApp(), se=app$se,...) {
   se$stud[names(values)] = values
   se$stud$semester = se$semester
   se$stud$userid = se$userid
+
 
   old.stud.exists = isTRUE(se[["stud.exists"]])
   dbBegin(se$db)

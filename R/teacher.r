@@ -4,8 +4,7 @@
 # cs current seminar, detailed info on currently active seminar
 
 examples.EditSeminarApp = function() {
-  library(shinyEventsUI)
-  library(shinyAce)
+  library(SeminarMatching)
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   app = EditSeminarsApp(init.userid = "test", init.password="test", lang="en")
   viewApp(app)
@@ -36,7 +35,7 @@ get.sem.number = function(semester) {
   year
 }
 
-EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), rmd.dir =  paste0(main.dir,"/rmd"), report.dir =  paste0(main.dir,"/reports"), main.dir=getwd(),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Editor", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en", smtp=NULL) {
+EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), rmd.dir =  paste0(main.dir,"/rmd"), log.dir = paste0(main.dir,"/log"), report.dir =  paste0(main.dir,"/reports"), main.dir=getwd(),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Editor", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, lang="en", smtp=NULL) {
   restore.point("EditSeminarsApp")
 
   library(shinyjs)
@@ -57,9 +56,13 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   glob$db.dir = db.dir
   glob$rmd.dir = rmd.dir
   glob$report.dir = report.dir
+  glob$log.dir = log.dir
 
   glob$cur_admin = get.current.admin(main.dir=main.dir)
   glob$sets = read.yaml(file =paste0(yaml.dir,"/sets.yaml"), utf8 = TRUE)
+
+  glob$semcrit.conds = import.semcrit.conds(yaml.dir=yaml.dir)
+
 
   texts = read.yaml(file=paste0(yaml.dir,"/texts.yaml"),keep.quotes = FALSE)
   glob$texts = lapply(texts,function(text) text[[lang]])
@@ -246,9 +249,9 @@ teacher.main.ui = function(se) {
           uiOutput("activeSemUI"),
           div(id="semHeadDiv", style="display: none",
             radioBtnGroup("seminarBtnGroup",
-              labels=c("Edit","Participants","Topics","Reports"),
-              values=c("editsem","stud","topics","report"),
-              panes=list(c("editsemDiv","editsemHeadDiv"),"studDiv","topicsDiv","reportDiv")
+              labels=c("Edit","Priorities", "Participants","Topics","Reports"),
+              values=c("editsem","prio", "stud","topics","report"),
+              panes=list(c("editsemDiv","editsemHeadDiv"),c("prioDiv","prioHeadDiv") , "studDiv","topicsDiv","reportDiv")
             ),
             div(id="editsemHeadDiv",
               hr(style="margin: 1px;"),
@@ -256,11 +259,18 @@ teacher.main.ui = function(se) {
               bsButton("delSemBtn","Delete Seminar"),
               uiOutput("editSemAlert")
             ),
+            hidden_div(id="prioHeadDiv",
+              hr(style="margin: 0px; border-color: grey;"),
+              bsButton("savePrioBtn","Save Added Points"),
+              uiOutput("prioAlert")
+            ),
+
             hr(style="margin: 0px; padding: 0px; border-color: grey;")
           )
         ),
         content = div(id="semContentDiv",
           div(id="editsemDiv",uiOutput("editsemUI")),
+          hidden_div(id="prioDiv",uiOutput("prioUI")),
           hidden_div(id="studDiv",uiOutput("studUI")),
           hidden_div(id="topicsDiv",uiOutput("topicsUI")),
           hidden_div(id="reportDiv",uiOutput("reportUI"))
@@ -371,7 +381,7 @@ load.current.seminar = function(cs=se$cs, se=app$se, app=getApp()) {
   restore.point("load.current.seminar")
 
   # Load and adapt criteria
-  cs$semcrit = dbGet(se$db,"semcrit",list(semid=cs$semid))
+  cs$semcrit = dbGet(se$db,"semcrit",list(semid=cs$semid), schema = app$glob$schemas$semcrit)
 
   if (NROW(cs$semcrit)<10) {
     df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(cs$semcrit), semid=cs$semid)
@@ -382,7 +392,7 @@ load.current.seminar = function(cs=se$cs, se=app$se, app=getApp()) {
   # topics are currently not used
   if (FALSE) {
   # Load and adapt topics
-  cs$semtopic = dbGet(se$db,"semtopic",list(semid=cs$semid))
+  cs$semtopic = dbGet(se$db,"semtopic",list(semid=cs$semid),schema=app$glob$schemas$semtopic)
   if (NROW(cs$semtopic)<30) {
     df = empty.df.from.schema(app$glob$schemas$semtopic, 30-NROW(cs$semtopic), semid=cs$semid, semester=cs$semester, size=1, userid=NA_character_)
     cs$semtopic = rbind(cs$semtopic,df)
@@ -391,7 +401,48 @@ load.current.seminar = function(cs=se$cs, se=app$se, app=getApp()) {
   }
   # Load participants
   cs$semstuds = load.semstuds(cs=cs,se=se)
+
+  load.semprio(cs=cs, se=se)
   cs
+}
+
+load.semprio = function(cs=se$cs, se = app$se, app = getApp()) {
+  restore.point("load.semprio")
+
+  cs$studpref = dbGetMemoise(se$db, table="studpref", params=list(semid = cs$semid))
+
+  if (NROW(cs$studpref)==0) {
+    cs$prio = NULL
+    return()
+  }
+
+  all.stud = dbGetMemoise(se$db, table="students", params = list(semester = cs$semester), schema = app$glob$schemas[["students"]])
+
+  cs$manprio = dbGet(se$db, table="manprio", params=list(semid=cs$semid),schema = app$glob$schemas[["manprio"]])
+
+  prio = left_join(select(cs$studpref,userid, pos), all.stud, by="userid")
+  if (NROW(cs$manprio)>0) {
+    prio = left_join(prio, select(cs$manprio, userid, manual_points), by="userid")
+    prio$manual_points[is.na(prio$manual_points)] = 0
+  } else {
+    prio$manual_points=0
+  }
+
+
+  u = make.seminar.slots.u(sem=cs$seminar, semcrit=cs$semcrit, students=prio, studpref=cs$studpref, base.points=0, conds=app$glob$semcrit.conds)
+  u[is.na(u)] = 0
+
+  prio$min_crit_points = rowmins::colMins(u) #- prio$random_points
+  prio$max_crit_points = rowmins::colMaxs(u)  #- prio$random_points
+
+  prio$min_points = prio$random_points+prio$manual_points + prio$min_crit_points
+  prio$max_points = prio$random_points+prio$manual_points + prio$max_crit_points
+
+  prio = arrange(prio, - max_points, - min_points)
+
+  cs$prio = prio
+
+
 }
 
 load.semstuds = function(semid=cs$semid,semtopic=cs$semtopic,db=se$db, cs=se$cs, se=app$se, app=getApp()) {
@@ -457,21 +508,21 @@ delete.seminar.click=function(cs=se$cs, se = app$se, app=getApp(),...) {
   dbBegin(se$db)
 
 
-  res = try(dbDelete(se$db,"seminars", list(semid=semid)))
+  res = try(dbDelete(se$db,"seminars", list(semid=semid),log.dir = app$glob$log.dir, user=se$user))
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when modifying database:<br> ",as.character(res))
     show.field.alert(msg=msg,id="editSemAlert")
     return()
   }
-  res = try(dbDelete(se$db,"semtopic", list(semid=semid)))
+  res = try(dbDelete(se$db,"semtopic", list(semid=semid),log.dir = app$glob$log.dir, user=se$user))
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when modifying database:<br> ",as.character(res))
     show.field.alert(msg=msg,id="editSemAlert")
     return()
   }
-  res = try(dbDelete(se$db,"semcrit", list(semid=semid)))
+  res = try(dbDelete(se$db,"semcrit", list(semid=semid),log.dir = app$glob$log.dir, user=se$user))
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when modifying database:<br> ",as.character(res))
@@ -561,6 +612,7 @@ set.current.seminar = function(seminar, se = app$se, app=getApp()) {
 
     setHtmlShow(id="semHeadDiv")
   }
+  show.sem.prio.ui(se=se,cs=cs, app=app)
   show.sem.stud.ui(se=se,cs=cs, app=app)
   show.sem.topics.ui(se=se,cs=cs, app=app)
   show.sem.report.ui(se=se,cs=cs, app=app)
@@ -685,10 +737,10 @@ save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
   # insert new seminar
 
   if (new.sem) {
-    res = try(dbInsert(se$db,"seminars",cs$seminar,mode = "insert",schema=glob$schemas$seminars,get.key=TRUE))
+    res = try(dbInsert(se$db,"seminars",cs$seminar,mode = "insert",schema=glob$schemas$seminars,get.key=TRUE, log.dir = app$glob$log.dir, user = se$user))
   # update existing seminar
   } else {
-    res = try(dbInsert(se$db,"seminars",cs$seminar,mode = "replace", schema=glob$schemas$seminars))
+    res = try(dbInsert(se$db,"seminars",cs$seminar,mode = "replace", schema=glob$schemas$seminars,log.dir = app$glob$log.dir, user=se$user))
   }
 
   if (is(res,"try-error")) {
@@ -706,7 +758,7 @@ save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
   crit.df$semester = cs$semester
 
   #Rewrite criterion table
-  res = try(dbDelete(se$db,"semcrit", list(semid=semid)))
+  res = try(dbDelete(se$db,"semcrit", list(semid=semid),log.dir = app$glob$log.dir, user=se$user))
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when updating database:<br> ",as.character(res))
@@ -714,7 +766,7 @@ save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
     return()
   }
 
-  res = try(dbInsert(se$db,"semcrit",crit.df,mode = "insert",schema=glob$schemas$semcrit))
+  res = try(dbInsert(se$db,"semcrit",crit.df,mode = "insert",schema=glob$schemas$semcrit, log.dir = app$glob$log.dir, user=se$user))
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when updating database:<br> ",as.character(res))
@@ -794,7 +846,7 @@ save.sem.topics =  function(cs=se$cs, se=app$se, app=getApp(),...) {
 
   dbBegin(se$db)
   # first delete all existing seminar topics
-  res = try(dbDelete(se$db,"semtopic", list(semid=semid)))
+  res = try(dbDelete(se$db,"semtopic", list(semid=semid),log.dir = app$glob$log.dir, user=se$user))
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when updating database:<br> ",as.character(res))
@@ -811,7 +863,7 @@ save.sem.topics =  function(cs=se$cs, se=app$se, app=getApp(),...) {
       top.df$semester = cs$semester
       top.df$size = 1
 
-      res = try(dbInsert(se$db,"semtopic",top.df,mode = "insert",schema=glob$schemas$semtopic))
+      res = try(dbInsert(se$db,"semtopic",top.df,mode = "insert",schema=glob$schemas$semtopic, log.dir = app$glob$log.dir, user=se$user))
       if (is(res,"try-error")) {
         dbRollback(se$db)
         msg = paste0("Error when updating database:<br> ",as.character(res))
@@ -924,8 +976,8 @@ add.student.to.seminar = function(email = NULL,seminar=cs$seminar, semstuds=cs$s
   )
 
   dbBegin(se$db)
-  dbInsert(se$db,"manual",manual, schema = app$glob$schemas$manual)
-  dbInsert(se$db,"assign",assign, schema = app$glob$schemas$assign)
+  dbInsert(se$db,"manual",manual, schema = app$glob$schemas$manual, log.dir = app$glob$log.dir, user=se$user)
+  dbInsert(se$db,"assign",assign, schema = app$glob$schemas$assign, log.dir = app$glob$log.dir, user=se$user)
   dbCommit(se$db)
 
   # reload form
@@ -980,8 +1032,8 @@ remove.student.from.seminar = function(email = NULL,seminar=cs$seminar, semstuds
   )
 
   dbBegin(se$db)
-  dbInsert(se$db,"manual",manual, schema = app$glob$schemas$manual)
-  dbDelete(se$db,"assign",params = list(userid=student$userid, semester=cs$semester,semid=cs$semid))
+  dbInsert(se$db,"manual",manual, schema = app$glob$schemas$manual, log.dir = app$glob$log.dir, user=se$user)
+  dbDelete(se$db,"assign",params = list(userid=student$userid, semester=cs$semester,semid=cs$semid),log.dir = app$glob$log.dir, user=se$user)
   dbCommit(se$db)
 
   # reload form
@@ -1020,6 +1072,42 @@ show.sem.report.ui =function(cs = se$cs,se = app$se, app=getApp()) {
   }
   dsetUI("reportUI",HTML(html))
   setUI("reportUI",HTML(html))
+}
+
+
+show.sem.prio.ui =function(cs = se$cs,se = app$se, app=getApp()) {
+  restore.point("show.sem.prio.ui")
+
+  df = cs$prio
+  df$Add_Points = textInputVector(inputId=paste0("manual_points_input",seq_len(NROW(cs$prio))),
+    value = cs$prio$manual_points,
+    autocomplete = "off",
+    style = "padding: 0px; margin: 0px; height: 1.2em; width: 3em",
+    size = 2
+  )
+  df$No = seq_len(NROW(df))
+  df$Points = round(df$max_points,2)
+  cols = unique(setdiff(c("No","Points", "Add_Points","name",colnames(df)),c("userid","email","semester", "pos","max_points","min_points","min_crit_points","max_crit_points","manual_points","random_points")))
+  df = df[,cols]
+  html = html.table(id = "prio_table",df,sel.row = NULL, td.padding="0px 4px 0px 4px", td.margin="1px")
+
+  ui = tagList(
+    p(HTML(paste0(
+"List of students that so far have added this seminar in their preference list (round ", se$admin$selection.round,").<br> You can add manual points and then press the button 'Save Added Points' to change your priorities over students."
+    ) )),
+    HTML(html),
+    HTML(
+"<br><h5>Remarks:</h5><ul>
+<li>The column points are the total priority points of a student, i.e. the sum of the randomly drawn points, points from the seminar criteria and your manually added points.</li>
+<li>Students with more points get higher priorities for a seminar slot. Yet, if they have ranked another seminar higher, they may still not end up in your seminar.
+<li>You don't see how students have ranked your seminar. Otherwise it may no longer be incentive compatible for students to truthfully state their seminar preferences.</li>
+<li>If your seminar bonus criteria only apply to some slots, the shown total points are a student's maximum points over all slots.</li>
+<li>You can already give manual bonus points even when not all students have yet entered their seminar preferences. Note, however, that this list of students may grow over time until the deadline for students to enter their preferences is reached.</li>
+</ul>")
+  )
+  dsetUI("prioUI",ui)
+  setUI("prioUI",ui)
+
 }
 
 
@@ -1121,7 +1209,7 @@ add.staff.click = function(...,se=app$se,app=getApp()) {
   vals$groupid = se$groupid
   vals$boss = FALSE
 
-  res = dbInsert(se$db,"groupstaff",vals = vals,schema = app$glob$schemas$groupstaff)
+  res = dbInsert(se$db,"groupstaff",vals = vals,schema = app$glob$schemas$groupstaff, log.dir = app$glob$log.dir, user=se$user)
   restore.point("add.staff.click2")
 
   se$staff = rbind(se$staff, res$values)
@@ -1152,7 +1240,7 @@ change.staff.click = function(...,se=app$se,app=getApp()) {
   vals$groupid = se$groupid
   vals$boss = all$boss[row]
 
-  res = dbInsert(se$db,"groupstaff",vals = vals,schema = app$glob$schemas$groupstaff,mode = "replace")
+  res = dbInsert(se$db,"groupstaff",vals = vals,schema = app$glob$schemas$groupstaff,mode = "replace", log.dir = app$glob$log.dir, user=se$user)
   restore.point("change.staff.click2")
 
   se$staff[row,] =res$values
@@ -1184,7 +1272,7 @@ delete.staff.click = function(...,se=app$se,app=getApp()) {
   vals$groupid = se$groupid
   vals$boss = all$boss[row]
 
-  res = dbDelete(se$db,"groupstaff",params=list(userid=vals$userid))
+  res = dbDelete(se$db,"groupstaff",params=list(userid=vals$userid), log.dir = app$glob$log.dir, user=se$user)
   restore.point("change.staff.click2")
 
   se$staff = se$staff[-row,,drop=FALSE]
@@ -1192,3 +1280,6 @@ delete.staff.click = function(...,se=app$se,app=getApp()) {
   show.staff.ui()
 
 }
+
+
+

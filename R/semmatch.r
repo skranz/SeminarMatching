@@ -3,10 +3,10 @@ examples.perform.matching = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
 
   n = 70
-  semester = "SS16"
+  semester = "SS17"
   delete.random.students(semester=semester)
   li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
-  df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,use.glob.points = 1,insert.into.db = TRUE)
+  df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,insert.into.db = !TRUE)
 
   df = df %>% arrange(num_ranked, semid)
 
@@ -16,15 +16,15 @@ examples.perform.matching = function() {
   df %>% filter(has==TRUE) %>% group_by(pos) %>% summarise(count=n())
 
 
-  analyse = function(use.glob.points=0) {
-    df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,use.glob.points = 1,insert.into.db = !TRUE, seed=seed)
+  analyse = function() {
+    df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,insert.into.db = !TRUE, seed=seed)
 
     df$has = df$semid != -1
 
     mean.share = as.numeric(df %>% filter(num_ranked==3) %>% summarise(matched=sum(has)/n()))
     mean.pos = mean(df$pos)
 
-    list(use.glob.points=use.glob.points,mean.share3=mean.share, mean.rank=mean.pos, rank1=sum(df$pos==1)/NROW(df))
+    list(mean.share3=mean.share, mean.rank=mean.pos, rank1=sum(df$pos==1)/NROW(df))
 
   }
   analyse(0.1, seed=seed)
@@ -36,7 +36,7 @@ examples.perform.matching = function() {
   res
 }
 
-perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,students=NULL, studpref=NULL, semcrit=NULL, semdb=se[["db"]], conds=glob[["conds"]], sets=glob[["sets"]], schemas=glob$schemas, se=NULL, dirs=glob, glob=getApp()$glob, yaml.dir=dirs$yaml.dir, db.dir=dirs$db.dir, schema.dir=dirs$schema.dir, reload=FALSE, seed=NULL, insert.into.db=TRUE, use.glob.points = TRUE) {
+perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,students=NULL, studpref=NULL, semcrit=NULL, semdb=se[["db"]], conds=glob[["conds"]], sets=glob[["sets"]], schemas=glob$schemas, se=NULL, dirs=glob, glob=getApp()$glob, yaml.dir=dirs$yaml.dir, db.dir=dirs$db.dir, schema.dir=dirs$schema.dir, reload=FALSE, seed=NULL, insert.into.db=TRUE) {
   restore.point("perform.matching")
 
 
@@ -87,9 +87,6 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   # matrix with total.slots rows and num.studs columns
   fixed.seu = do.call(rbind,seu.li)
 
-  if (is.null(seed)) seed = as.integer(Sys.time())
-  set.seed(seed)
-  students$glob.points = runif(NROW(students),0,10)
 
   # Random basic points for each seminar
   # Students either have a global random value
@@ -102,9 +99,7 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   # this may be beneficial.
 
 
-  sem.base.points =
-    use.glob.points*matrix(students$glob.points,num.sems,num.studs,byrow=TRUE) +
-    (1-use.glob.points)*matrix(runif(num.sems*num.studs,0,10),num.sems,num.studs)
+  sem.base.points = matrix(students$random_points,num.sems,num.studs,byrow=TRUE)
 
   sem.of.slot = unlist(lapply(1:num.sems, function(sem.pos) rep(sem.pos,seminars$slots[sem.pos])))
   slot.of.slot = unlist(lapply(1:num.sems, function(sem.pos) if (num.slots[sem.pos]>0) 1:num.slots[sem.pos] else NULL))
@@ -323,13 +318,19 @@ make.seminar.slots.u = function(sem, semcrit, students, studpref, conds, base.po
 
   points = base.points
 
+
+
   scs = filter(semcrit, semid==sem$semid)
+  if (!has.col(scs,"slot.pos")) {
+    scs$slot.pos = parse.semcrit.slots(scs$slots)
+  }
 
   scs.ind = 1
   if (NROW(scs)>0) {
     for (scs.ind in 1:NROW(scs)) {
       # Which students satisfy criterion
       sc = scs[scs.ind,]
+      if (is.na(sc$points)) next
       stud.ok = students.satisfy.semcrit(sc,students=students, studpref=studpref, conds=conds)
       if (length(sc$slot.pos)>0) {
         slot.ok = (1:num.slots) %in% sc$slot.pos[[1]]
@@ -428,6 +429,7 @@ draw.random.students = function(n=2, semester, round=1, insert.into.db=FALSE, ya
   random.stud = function(i,...) {
     restore.point("random.stud")
     stud = form.random.values(studform,sets = sets)
+    stud$random_points = runif(1,0,10)
     stud$semester = semester
     if (!counter.name) {
       name = paste0("random__", sample.int(.Machine$integer.max,1))

@@ -1,5 +1,5 @@
 
-html.table = function(df, id = random.string(), sel.row=NULL, show.header=TRUE, header=colnames(df), row.names=FALSE, border=TRUE, bg.color =c("#dddddd","#ffffff"), sel.color='#ffdc98', font.size="100%", round.digits=8, signif.digits=8,col.tooltips=NULL, ...) {
+html.table = function(df, id = random.string(), sel.row=NULL, show.header=TRUE, header=colnames(df), row.names=FALSE, border=TRUE, bg.color =c("#dddddd","#ffffff"), sel.color='#ffdc98', font.size="100%", round.digits=8, signif.digits=8,col.tooltips=NULL, td.padding = "3px 5px 3px 5px", td.margin = "2px 4px 2px 4px", ...) {
   restore.point("html.table")
   n = NROW(df)
 
@@ -48,7 +48,7 @@ html.table = function(df, id = random.string(), sel.row=NULL, show.header=TRUE, 
   tab = paste0('<table class="data-frame-table" id="',id,'">\n', head, main, "\n</table>")
 
   th.style='font-weight: bold; margin: 5px; padding: 5px; border: solid 1px black; text-align: center;'
-  td.style='font-family: Verdana,Geneva,sans-serif; margin: 2px 4px 2px 4px; padding: 3px 5px 3px 5px; border: solid 1px black; text-align: left;'
+  td.style= paste0('font-family: Verdana,Geneva,sans-serif;  margin: ', td.margin, '; padding: ', td.padding,'; border: solid 1px black; text-align: left;')
 
   if (!is.null(font.size)) {
     th.style = paste0(th.style, "font-size: ", font.size,";")
@@ -81,7 +81,7 @@ html.table = function(df, id = random.string(), sel.row=NULL, show.header=TRUE, 
 #' @param id id of the HTML img object
 #' @param fun the handler fun that will be called when the image is clicked
 #' @param ... additional arguments passed to the handler fun
-tdClickHandler = function(id=NULL, fun, ..., eventId=if(stop.propagation) "tdClickEvent" else "tdClickEventWithPropagation", css.selector=".data-frame-td", app=getApp(),no.authentication.required=FALSE, stop.propagation=TRUE, auto.select = FALSE, remove.sel.row.selector=NULL) {
+tdClickHandler = function(id=NULL, fun, ..., eventId=if(stop.propagation) "tdClickEvent" else "tdClickEventWithPropagation", css.selector=paste0("#",id, " td.data-frame-td"), app=getApp(),no.authentication.required=FALSE, stop.propagation=TRUE, auto.select = FALSE, remove.sel.row.selector=NULL) {
   restore.point("tdClickHandler")
 
   sp = if (stop.propagation) "e.stopPropagation();" else ""
