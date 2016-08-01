@@ -249,9 +249,15 @@ teacher.main.ui = function(se) {
           uiOutput("activeSemUI"),
           div(id="semHeadDiv", style="display: none",
             radioBtnGroup("seminarBtnGroup",
-              labels=c("Edit","Priorities", "Participants","Topics","Reports"),
-              values=c("editsem","prio", "stud","topics","report"),
-              panes=list(c("editsemDiv","editsemHeadDiv"),c("prioDiv","prioHeadDiv") , "studDiv","topicsDiv","reportDiv")
+              labels=c("Edit",
+                #"Priorities",
+                "Participants","Topics","Reports"),
+              values=c("editsem",
+                #"prio",
+                "stud","topics","report"),
+              panes=list(c("editsemDiv","editsemHeadDiv"),
+                #c("prioDiv","prioHeadDiv"),
+                "studDiv","topicsDiv","reportDiv")
             ),
             div(id="editsemHeadDiv",
               hr(style="margin: 1px;"),
@@ -259,18 +265,18 @@ teacher.main.ui = function(se) {
               bsButton("delSemBtn","Delete Seminar"),
               uiOutput("editSemAlert")
             ),
-            hidden_div(id="prioHeadDiv",
-              hr(style="margin: 0px; border-color: grey;"),
-              bsButton("savePrioBtn","Save Added Points"),
-              uiOutput("prioAlert")
-            ),
+            # hidden_div(id="prioHeadDiv",
+            #   hr(style="margin: 0px; border-color: grey;"),
+            #   bsButton("savePrioBtn","Save Added Points"),
+            #   uiOutput("prioAlert")
+            # ),
 
             hr(style="margin: 0px; padding: 0px; border-color: grey;")
           )
         ),
         content = div(id="semContentDiv",
           div(id="editsemDiv",uiOutput("editsemUI")),
-          hidden_div(id="prioDiv",uiOutput("prioUI")),
+#          hidden_div(id="prioDiv",uiOutput("prioUI")),
           hidden_div(id="studDiv",uiOutput("studUI")),
           hidden_div(id="topicsDiv",uiOutput("topicsUI")),
           hidden_div(id="reportDiv",uiOutput("reportUI"))
@@ -402,7 +408,7 @@ load.current.seminar = function(cs=se$cs, se=app$se, app=getApp()) {
   # Load participants
   cs$semstuds = load.semstuds(cs=cs,se=se)
 
-  load.semprio(cs=cs, se=se)
+  #load.semprio(cs=cs, se=se)
   cs
 }
 
@@ -612,7 +618,7 @@ set.current.seminar = function(seminar, se = app$se, app=getApp()) {
 
     setHtmlShow(id="semHeadDiv")
   }
-  show.sem.prio.ui(se=se,cs=cs, app=app)
+  #show.sem.prio.ui(se=se,cs=cs, app=app)
   show.sem.stud.ui(se=se,cs=cs, app=app)
   show.sem.topics.ui(se=se,cs=cs, app=app)
   show.sem.report.ui(se=se,cs=cs, app=app)
