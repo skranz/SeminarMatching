@@ -3,7 +3,8 @@ examples.perform.matching = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
 
   n = 70
-  semester = "SS17"
+  semester = "SS16"
+  delete.seminar.matching(semester=semester)
   delete.random.students(semester=semester)
   li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
   df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,insert.into.db = !TRUE)
@@ -86,20 +87,13 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
 
   # matrix with total.slots rows and num.studs columns
   fixed.seu = do.call(rbind,seu.li)
+  fixed.seu[is.na(fixed.seu)] = 0
 
 
-  # Random basic points for each seminar
-  # Students either have a global random value
-  # or we draw the value separately for each seminar
-  # Global values are more likely to be pareto-efficient
-  # but separate values benefit students who rank many
-  # seminars compared to those that rank a few.
-  # Assuming that students who rank many seminars
-  # have higher utility from getting a seminar slot,
-  # this may be beneficial.
-
-
+  # Take global random points that were drawn for
+  # each student for this semester
   sem.base.points = matrix(students$random_points,num.sems,num.studs,byrow=TRUE)
+  sem.base.points[is.na(sem.base.points)] = 0
 
   sem.of.slot = unlist(lapply(1:num.sems, function(sem.pos) rep(sem.pos,seminars$slots[sem.pos])))
   slot.of.slot = unlist(lapply(1:num.sems, function(sem.pos) if (num.slots[sem.pos]>0) 1:num.slots[sem.pos] else NULL))
@@ -118,8 +112,6 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   seu = rbind(seu, empty.sem)
   random.seu = rbind(random.seu, empty.sem)
   fixed.seu = seu-random.seu
-
-
 
   # create student utility over seminars
   studpref$pos.points = (num.sems+1 - studpref$pos)
@@ -149,8 +141,6 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   # we can now perform the matching with
   # stu (students' utility over seminar slots) and
   # seu (seminar slots utility over students)
-
-
   gs = galeShapley.marriageMarket(proposerUtils = t(stu),reviewerUtils = t(seu))
 
   # The matched seminars for each student are in
@@ -186,6 +176,8 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   # store the number of ranked seminars
   mr = group_by(studpref,userid) %>% summarise(num_ranked = max(pos))
   df = left_join(df,mr,by=c("userid"))
+  df$num_ranked[is.na(df$num_ranked)] = 0
+
 
   # set the rank for non-matched students to num_ranked+1
   rows = is.na(df$pos)
@@ -473,4 +465,30 @@ draw.random.students = function(n=2, semester, round=1, insert.into.db=FALSE, ya
   invisible(list(students = studs, studpref=studpref))
 }
 
+delete.seminar.matching = function(semdb=NULL,semester, round=1,schemas, db.dir=NULL, schema.dir=NULL,...) {
+  restore.point("delete.seminar.matching")
+
+  if (is.null(db.dir)) db.dir = "./db"
+  if (is.null(semdb))
+    semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+
+  seed = NA
+  dbWithTransaction(semdb,{
+    if (round==1) {
+      # delete also later matching rounds
+      dbDelete(semdb,"matchings",nlist(semester))
+      dbDelete(semdb,"assign",nlist(semester, assign_method="r1"))
+      dbDelete(semdb,"assign",nlist(semester, assign_method="r2"))
+
+      dbUpdate(semdb,"admin",list(rounds_done=0, round1_seed=NA, round1_done_date=NA,round2_seed=NA, round2_done_date=NA), where=nlist(semester))
+    } else if (round==2) {
+      dbDelete(semdb,"matchings",nlist(semester,round))
+      dbDelete(semdb,"assign",nlist(semester, assign_method="r2"))
+      dbUpdate(semdb,"admin",list(rounds_done=1, round2_seed=NA, round2_done_date=NA), where=nlist(semester))
+    } else {
+      stop("round must be 1 or 2")
+    }
+  })
+  invisible()
+}
 

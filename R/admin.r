@@ -16,6 +16,7 @@ AdminSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0
 
   app = eventsApp()
 
+  .GlobalEnv$knit_print.Date = function(x,...) {format(x, format="%a. %d.%m.%Y")}
   glob = app$glob
 
   glob$schemas = load.and.init.schemas(paste0(schema.dir, "/semdb.yaml"))
@@ -204,7 +205,9 @@ save.admin.form = function(values, app=getApp(), se=app$se,...) {
 show.admin.sems = function(se=app$se, app=getApp()) {
   restore.point("show.admin.sems")
 
-  se$asems = filter(se$seminars,active==TRUE)
+  se$asems = filter(se$seminars,active==TRUE) %>%
+    arrange(semBAMA,groupid,teacher,semname) %>%
+    select(semBAMA, groupid, everything())
   df = se$asems
 
   if (NROW(df)>0) {
@@ -214,10 +217,10 @@ show.admin.sems = function(se=app$se, app=getApp()) {
       endisLabel = ifelse (df$enabled, "disable", "enable")
 
       endisBtns = extraSmallButtonVector(id=endisBtnId,label=endisLabel)
-      cols = intersect(colnames(df), c("groupid","name","teacher","semBAMA","area","weblink"))
+      cols = intersect(colnames(df), c("groupid","semname","teacher","semBAMA","area","weblink"))
       wdf = data.frame(action=endisBtns,df[,cols])
     } else {
-      cols = intersect(colnames(df), c("groupid","name","teacher","semBAMA","area","weblink"))
+      cols = intersect(colnames(df), c("groupid","semname","teacher","semBAMA","area","weblink"))
       wdf = data.frame(df[,cols])
     }
     html = html.table(wdf, sel.col="#aaaaaa",bg.col="#ffffff")
@@ -227,7 +230,7 @@ show.admin.sems = function(se=app$se, app=getApp()) {
   }
 
   ui = fluidRow(column(offset=1, width=10,
-    h4(paste0("Seminars for ", se$semester)),
+    h4(paste0("Activated seminars for ", se$semester)),
     HTML(html)
   ))
   setUI("semAdminSemUI", ui)
@@ -316,7 +319,7 @@ init.se.admin = function(admin) {
 do.matching.click = function(app=getApp(),se=app$se, round=1,...) {
   restore.point("do.matching.click")
 
-  perform.matching(semester=se$semester,use.glob.points = 1,insert.into.db = TRUE, round=round)
+  perform.matching(semester=se$semester,insert.into.db = TRUE, round=round)
   load.admin.data.from.db(se = se)
   show.admin.matching(se=se)
 }
