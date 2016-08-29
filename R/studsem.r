@@ -230,6 +230,9 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
   }
 
   semids = se$stud_sems$semid
+
+  # ignore topics (not yet implemented)
+  if (FALSE) {
   se$semtopics = lapply(semids, function(semid) {
     df = dbGet(se$db,"semtopic", nlist(semester,semid))
     df$topic_pos = rep(NA, NROW(df))
@@ -250,7 +253,7 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
     df
   })
   names(se$seltopics) = as.character(semids)
-
+  }
 
   se
 }
