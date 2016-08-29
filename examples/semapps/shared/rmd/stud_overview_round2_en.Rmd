@@ -53,26 +53,24 @@ Please update your personal data in the tab "Your Data" before you can state you
 #>
 
 
-Die Hauptrunde der Seminarvergabe für das {{semester}} wurde am {{round1_done_date}} abgeschlossen.
+The main round for the seminar matching in the semester {{semester}} was conducted at the {{round1_done_date}}.
 
 #< if NROW(stud_sems)>0
-Sie haben einen Platz in folgendem Seminar erhalten:
+You got a seat in the following seminar:
 
 ```{r results = 'asis', echo=FALSE}
 cat(
-  assigned.sems.table(stud_sems=stud_sems,header = c("Seminar","Dozent"), topic.header = "Thema", topic.choice.label = "Thema wählen...")
+  assigned.sems.table(stud_sems=stud_sems,header = c("Seminar","Lecturer"), topic.header = "Topic", topic.choice.label = "Choose topic...")
 )
 ```
 
-Schauen Sie im Reiter `Themen`, ob und bis wann Sie für das Seminar Präferenzen über Themen angegeben können.
-
-Falls Sie an zwei Seminaren teilnehmen möchten, können Sie hier noch bis zum {{round2_date-1}} Präferenzen für Ihr zweites Seminar angeben. Die zentrale zweite Runde der Seminarplatzverteilung findet dann am {{round2_date}} statt.
+If you want to participate in two semianrs, you can enter until the {{round2_date-1}} preferences for your second seminar. The second round of seminar matching takes place on {{round2_date}}.
 #>
 
 #< if NROW(stud_sems)==0
-Sie haben leider in der ersten Runde keinen Seminarplatz erhalten.
+You did not get a seat in a seminar in the first round.
 
-Sie hier noch bis zum {{round2_date-1}} im Reiter `Seminarwahl` Präferenzen für die zweite Vergaberunde angeben. Die zentrale zweite Runde der Seminarplatzverteilung findet dann am {{round2_date}} statt.
+Until the {{round2_date-1}} you can enter preferences for the second round of the seminar matching. The second round of seminar matching takes place on {{round2_date}}.
 #>
 
 

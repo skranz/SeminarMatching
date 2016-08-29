@@ -65,7 +65,9 @@ cat(
 )
 ```
 
+#< if FALSE
 Schauen Sie im Reiter `Themen`, ob und bis wann Sie für das Seminar Präferenzen über Themen angegeben können.
+#>
 
 Falls Sie an zwei Seminaren teilnehmen möchten, können Sie hier noch bis zum {{round2_date-1}} Präferenzen für Ihr zweites Seminar angeben. Die zentrale zweite Runde der Seminarplatzverteilung findet dann am {{round2_date}} statt.
 #>

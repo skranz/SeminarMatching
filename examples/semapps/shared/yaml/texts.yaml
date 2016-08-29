@@ -49,3 +49,29 @@ allSemColnames:
 selSemColnames:
   de: ["Pos","Joker", "","Niveau", "Dozent","Titel","Bereiche","Anmerkung"]
   en: ["Pos","Joker", "","Level","Lecturer","Title", "Areas","Note"]
+
+# Für login screen
+loginTitle:
+  de: <h4>Login Uni Ulm WiWi Seminarmatching</h4>
+  en: <h4>Login Uni Ulm WiWi Seminarmatching</h4>
+
+passwordLabel:
+  de: 'Passwort:'
+  en: 'Password:'
+
+useridLabel:
+  de: 'Nutzername (Uni Ulm Emailadresse)'
+  en: 'Username (Uni Ulm email):'
+
+loginHelp:
+  de: |
+    <br>
+    Bei der ersten Anmeldung, klicken Sie "sign-up"
+    und geben Sie danach Ihre @uni-ulm.de Emailadresse an.
+    <br>
+    Automatische Passwortspeicherung funktioniert nur mit manchen
+    Browsern, z. B. mit Chrome.
+  en: |
+    <br>
+    To register as new user press "sign-up"
+    and then enter your @uni-ulm.de email adress.

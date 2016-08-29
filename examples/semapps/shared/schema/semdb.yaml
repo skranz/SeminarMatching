@@ -31,6 +31,9 @@ students:
     studSpecBA: VARCHAR(255)
     studSpecMA: VARCHAR(255)
     studSpecMA2: VARCHAR(255)
+    random_points: DOUBLE
+  defaults:
+    random_points: 0
   indexes:
     - "CREATE INDEX students1 on students (userid)"
     - "CREATE UNIQUE INDEX students2 on students (userid, semester)"
@@ -102,7 +105,7 @@ semcrit:
     semid: INTEGER
     semester: VARCHAR(20)
     pos: INTEGER
-    points: NUMERIC
+    points: DOUBLE
     slots: TEXT
     subject: VARCHAR(255)
     specBA: VARCHAR(255)
@@ -166,11 +169,11 @@ matchings:
     semester: VARCHAR(20)
     round: INTEGER
     slot: INTEGER
-    points: NUMERIC
+    points: DOUBLE
     pos: INTEGER
     joker: INTEGER
-    random_points: NUMERIC
-    fixed_points: NUMERIC
+    random_points: DOUBLE
+    fixed_points: DOUBLE
     num_ranked: INTEGER
   indexes:
     - "CREATE INDEX matchings1 on matchings (semester, round)"
@@ -202,3 +205,16 @@ adminstaff:
     email: VARCHAR(255)
   indexes:
     - "CREATE UNIQUE INDEX adminstaff1 on adminstaff (userid)"
+
+manprio:
+  descr: |
+    Manual priorities added by lecturer
+  table:
+    semid: INTEGER
+    userid: VARCHAR(255)
+    manual_points: DOUBLE
+  defaults:
+    manual_points: 0
+  indexes:
+    - "CREATE INDEX manprio1 on manprio (semid)"
+    - "CREATE INDEX manprio2 on manprio (userid)"

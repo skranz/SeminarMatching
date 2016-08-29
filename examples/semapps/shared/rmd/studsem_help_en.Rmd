@@ -70,28 +70,21 @@ stop.without.error()
 - F: Wouldn't it be fair if students with some specialization have a higher chance to get a seminar in their field of specialization.
 
   - A: If justified, lectures can give priorities to students of some specialization.
-  
-- F: Does a lecturer see how I have ranked his seminar?
-
-  - A: No.
 
 - F: When do I know the result of the seminar assignment?
 
   - A: The main round of the seminar matching takes place on {{round1_date}}.
   
 - F: What if I want to participate in 2 seminars?
-  - A: In the main matching round, each student gets at most one seminar slot. If you want to participate in two seminars, können Sie vom {{round1_date}} bis zum  {{round2_date-1}} ihre Präferenzen für den zweiten Seminarplatz angeben. Am {{round2_date}} findet die zweite automatische Vergaberunde statt, in der nicht vergebene Seminarplätze vergeben werden.
+  - A: In the main matching round, each student gets at most one seminar slot. If you want to participate in two seminars, you can enter from {{round1_date}} to  {{round2_date-1}} your preferences for your second seminar. On {{round2_date}} the second round of seminar matching takes place.
   
-- F: Was ist wenn ich doch nicht an dem mir zugeteilten Seminar teilnehmen möchte?
+- F: What if I got a seminar slot but don't want to participate?
 
-  - A: Bitte geben Sie nur diejenigen Seminare in Ihrer Präferenzliste an, an denen Sie teilnehmen würden. Wenn Sie einen zugeteilten Seminarplatz später absagen, ist dies sehr unsoziales Verhalten gegenüber Ihren Kommillitonen, denen Sie einen Seminarplatz weggenommen haben. Wir prüfen inwiefern eine unbegründete Absage auch zu einem formalen Malus, ggf. in der Form geringerer Priorität bei zukünftiger Seminarvergabe führen kann.
+  - A: Please only rank those seminars at which you would participate if you get a seminar slot. If you later don't take part in an assigned seminar you show fairly asocial behavior towards your fellow students whom you have taken away that seminar slots (unless there are reasons out of your reach like a illness etc). We check whether an unjustified non-appearance may lead to a formal malus, e.g. in the form of lower priorities in future seminar matchings.
   
-- F: Was ist wenn ich den Termin der Seminarvergabe verpasst habe und hier nicht rechtzeitig meine Präferenzliste eingetragen habe?
+- F: What if I missed the date of the official seminar matching?
 
-  - A: Ziel der zentralisierten Seminarvergabe ist die Seminarplätze auf faire und effiziente Art und Weise zu verteilen. Hierfür ist es allerdings notwendig, dass Sie Ihre Seminarpräferenzen bis zum Stichtag eintragen. Falls die zweite Vergaberunde noch nicht stattgefunden hat, können Sie sich hier noch für einen verbliebenen Platz bewerben. Wenn die zweite Vergaberunde auch vorbei ist, haben sie leider endgültig die Seminarplatzvergabe dieses Semester verpasst.
+  - A: Goal of the official seminar matching is a fair and efficient central assignment of seminar slots. That makes it neccessary that everybody submits the seminar preferences until the specified date. If the second seminar round has not yet taken place, you can still participate there and try to get one of the remaining slots. If also the second round has already been conducted, you have missed this semester's seminar assignment. 
 
-- F: Wie werden die Seminarthemen vergeben?
-  - A: Die Vergabe der Seminarthemen erfolgt noch dezentral durch die jeweiligen Dozenten.
-
-- F: Meine Präferenzen über die Seminare hängen aber davon ab, welche Themen ich jeweils in den Seminaren erhalten würde...
-  - A: Aus logistischen Gründen, haben wir uns gegen eine gleichzeitige Zuordnung von Seminaren und Themen entschieden. Sonst müssten beispielsweise alle Studierenden ihre Präferenzen über alle Themen von allen Seminaren angeben, was sehr aufwendig wäre. Deshalb müssen Sie zunächst Präferenzen über Seminare abgeben ohne ihr später zugeteiltes Thema genau zu kennen. Dies ist aber üblich bei Seminarplatzvergaben.
+- F: How are seminar topics assigned?
+  - A: Seminar topics will be assigned after the seminar slots are assigned. Topic assignment will be performed decentralized. You either get an email or information is given on the seminar website.

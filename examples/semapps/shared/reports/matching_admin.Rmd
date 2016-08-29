@@ -10,7 +10,7 @@ library(reshape2)
 
 ```{r init_param, include=FALSE}
 setwd("D:/libraries/SeminarMatching/semapps/shared/reports")
-semester = "SS15"
+semester = "SS17"
 db.dir = paste0("../db")
 round = 1
 
@@ -53,6 +53,7 @@ sdf = df %>%
   summarise(n=n()) %>%
   ungroup() %>%
   spread(key = found, value=n) %>%
+  replace.na(0) %>%
   as.data.frame()
 
 if (ncol(sdf)==2)
@@ -64,7 +65,8 @@ sdf
 
 Here are the shares of students that got the seminar that they ranked at n'th position... 
 ```{r }
-df %>% 
+df %>%
+  filter(num_ranked >0) %>%
   group_by(studBAMA) %>%
   mutate(N=n()) %>%
   group_by(studBAMA,pos, found) %>% 
@@ -87,14 +89,27 @@ df %>%
   replace.na("0%")
 ```
 
+Here are the number of students that rankend `num_ranked` seminars:
+```{r}
+df %>% 
+  group_by(studBAMA,num_ranked) %>% 
+  summarise(number_students=n()) %>%
+  dcast(num_ranked ~ studBAMA,value.var="number_students") %>%
+  replace.na(0) %>%
+  mutate("Total Number of Students" = Bachelor + Master)
+```
+
+
 Let us now compare for Bachelor students the seminar matching by their main subject:
 
 ```{r}
 df %>% 
   filter(studBAMA=="Bachelor") %>% 
-  group_by(studSubject, found) %>% 
+  group_by(studSubject) %>%
+  mutate(mean_num_sem_ranked=round(mean(num_ranked),1)) %>%
+  group_by(studSubject, mean_num_sem_ranked, found) %>% 
   summarise(n=n()) %>%
-  dcast(studSubject ~ found,value.var="n") %>%
+  dcast(studSubject + mean_num_sem_ranked ~ found,value.var="n") %>%
   arrange(-`found seminar`) %>%
   replace.na(0)
 ```
@@ -103,9 +118,11 @@ and the same thing for master students...
 ```{r}
 df %>% 
   filter(studBAMA=="Master") %>% 
-  group_by(studSubject, found) %>% 
+  group_by(studSubject) %>%
+  mutate(mean_num_sem_ranked=round(mean(num_ranked),1)) %>%
+  group_by(studSubject, mean_num_sem_ranked, found) %>% 
   summarise(n=n()) %>%
-  dcast(studSubject ~ found,value.var="n") %>%
+  dcast(studSubject + mean_num_sem_ranked ~ found,value.var="n") %>%
   arrange(-`found seminar`) %>%
   replace.na(0)
 ```

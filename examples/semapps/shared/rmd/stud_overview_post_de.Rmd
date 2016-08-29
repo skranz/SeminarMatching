@@ -68,4 +68,6 @@ cat(
 ```
 #>
 
+#< if FALSE
 Schauen Sie im Reiter `Themen`, ob und bis wann Sie für das Seminar Präferenzen über Themen angegeben können.
+#>

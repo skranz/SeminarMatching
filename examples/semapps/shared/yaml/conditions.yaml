@@ -16,8 +16,7 @@ fields:
       label: BA Specialization
     condition: >
       (studSubject == "WiWi" | studSubject2 == "WiWi") &
-         (studBAMA == "Bachelor" & studSpecBA == .spec)
-      )
+      (studBAMA == "Bachelor" & studSpecBA == .specBA)
     choice_set: [specBA]
   specMA:
     lang_de:
@@ -26,9 +25,8 @@ fields:
       label: MA Specialization
     condition: >
       (studSubject == "WiWi" | studSubject2 == "WiWi") &
-      (
-        (studBAMA == "Master" & (studSpecMA == .spec | studSpecMA2 == .spec))
-      )
+      (studBAMA == "Master") &
+      (studSpecMA == .specMA | studSpecMA2 == .specMA)
     choice_set: [specMA]
 
   #heard_sem:

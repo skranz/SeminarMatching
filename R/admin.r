@@ -277,8 +277,6 @@ init.se.admin = function(admin) {
   }
 
   if (admin$rounds_done == 0) {
-    admin$stud.can.select = admin$after.stud.date
-    admin$stud.see.matching = c(FALSE, FALSE)
     admin$cur_round_date = admin$round1_date
     if (admin$after.stud.date) {
       admin$selection.round = 1
@@ -286,20 +284,13 @@ init.se.admin = function(admin) {
       admin$selection.round = 0
     }
   } else if (admin$rounds_done == 1) {
-    admin$stud.see.matching = c(admin$rounds_show>=1, FALSE)
-    if (is.na(admin$round2_date)) {
-      admin$stud.can.select = FALSE
+    if (admin$num_rounds <= 1) {
       admin$selection.round = 1
-    } else if (admin$round2_date <= today) {
-      admin$stud.can.select = FALSE
-      admin$selection.round = 1
-    } else if (admin$round2_date <= today) {
-      admin$stud.can.select = TRUE
+    } else {
       admin$selection.round = 2
     }
   } else if (admin$rounds_done == 2) {
-    admin$stud.see.matching = c(admin$rounds_show>=1, admin$rounds_show>=2)
-    admin$stud.can.select = FALSE
+    admin$selection.round = NA
   }
 
   if (!admin$after.stud.date) {

@@ -1,5 +1,6 @@
 use_joker: FALSE
 
+random_points_negative_autocor: TRUE
 
 selSemCols: [semBAMA, teacher, semname, area, descr]
 allSemCols: [semBAMA, teacher, semname, area, descr]

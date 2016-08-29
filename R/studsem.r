@@ -181,7 +181,6 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
     se$db = app$glob$semdb
     se$userid = userid
   }
-
   semester = get.default.semester(se=se)
   if (is.null(semester)) {
     semester = app$glob$sets$semesters[1]
@@ -196,7 +195,7 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
 
   se$seminars = dbGet(se$db,"seminars",list(semester=semester,active=TRUE),schema=app$glob$schemas$seminars)
   if (NROW(se$seminars) > 0) {
-    se$seminars = mutate(se$seminars, free_slots = slots-filled_slots)
+    se$seminars = mutate(se$seminars, free_slots = slots-filled_slots, filled=free_slots <= 0)
 
     # sort seminars
     if (!is.null(app$opts$allSemSort)) {
@@ -209,6 +208,7 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
 
   admin = dbGet(se$db,"admin",nlist(semester=semester),schema=app$glob$schemas$admin)
   se$admin = init.se.admin(admin)
+  se$round = se$admin$selection.round
 
   se$studmode = se$admin$studmode
 
@@ -345,6 +345,20 @@ as.weblink = function(link, label, target=' target="_blank"') {
   str
 }
 
+copy.round1.studpref = function(...,studpref=se$studpref,se=app$se, app=getApp()) {
+  restore.point("copy.round1.studpref")
+
+  r1 = filter(studpref, round==1)
+  r2 = mutate(r1, round=2)
+  se$studpref = rbind(r1,r2)
+
+  compute.sem.df(se=se)
+
+  show.selsem.table(se=se)
+  show.sem.table(se=se)
+  save.studpref()
+}
+
 show.stud.sem.ui = function(se=app$se, app=getApp()) {
   restore.point("show.stud.sem.ui")
 
@@ -365,6 +379,7 @@ show.stud.sem.ui = function(se=app$se, app=getApp()) {
   ui = render.compiled.rmd(cr, envir=envir,out.type = "shiny",fragment.only = TRUE)
 
   buttonHandler("saveStudprefBtn",save.studpref)
+  buttonHandler("copyStudprefBtn",copy.round1.studpref)
   add.studpref.handlers(num.sems=NROW(se$sem.df))
 
   setUI("studsemUI", ui)
@@ -382,9 +397,10 @@ compute.sem.df = function(se=app$se, app=getApp(), opts=app$opts) {
   } else {
     round = 1
   }
+  studpref = se$studpref[se$studpref$round==round,,drop=FALSE]
 
   sems = se$seminars
-  cols = c("semid",intersect(unique(c("weblink", opts$selSemCols,opts$allSemCols)),colnames(sems)))
+  cols = c("semid",intersect(unique(c("weblink", opts$selSemCols,opts$allSemCols)),colnames(sems)),"filled")
   sem.df = sems[,cols]
 
 
@@ -400,13 +416,13 @@ compute.sem.df = function(se=app$se, app=getApp(), opts=app$opts) {
   sem.df$pos = NA
   sem.df$joker = 0
 
-  if (NROW(se$studpref)>0) {
-    sel.rows = match(se$studpref$semid, sem.df$semid)
+  if (NROW(studpref)>0) {
+    sel.rows = match(studpref$semid, sem.df$semid)
     sel.rows = na.omit(sel.rows)
     if (length(sel.rows)>0) {
       sel.df = sem.df[sel.rows,]
       sel.df$pos = 1:NROW(sel.df)
-      sel.df$joker = se$studpref$joker
+      sel.df$joker = studpref$joker
       sem.df$selected[sel.rows] = TRUE
     } else {
       sel.rows = integer(0)
@@ -419,35 +435,6 @@ compute.sem.df = function(se=app$se, app=getApp(), opts=app$opts) {
 
   se$sem.df = sem.df
   se$sel.df = sel.df
-}
-
-show.stud.sem.round.ui = function(se=app$se, app=getApp()) {
-  restore.point("show.stud.sem.round.ui")
-  lang = app$lang
-  glob = app$glob
-  opts = glob$opts
-
-  update.selTable(sel.df)
-  update.semTable(sem.df, sel.rows=sel.rows)
-
-
-  ui = fluidRow(column(offset=1, width=10,
-    header,
-    note,
-    h3(glob$texts$selSemTitle),
-    uiOutput("selSemUI"),
-    br(),
-    actionButton("saveStudprefBtn",glob$texts$rankingSaveBtnLabel),
-    bsAlert("saveStudprefAlert"),
-    h3(glob$texts$allSemTitle),
-    uiOutput("allSemUI")
-  ))
-
-
-  #view.ui(header)
-  buttonHandler("saveStudprefBtn",save.studpref)
-  add.studpref.handlers(num.sems=NROW(sem.df))
-  setUI("studsemUI", ui)
 }
 
 
@@ -465,7 +452,9 @@ show.selsem.table = function(sel.df=se$sel.df, sel.row=NULL, app=getApp(), se=ap
     header = setdiff(header, c("joker","Joker"))
   }
 
-  html = html.table(id="selSemTable",widget.df,sel.row = sel.row, header=header, bg.color="#ffffff")
+  bg.color = ifelse(sel.df$filled,"#cccccc", "#ffffff")
+
+  html = html.table(id="selSemTable",widget.df,sel.row = sel.row, header=header, bg.color=bg.color)
 
   setUI("selSemUI",HTML(html))
 
@@ -519,9 +508,9 @@ show.sem.table = function(sem.df=se$sem.df, sel.rows=which(sem.df$selected), app
   se$sem.df = sem.df
 
 
-
+  bg.color = ifelse(sem.df$filled,"#cccccc", "#ffffff")
   widget.df = sem.widgets.df(sem.df, cols=cols)
-  html =   html.table(id="allSemTable",widget.df,sel.row = sel.rows,header=header , bg.color="#ffffff", sel.color="#aaffaa")
+  html =   html.table(id="allSemTable",widget.df,sel.row = sel.rows,header=header , bg.color=bg.color, sel.color="#aaffaa")
   setUI("allSemUI",HTML(html))
 }
 
@@ -641,11 +630,11 @@ save.studpref = function(app=getApp(), se=app$se,...) {
   }
 
   dbBegin(se$db)
-  dbDelete(se$db, "studpref",list(userid=se$userid, semester=se$semester))
+  dbDelete(se$db, "studpref",list(userid=se$userid, semester=se$semester, round=se$round))
 
   if (NROW(se$sel.df)>0) {
     sel.df = arrange(se$sel.df,pos)
-    studpref = data_frame(semid=se$sem.df$semid[sel.df$row], userid=se$userid,semester=se$semester, pos=sel.df$pos, joker=sel.df$joker, round=se$admin$selection.round)
+    studpref = data_frame(semid=se$sem.df$semid[sel.df$row], userid=se$userid,semester=se$semester, pos=sel.df$pos, joker=sel.df$joker, round=se$round)
     dbInsert(se$db, "studpref",studpref, schema=app$glob$schemas$studpref)
   }
   dbCommit(se$db)
@@ -660,6 +649,9 @@ max.date = function(vals) {
 
 show.stud.topics.ui = function(se=app$se, app=getApp()) {
   restore.point("show.stud.topics.ui")
+  setUI("studtopicsUI", HTML("Seminar topics cannot yet be assigned with this software."))
+  return()
+
   stud_sems = se$stud_sems
 
   if (NROW(stud_sems)==0) {

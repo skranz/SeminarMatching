@@ -63,22 +63,20 @@ Sie können hier noch bis zum {{round2_date-1}} im Reiter `Seminarwahl` Präfere
 #>
 
 
-Wählen Sie bitte aus der Liste aller Seminare diejenigen und nur diejenigen Seminare aus, an denen Sie noch teilnehmen würden, wenn Sie einen Platz erhalten.
+Wählen Sie bitte aus der Liste aller Seminare diejenigen und nur diejenigen Seminare aus, an denen Sie noch teilnehmen würden, wenn Sie einen Platz erhalten. (Grau hinterlegte Seminare wurden bereits in der Hauptvergaberunde komplett gefüllt. Sie können diese zwar in ihre Präferenzliste aufnehmen, aber dies wird keinen Effekt haben.)
 
 Sortieren Sie dann die ausgewählten Seminare gemäß Ihrer Wunschreihenfolge
 (bevorzugte Seminare weiter oben) und **speichern Sie dann per Knopfdruck ihre Präferenzen**.
 
 {{actionButton("saveStudprefBtn","Präferenzliste speichern")}}
 
-{{actionButton("copyStudprefBtn","Präferenzliste aus Hauptrunde übernehmen")}}
-
-              
 {{uiOutput("studSemAlert")}}
 
 ### Ausgewählten Seminare und Rangfolge
 
 {{uiOutput("selSemUI")}}
 
+{{actionButton("copyStudprefBtn","Präferenzliste aus Hauptrunde übernehmen und speichern.")}}
 ### Alle angebotenen Seminare
 
 {{uiOutput("allSemUI")}}

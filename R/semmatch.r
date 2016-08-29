@@ -488,7 +488,25 @@ delete.seminar.matching = function(semdb=NULL,semester, round=1,schemas, db.dir=
     } else {
       stop("round must be 1 or 2")
     }
+    update.seminar.filled.slots(semdb, semester=semester)
   })
   invisible()
 }
 
+update.seminar.filled.slots = function(semdb=NULL,semester=NULL, where=list(semester=semester)) {
+  restore.point("update.seminar.filled.slots")
+
+  db.dir = "./db"
+  if (is.null(semdb))
+    semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+
+  matchings = dbGet(semdb, "matchings",params = where)
+
+  df = matchings %>% group_by(semid) %>% summarize(filled_slots = n()) %>% filter(semid > -1)
+
+  dbWithTransaction(semdb,{
+    for (i in seq_len(NROW(df))) {
+      dbUpdate(semdb, "seminars", vals=list(filled_slots=df$filled_slots[i]),where = list(semid=df$semid[i]))
+    }
+  })
+}

@@ -71,10 +71,6 @@ stop.without.error()
 
   - A: Dozenten können, soweit inhaltlich gerechtfertigt, solche Prioritäten vergeben. Dies hat aber keinen Einfluss auf die Gestaltung Ihrer Präferenzliste. Hier ist es stets optimal Ihre wahren Präferenzen über die Seminare anzugeben, unabhängig davon ob sie ggf. bei einem Seminar höhere Priorität haben.
   
-- F: Sieht der Dozent auf welchen Platz ich sein Seminar gerankt habe?
-
-  - A: Ein Dozent erfährt nicht, wie sie persönlich sein Seminar gerankt haben. 
-
 - F: Wann sehe ich ob und welchen Seminarplatz ich erhalten habe?
 
   - A: Die Hauptrunde der Seminarzuteilung erfolgt automatisch in der Nacht des {{round1_date}}. Sie sehen hiernach ob und welchen Seminarplatz Sie erhalten haben.
@@ -92,8 +88,7 @@ stop.without.error()
   - A: Ziel der zentralisierten Seminarvergabe ist die Seminarplätze auf faire und effiziente Art und Weise zu verteilen. Hierfür ist es allerdings notwendig, dass Sie Ihre Seminarpräferenzen bis zum Stichtag eintragen. Falls die zweite Vergaberunde noch nicht stattgefunden hat, können Sie sich hier noch für einen verbliebenen Platz bewerben. Wenn die zweite Vergaberunde auch vorbei ist, haben sie leider endgültig die Seminarplatzvergabe dieses Semester verpasst.
 
 - F: Wie werden die Seminarthemen vergeben?
-  - A: Die Vergabe der Seminarthemen erfolgt noch dezentral durch die jeweiligen Dozenten.
+  - A: Die Vergabe der Seminarthemen erfolgt derzeit noch dezentral durch die jeweiligen Dozenten. Sie werden auf der Seminarwebseite oder per Email über die Modalitäten der Themenvergabe informiert.
 
 - F: Meine Präferenzen über die Seminare hängen aber davon ab, welche Themen ich jeweils in den Seminaren erhalten würde...
-  - A: Aus logistischen Gründen, haben wir uns gegen eine gleichzeitige Zuteilung von Seminaren und Themen entschieden. Sonst müssten beispielsweise alle Studierenden ihre Präferenzen über alle Themen von allen Seminaren angeben, was sehr aufwendig wäre. Deshalb müssen Sie zunächst Präferenzen über Seminare abgeben ohne ihr später zugeteiltes Thema genau zu kennen. Dies ist aber üblich bei Seminarplatzvergaben.
-
+  - A: Aus logistischen Gründen, haben wir uns gegen eine gleichzeitige Zuteilung von Seminaren und Themen entschieden. Sonst müssten beispielsweise alle Studierenden ihre Präferenzen über alle Themen von allen Seminaren angeben, was sehr, sehr komplex und aufwendig wäre. Deshalb müssen Sie Ihre Präferenzen über Seminare abgeben ohne ihr später zugeteiltes Thema genau zu kennen. Dies ist aber üblich bei Seminarplatzvergaben.
