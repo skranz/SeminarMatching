@@ -84,7 +84,6 @@ make.dirs = function(main.dir=getwd()) {
 find.auto.tasks = function(admin=NULL,main.dir = getwd()) {
 
   restore.point("find.auto.tasks")
-  setwd("D:/libraries/SeminarMatching/semapps/shared")
   if (is.null(admin))
     admin = get.current.admin(main.dir=main.dir)
 
