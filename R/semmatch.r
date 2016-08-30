@@ -3,7 +3,7 @@ examples.perform.matching = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
 
   n = 70
-  semester = "SS16"
+  semester = "SS17"
   delete.seminar.matching(semester=semester)
   delete.random.students(semester=semester)
   li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
@@ -488,8 +488,8 @@ delete.seminar.matching = function(semdb=NULL,semester, round=1,schemas, db.dir=
     } else {
       stop("round must be 1 or 2")
     }
-    update.seminar.filled.slots(semdb, semester=semester)
   })
+  update.seminar.filled.slots(semdb, semester=semester)
   invisible()
 }
 
@@ -499,14 +499,20 @@ update.seminar.filled.slots = function(semdb=NULL,semester=NULL, where=list(seme
   db.dir = "./db"
   if (is.null(semdb))
     semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+  seminars = dbGet(semdb,"seminars", params=where)
 
   matchings = dbGet(semdb, "matchings",params = where)
-
-  df = matchings %>% group_by(semid) %>% summarize(filled_slots = n()) %>% filter(semid > -1)
+  if (NROW(matchings)==0) {
+    seminars$filled_slots = 0
+  } else {
+    df = matchings %>% group_by(semid) %>% summarize(filled_slots = n()) %>% filter(semid > -1)
+    rows = match(df$semid, seminars$semid)
+    seminars$filled_slots[rows] = df$filled_slots
+  }
 
   dbWithTransaction(semdb,{
-    for (i in seq_len(NROW(df))) {
-      dbUpdate(semdb, "seminars", vals=list(filled_slots=df$filled_slots[i]),where = list(semid=df$semid[i]))
+    for (i in seq_len(NROW(seminars))) {
+      dbUpdate(semdb, "seminars", vals=list(filled_slots=seminars$filled_slots[i]),where = list(semid=seminars$semid[i]))
     }
   })
 }

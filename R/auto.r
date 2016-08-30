@@ -22,7 +22,7 @@ examples = function() {
   db.dir = paste0(getwd(),"/db")
   yaml.dir = paste0(getwd(),"/yaml")
   n = 30
-  semester = "SS16"
+  semester = "SS17"
 
   delete.random.students(db.dir=db.dir, semester=semester)
 
@@ -44,15 +44,27 @@ run.auto.tasks = function(main.dir = getwd(), log.file=paste0(main.dir,"/log/aut
   run.seminar.tasks(tasks=tasks, admin=admin, main.dir=main.dir, log.file=log.file)
 }
 
+append.log = function(x, log.file) {
+  restore.point("append.log")
+
+  try({
+    con <- file(log.file,open = "at")
+    write(paste0(c(as.character(Sys.time()),x),collapse=","),con)
+  })
+  try(close(con))
+}
+
 run.seminar.tasks = function(tasks, admin=get.current.admin(main.dir=main.dir), main.dir = getwd(), log.file=paste0(main.dir,"/log/auto_run.log")) {
   restore.point("run.seminar.tasks")
   dirs = make.dirs(main.dir)
 
   if ("round1" %in% tasks) {
     perform.matching(round=1,semester=admin$semester, dirs=dirs)
+    append.log(c("matching1",admin$semester), log.file)
   }
   if ("round2" %in% tasks) {
     perform.matching(round=2,semester=admin$semester, dirs=dirs)
+    append.log(c("matching2",admin$semester), log.file)
   }
 
 }
