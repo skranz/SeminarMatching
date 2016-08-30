@@ -44,7 +44,7 @@ run.auto.tasks = function(main.dir = getwd(), log.file=paste0(main.dir,"/log/aut
   run.seminar.tasks(tasks=tasks, admin=admin, main.dir=main.dir, log.file=log.file)
 }
 
-append.log = function(x, log.file) {
+append.log = function(x, log.file=paste0(getwd(),"/log/auto_run.log")) {
   restore.point("append.log")
 
   try({
