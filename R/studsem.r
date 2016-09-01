@@ -840,6 +840,7 @@ show.stud.help.ui = function(se=app$se, app=getApp()) {
   restore.point("show.stud.help.ui")
   cr = app$glob$rmd.li[["studsem_help"]]
   envir = as.environment(se$admin)
+  parent.env(envir) = baseenv()
   content = render.compiled.rmd(cr, envir=envir)
   setUI("studhelpUI",content)
 }
