@@ -156,6 +156,8 @@ load.student.from.db = function(userid=se$userid, semester=NULL, app=getApp(), s
 
   # redraw random points for this semester
 
+  if (is.na(stud$random_points))
+    stud$random_points=5
   if (isTRUE(app$opts$random_points_negative_autocor)) {
     # give a bonus if last time random points were below 5
     if (stud$random_points < 5) {
@@ -290,9 +292,9 @@ save.studform = function(values, app=getApp(), se=app$se,...) {
 
 
   old.stud.exists = isTRUE(se[["stud.exists"]])
-  dbBegin(se$db)
-  dbInsert(se$db,"students", se$stud,mode = if (old.stud.exists) "replace" else "insert")
-  dbCommit(se$db)
+  dbWithTransaction(se$db,{
+    dbInsert(se$db,"students", se$stud,mode = if (old.stud.exists) "replace" else "insert", schema=app$glob$schemas$students)
+  })
   se$stud.exists = TRUE
 
   show.form.alert(form=form,msg=form$texts$submitSuccess, color=NULL)
