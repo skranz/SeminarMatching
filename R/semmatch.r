@@ -2,12 +2,12 @@
 examples.perform.matching = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
 
-  n = 70
+  n = 270
   semester = "SS17"
   delete.seminar.matching(semester=semester)
   delete.random.students(semester=semester)
   li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
-  df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,insert.into.db = !TRUE)
+  df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,insert.into.db = TRUE)
 
   df = df %>% arrange(num_ranked, semid)
 
@@ -259,7 +259,7 @@ students.satisfy.semcrit = function(sc, students, studpref, conds) {
   restore.point("students.satisfy.semcrit")
 
   cfields = intersect(names(conds), names(sc))
-  cfields = cfields[nchar(sc[cfields])>0]
+  cfields = cfields[is.true(nchar(sc[cfields])>0)]
 
   #field = cfields[[1]]
   ok = rep(TRUE, NROW(students))

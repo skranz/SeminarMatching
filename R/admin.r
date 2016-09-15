@@ -244,11 +244,26 @@ show.admin.matching = function(se=app$se, app=getApp()) {
   }
   mui = do.matching.ui(se=se)
 
+  umui = NULL
+  admin = se$admin
+  if (admin$rounds_done >= admin$num_rounds) {
+    us = get.unassigned(db=se$db, semester=admin$semester)
+    if (NROW(us$studs)>0) {
+      umui = tagList(
+        br(),
+        h4("Students who ranked at least 1 seminar but did not get a slot:"),
+        HTML(html.table(us$studs))
+      )
+    } else {
+      h4("All students who participated got a seminar slot.")
+    }
+  }
 
   ui = fluidRow(column(offset=1, width=10,
     h4(paste0("Matching for ", se$semester)),
     br(),
-    mui
+    mui,
+    umui
   ))
   setUI("semAdminMatchingUI", ui)
   buttonHandler("doMatching1Btn", do.matching.click, round=1,se=se)

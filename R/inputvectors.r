@@ -1,26 +1,32 @@
 textInputVector = function(inputId, label=NULL, value="", readonly = rep(FALSE, length(inputId)), style="", autocomplete = "off",class="", size=20){
-#   code = paste0('
-# <div class="form-group shiny-input-container" style="',style,'">
-#   <label for="',inputId,'">',label,'</label>
-#   <input id="',inputId,'" type="text" style="',style,'" class="form-control" value="',value,'"', ifelse(readonly,' readonly',''),'/>
-# </div>
-#   ')
+
   code = paste0('
   <input id="',inputId,'" type="text" style="',style,'" class="form-control ',class,'" size="',size,'" value="',value,'"', ifelse(readonly,' readonly',''),' autocomplete="',autocomplete,'"/>')
 
+  if (!is.null(label)) {
+    code = paste0('
+  <div class="form-group shiny-input-container" style="',style,'">
+    <label for="',inputId,'">',label,'</label>
+    ',code,'
+  </div>
+    ')
+  }
   code
 }
 
 numericInputVector = function (inputId, label=NULL, value=0)  {
-  code = paste0('
+  if (!is.null(label)) {
+    code = paste0('
 <div class="form-group shiny-input-container">
   <label for="',inputId,'">',label,'</label>
   <input id="',inputId,'" type="number" class="form-control" value="',value,'"/>
 </div>
   ')
-  code = paste0('
+  } else {
+    code = paste0('
   <input id="',inputId,'" type="number" class="form-control" value="',value,'"/>
   ')
+  }
 
   code
 }

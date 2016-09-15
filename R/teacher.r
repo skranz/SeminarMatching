@@ -324,8 +324,8 @@ show.teacher.seminars = function(userid=se$userid, yaml.dir=app$glob$yaml.dir, d
   restore.point("show.teacher.seminars")
 
 
-  atable = edit.seminar.table(id="atable",se$aseminars, prefix="a", semid=semid)
-  ptable = edit.seminar.table(id="ptable",se$pseminars, prefix="p", semid=semid)
+  atable = edit.seminar.table(id="atable",df=se$aseminars, prefix="a", semid=semid)
+  ptable = edit.seminar.table(id="ptable",df=se$pseminars, prefix="p", semid=semid)
 
 
   buttonHandler("createSeminarBtn",create.seminar.click)
@@ -368,7 +368,7 @@ edit.seminar.table = function(id = "seminarTable", df = se$seminars, prefix="a",
   cols = setdiff(colnames(df),c("semid", "groupid","locked","active","enabled"))
   wdf = data.frame(df[,cols])
 
-  tdClickHandler(id = id,auto.select = TRUE, remove.sel.row.selector= "#atable tr, #ptable tr", df=df, fun = function(tableId,data,df,...) {
+  tdClickHandler(id = id,eventId=id,auto.select = TRUE, remove.sel.row.selector= "#atable tr, #ptable tr", df=df, fun = function(tableId,data,df,...) {
     args = list(...)
     restore.point("mytdClickHandler")
     cat("Table ", tableId, "was clicked in row ", data$row, " and column ", data$col)
@@ -625,48 +625,6 @@ set.current.seminar = function(seminar, se = app$se, app=getApp()) {
 
 }
 
-edit.seminar.click=function(cs=se$cs, se = app$se, app=getApp(),mode="edit", prefix="a", row=1,...) {
-  restore.point("edit.seminar.click")
-
-  if (prefix=="a") {
-    seminars = se$aseminars
-  } else {
-    seminars = se$pseminars
-  }
-
-  cs$seminar = as.list(seminars[row,])
-
-  cs$semcrit = dbGet(se$db,"semcrit",list(semid=cs$semid))
-
-  if (NROW(cs$semcrit)<10) {
-    df = empty.df.from.schema(app$glob$schemas$semcrit, 10-NROW(cs$semcrit), semid=cs$semid)
-    df$semester = se$semester
-    cs$semcrit = rbind(cs$semcrit,df)
-  }
-
-  cs$semtopic = dbGet(se$db,"semtopic",list(semid=cs$semid))
-  if (NROW(cs$semtopic)<30) {
-    df = empty.df.from.schema(app$glob$schemas$semtopic, 30-NROW(cs$semtopic), semid=cs$semid, semester=se$semester, size=1, userid=NA_character_)
-    cs$semtopic = rbind(cs$semtopic,df)
-  }
-  cs$semtopic$ind = 1:NROW(cs$semtopic)
-
-
-
-  if (mode=="copyedit") {
-    cs$semid = NA_integer_
-    cs$active = FALSE
-    cs$semester = se$semester
-    cs$locked = FALSE
-
-    cs$semcrit$semid = NA_integer_
-    cs$semcrit$semester = se$semester
-
-  }
-
-  show.sem.edit.ui(se=se, app=app)
-}
-
 
 show.sem.edit.ui = function(cs = se$cs,se=NULL, app=getApp(), edit=isTRUE(!is.na(cs$semid))) {
   restore.point("show.sem.edit.ui")
@@ -795,20 +753,6 @@ save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
 }
 
 
-studsem.click=function(cs = se$cs, se = app$se, app=getApp(),prefix, row,...) {
-  restore.point("studsem.click")
-
-  if (prefix=="a") {
-    seminars = se$aseminars
-  } else {
-    seminars = se$pseminars
-  }
-
-  cs$seminar = as.list(seminars[row,])
-  cs$semstuds = load.semstuds(se=se)
-
-  show.sem.stud.ui(se=se, app=app)
-}
 
 show.sem.topics.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   restore.point("show.sem.topics.ui")
@@ -903,18 +847,33 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   # Choose columns
   stud.df = stud.df[,setdiff(colnames(stud.df),c("userid"))]
 
+  # Show students that did not get any slot
+  us = get.unassigned(db=se$db, semester=se$admin$semester)
+  emails = unique(filter(us$prefs, semid == cs$semid)$email)
+  us.studs =us$stud[us$studs$email %in% emails,]
+
+  umui = NULL
+  if (NROW(us.studs)>0) {
+    us.studs = select(us.studs, - num_sem_ranked,-ranked_seminars) %>% arrange(random_points)
+    umui = tagList(
+        h4(paste0("Students who ranked your seminar but did not get a slot in any seminar:")),
+        HTML(paste0("Last updated :", us$time)),
+        HTML(html.table(us.studs))
+      )
+  }
+
   # Add and delete student ui
   ar.ui = tagList(
     hr(),
     h4("Add or remove student from seminar"),
     textInput("arEmailInput","Student email",value = ""),
     tags$table(tags$tr(      tags$td(
-        actionButton("arAddButton","Add student"),
-        actionButton("arRemoveButton","Remove student")
+        actionButton("arAddButton","Add student","data-form-selector" = "#arEmailInput"),
+        actionButton("arRemoveButton","Remove student","data-form-selector" = "#arEmailInput")
       )
     )),
     uiOutput("arInfo"),
-    hr()
+    umui
   )
   setUI("arInfo","")
 
@@ -923,24 +882,23 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   ui = tagList(
     h4("Participants"),
     HTML(html.table(stud.df)),
-    h4("Participants Emails"),
-    shinyAce::aceEditor("studEmailListAce", value=emails.string, wordWrap = TRUE, height="4em"),
+    textAreaInput("studEmailList",label="Participants' emails",value=emails.string, width="100%", rows=3),
     ar.ui
   )
 
   buttonHandler("arAddButton",add.student.to.seminar)
   buttonHandler("arRemoveButton",remove.student.from.seminar)
 
-  setUI("studUI",ui)
   dsetUI("studUI",ui)
+  setUI("studUI",ui)
 }
 
 
-add.student.to.seminar = function(email = NULL,seminar=cs$seminar, semstuds=cs$semstuds, app=getApp(),se=app$se, cs=se$cs,...) {
-  if (is.null(email))
-    email = getInputValue("arEmailInput")
+add.student.to.seminar = function(formValues,seminar=cs$seminar, semstuds=cs$semstuds, app=getApp(),se=app$se, cs=se$cs,...) {
+  email = formValues$arEmailInput
 
   restore.point("add.student.to.seminar")
+  cat("\nadd.student.to.seminar: ", email)
 
   if (is.null(email) | isTRUE(nchar(email)==0)) {
     msg = colored.html(paste0("You must enter the email adress of the student you want to add to the seminar."), color="red")
@@ -988,12 +946,16 @@ add.student.to.seminar = function(email = NULL,seminar=cs$seminar, semstuds=cs$s
 
   # reload form
   cs$semstuds = load.semstuds(cs=cs)
+
+  # update unassigned students
+  fetch.unassigned.students(db=se$db, semester=se$admin$semester)
+  # important to set dsetUI = FALSE otherwise
+  # email of student to add or remove is not read correctly
   show.sem.stud.ui(se=se)
 }
 
-remove.student.from.seminar = function(email = NULL,seminar=cs$seminar, semstuds=cs$semstuds, app=getApp(),se=app$se,cs=se$cs,...) {
-  if (is.null(email))
-    email = getInputValue("arEmailInput")
+remove.student.from.seminar = function(formValues,seminar=cs$seminar, semstuds=cs$semstuds, app=getApp(),se=app$se,cs=se$cs,...) {
+  email = formValues$arEmailInput
 
   restore.point("remove.student.from.seminar")
 
@@ -1044,6 +1006,12 @@ remove.student.from.seminar = function(email = NULL,seminar=cs$seminar, semstuds
 
   # reload form
   cs$semstuds = load.semstuds(cs=cs)
+
+  # update unassigned students
+  fetch.unassigned.students(db=se$db, semester=se$admin$semester)
+
+  # important to set dsetUI = FALSE otherwise
+  # email of student to add or remove is not read correctly
   show.sem.stud.ui(se=se)
 }
 
