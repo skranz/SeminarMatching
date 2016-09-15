@@ -205,7 +205,7 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   app
 }
 
-teacher.main.ui = function(se) {
+teacher.main.ui = function(se, app=getApp()) {
   restore.point("teacher.main.ui")
 
   json.opts = '
@@ -261,7 +261,7 @@ teacher.main.ui = function(se) {
             ),
             div(id="editsemHeadDiv",
               hr(style="margin: 1px;"),
-              bsButton("saveSemBtn","Save"),
+              bsButton("saveSemBtn","Save", "data-form-selector" = get.form.selector(app$glob$semform)),
               bsButton("delSemBtn","Delete Seminar"),
               uiOutput("editSemAlert")
             ),
@@ -659,18 +659,13 @@ show.sem.edit.ui = function(cs = se$cs,se=NULL, app=getApp(), edit=isTRUE(!is.na
   setUI("editsemUI",ui)
   evalJS("Shiny.bindAll();") # need for form to be updated
 
-  #cat("get.form.values:\n")
-  #sres = get.form.values(glob$semform)
-
 }
 
-save.sem.click = function(cs=se$cs, se=app$se, app=getApp(),...) {
+save.sem.click = function(formValues,cs=se$cs, se=app$se, app=getApp(),...) {
   restore.point("save.sem.click")
   glob  = app$glob
 
-  sres = get.form.values(glob$semform)
-
-
+  sres = get.form.values(glob$semform, formValues=formValues)
 
   restore.point("save.sem.click")
   if (!sres$ok) {
@@ -1140,12 +1135,13 @@ show.staff.ui = function(se=app$se, app=getApp(), sel.row=NULL) {
   })
 
 
+  form.selector = get.form.selector(form)
   ui = tagList(
     h4("Staff that is allowed to change seminars"),
     HTML(staff.table),
-    actionButton("addStaffBtn","Add to Staff"),
-    actionButton("changeStaffBtn","Change Permissions"),
-    actionButton("delStaffBtn","Remove from Staff"),
+    actionButton("addStaffBtn","Add to Staff","data-form-selector"=form.selector),
+    actionButton("changeStaffBtn","Change Permissions","data-form-selector"=form.selector),
+    actionButton("delStaffBtn","Remove from Staff","data-form-selector"=form.selector),
     uiOutput("staffAlert"),
     br(),
     form.ui
@@ -1164,9 +1160,8 @@ show.staff.ui = function(se=app$se, app=getApp(), sel.row=NULL) {
 
 
 
-add.staff.click = function(...,se=app$se,app=getApp()) {
-
-  sres = get.form.values(app$glob$staffform)
+add.staff.click = function(...,formValues, se=app$se,app=getApp()) {
+  sres = get.form.values(app$glob$staffform, formValues=formValues)
   restore.point("add.staff.click")
   if (!sres$ok) {
     show.field.alert(msg="Not all fields are correctly entered.",id="staffAlert")
@@ -1191,9 +1186,9 @@ add.staff.click = function(...,se=app$se,app=getApp()) {
   show.staff.ui()
 }
 
-change.staff.click = function(...,se=app$se,app=getApp()) {
+change.staff.click = function(...,formValues, se=app$se,app=getApp()) {
 
-  sres = get.form.values(app$glob$staffform)
+  sres = get.form.values(app$glob$staffform, formValues=formValues)
   restore.point("change.staff.click")
   if (!sres$ok) {
     show.field.alert(msg="Not all fields are correctly entered.",id="staffAlert")
@@ -1203,7 +1198,7 @@ change.staff.click = function(...,se=app$se,app=getApp()) {
   all = se$staff
   row = match(vals$email, all$email)
   if (is.na(row)) {
-    show.field.alert(msg=paste0("The user with email ", vals$email, " is not yet member of the group ", group.id,". Click the add button instead."),id="staffAlert")
+    show.field.alert(msg=paste0("The user with email ", vals$email, " is not yet member of the group ", se$groupid,". Click the add button instead."),id="staffAlert")
     return()
   }
   if (isTRUE(all$boss[row])) {
@@ -1222,9 +1217,9 @@ change.staff.click = function(...,se=app$se,app=getApp()) {
   show.staff.ui()
 }
 
-delete.staff.click = function(...,se=app$se,app=getApp()) {
+delete.staff.click = function(...,formValues, se=app$se,app=getApp()) {
 
-  sres = get.form.values(app$glob$staffform)
+  sres = get.form.values(app$glob$staffform, formValues=formValues)
   restore.point("change.staff.click")
   if (!sres$ok) {
     show.field.alert(msg="Not all fields are correctly entered.",id="staffAlert")

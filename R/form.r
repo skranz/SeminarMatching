@@ -147,11 +147,10 @@ get.form = function(app=getApp()) {
   }
 }
 
-formSubmitButton = function(label=form$texts$submitBtnLabel, form=get.form()) {
+formSubmitButton = function(label=form$texts$submitBtnLabel, form=get.form(), id=paste0(form$prefix,"submitBtn",form$postfix)) {
   restore.point("formSubmitButton")
-
-  id = paste0(form$prefix,"submitBtn",form$postfix)
-  HTML(as.character(actionButton(id, label)))
+  sel = get.form.selector(form)
+  HTML(as.character(actionButton(id, label, "data-form-selector"=sel)))
 }
 
 add.form.handlers = function(form, success.handler=form$success.handler,...) {
@@ -196,16 +195,15 @@ form.ui.simple = function(form, fields=form$fields, values=NULL, submitBtn=NULL,
   if (is.null(submitBtn)) {
 
     id = paste0(form$prefix,"submitBtn",form$postfix)
-    submitBtn = actionButton(id,submitLabel)
+    submitBtn = formSubmitButton(label = submitLabel, form=form)
   }
   c(li,  list(submitAlert,submitBtn))
 }
 
 
-formSubmitClick = function(form, success.handler = NULL,app=getApp(),id=NULL,session=NULL,...) {
+formSubmitClick = function(form, formValues=NULL, success.handler = NULL,app=getApp(),id=NULL,session=NULL,...) {
   restore.point("formSubmitClick")
-
-  res = get.form.values(form=form)
+  res = get.form.values(form=form, formValues=formValues)
   restore.point("formSubmitClick_2")
   if (res$ok & (!is.null(success.handler))) {
     success.handler(values=res$values, form=form,...)
@@ -214,17 +212,30 @@ formSubmitClick = function(form, success.handler = NULL,app=getApp(),id=NULL,ses
 
 
 
-get.form.values = function(form=get.form(),fields=form$fields,field.names=names(fields), prefix=form$prefix, postfix=form$postfix, check.values = TRUE, show.alerts=isTRUE(form$show.alerts)) {
+get.form.selector = function(form, field.names = names(form$fields)) {
+  ids = paste0(form$prefix,field.names,form$postfix)
+  ids2sel(ids)
+}
 
-  values = lapply(field.names, function(name) {
-    id = paste0(prefix,name,postfix)
-    getInputValue(id)
-  })
+
+get.form.values = function(form=get.form(),fields=form$fields,field.names=names(fields), prefix=form$prefix, postfix=form$postfix, check.values = TRUE, show.alerts=isTRUE(form$show.alerts), formValues
+) {
   #cat("get.form.values:\n ", paste0(names(values),": ",values,collapse="\n"))
   restore.point("get.form.values")
 
+  if (missing(formValues)) {
+    values = lapply(field.names, function(name) {
+      id = paste0(prefix,name,postfix)
+      getInputValue(id)
+    })
+    names(values) = field.names
+  } else {
+    values = formValues
+    ids = paste0(prefix,field.names,postfix)
+    names(values) = field.names[match(names(formValues), ids)]
 
-  names(values) = field.names
+  }
+
   if (!check.values)
     return(values)
 
