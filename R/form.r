@@ -502,22 +502,25 @@ fieldInput = function(name=field$name, label=lang.field$label, help=lang.field$h
 
     res[[1]] = selectizeInput(id, label,choices=choices, selected=value, multiple=multiple)
 
-  } else if (input == "ace") {
-    library(shinyAce)
+  } else if (input == "ace" || input=="textArea") {
+    #library(shinyAce)
     if (is.null(value)) value = ""
-    height = first.none.null(field[["height"]], 200)
-    mode = first.none.null(field[["mode"]], "text")
 
-    widget = aceEditor(outputId = id, value = value,mode = mode,height=height, showLineNumbers = FALSE)
-
-    if (!is.null(label)) {
-      res[[1]] = list(
-        HTML(paste0('<label for="',id,'">',label,'</label>')),
-        widget
-      )
-    } else {
-      res[[1]] = widget
-    }
+    widget = textAreaInput(id, label=label,value=value, height=field[["height"]], rows = first.none.null(field[["rows"]], 1))
+    res[[1]] = widget
+    # height = first.none.null(field[["height"]], 200)
+    # mode = first.none.null(field[["mode"]], "text")
+    #
+    # widget = aceEditor(outputId = id, value = value,mode = mode,height=height, showLineNumbers = FALSE)
+    #
+    # if (!is.null(label)) {
+    #   res[[1]] = list(
+    #     HTML(paste0('<label for="',id,'">',label,'</label>')),
+    #     widget
+    #   )
+    # } else {
+    #   res[[1]] = widget
+    # }
 
   }
 
