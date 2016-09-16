@@ -49,6 +49,14 @@ fields:
       label: Degree
       help: Are you a Bachelor or Master student in the semester the seminar is offered?
     choice_set: studBAMA
+  numSemester:
+    lang_de:
+      label: Anzahl der Fachsemester
+      help: Im wievielten Fachsemester ihres Studiengangs sind Sie, wenn das Seminar stattfindet? Für Master Studierende zählen nur die Master Fachsemester!
+    lang_en:
+      label: Number of Study Semesters (Fachsemester)
+      help: How many semesters have you studied in your degree when the seminar takes place. For Master students only the Master semesters count.
+    choices: [1,2,3,4,5,6,7,8,9,10,11,12]
   studSubject:
     lang_de:
       label: Studienfach
@@ -61,6 +69,9 @@ fields:
     lang_de:
       label: Zweites Studienfach
       help: Bitte geben Sie ggf. ihr zweites Studienfach an
+    lang_en:
+      label: Second Subject
+      help: If you have two subjects, enter your second subject.
     choice_set: subjects2
   studSpecBA:
     lang_de:
@@ -95,3 +106,21 @@ fields:
     showif: |
       studSubject == "WiWi" | studSubject2 == "WiWi"
     value: ''
+  do13b:
+    lang_de:
+      label: Zusatzqualifikation 13b
+      help: |
+        Streben Sie die 13b Zusatzqualifikation für Wirtschaftsprüfer an.
+        (Nur relevant für WiWi Bachelor mit Schwerpunkt Rechnungswesen und Wirtschaftsprüfung.)
+      choices:
+        Nein: FALSE
+        Ja: TRUE
+    lang_en:
+      label: 13b Qualification
+      help: |
+        Are you part of the 13b programm for certified accountants?
+        (Only relevant for Bachelor WiWi students with specialization
+        Rechnungswesen und Wirtschaftsprüfung.)
+      choices:
+        No: FALSE
+        Yes: TRUE

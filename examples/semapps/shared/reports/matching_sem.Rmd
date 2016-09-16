@@ -58,7 +58,7 @@ sdf = df %>%
   replace.na(0, cols=-1) %>%
   as.data.frame()
 
-sdf$total = rowSums(sdf[,-1],na.rm = TRUE)
+sdf$total = rowSums(sdf[,-1,drop=FALSE],na.rm = TRUE)
 sdf
 ```
 
@@ -72,7 +72,7 @@ sdf = df %>%
   replace.na(0, cols=-1) %>%
   as.data.frame()
 
-sdf$total = rowSums(sdf[,-1],na.rm = TRUE)
+sdf$total = rowSums(sdf[,-1,drop=FALSE],na.rm = TRUE)
 sdf = arrange(sdf, -total)
 sdf
 ```
@@ -101,7 +101,7 @@ sdf = d %>%
   replace.na(0, cols=-1) %>%
   as.data.frame()
 
-sdf$total = rowSums(sdf[,-1],na.rm = TRUE)
+sdf$total = rowSums(sdf[,-1, drop=FALSE],na.rm = TRUE)
 sdf = arrange(sdf, -total)
 sdf
 ```

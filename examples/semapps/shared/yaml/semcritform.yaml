@@ -184,6 +184,7 @@ fields:
      - 'Technologie und Prozessmanagement (MA)'
      - 'Versicherungswirtschaft (MA)'
      - 'Unternehmensführung und Controlling (MA)'
+
   #heard_sem:
   #  lang_de:
   #    label: Schon Seminar ... gehört
@@ -192,6 +193,19 @@ fields:
   #  condition: >
   #    TRUE
   #  choice_set: [seminars]
+  bama:
+    optional: TRUE
+    lang_de:
+      label: BaMa
+    lang_en:
+      label: BaMA
+    condition: >
+      studBAMA == {{bama}}
+    choices:
+     - ''
+     - 'Bachelor'
+     - 'Master'
+
   email:
     optional: TRUE
     lang_de:
@@ -200,6 +214,35 @@ fields:
       label: Email
     condition: >
       email == "{{email}}"
+  numSemester:
+    optional: TRUE
+    lang_de:
+      label: '>= Semester'
+      help:
+    lang_en:
+      label: '>= Semester'
+      help: |
+        When the seminar takes place,
+        the student has studied at least this number of semesters.
+        (For MA students only master semesters count.)
+    condition: >
+      numSemester >= "{{numSemester}}"
+    choices: ['',1,2,3,4,5,6,7,8,9,10,11,12]
+
+  do13b:
+    optional: TRUE
+    lang_de:
+      label: 13b
+      help: Student möchte 13b Zusatzqualifikation (WiWi Bachelor only)
+      choices:
+        Ja: TRUE
+    lang_en:
+      label: 13b
+      help: Student wants 13b qualification (WiWi Bachelor only)
+    choices:
+     - ''
+     - 'TRUE'
+
   points_pair_first:
     optional: TRUE
     lang_de:

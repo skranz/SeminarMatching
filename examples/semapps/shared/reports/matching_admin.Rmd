@@ -73,8 +73,8 @@ df %>%
   summarise(share = paste0(round(100*n() / first(N),1),"%")) %>%
   ungroup() %>%
   filter(found == "found seminar") %>%
-  mutate(pos = paste0("Ranked ",pos)) %>%
   dcast(pos ~ studBAMA+found, value.var="share") %>%
+  mutate(pos = paste0("Ranked ",pos)) %>%
   replace.na("0%")
 ```
 

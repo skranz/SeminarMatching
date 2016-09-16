@@ -26,14 +26,17 @@ students:
     semester: VARCHAR(20)
     name: VARCHAR(255)
     studBAMA: VARCHAR(255)
+    numSemester: INTEGER
     studSubject: VARCHAR(255)
     studSubject2: VARCHAR(255)
     studSpecBA: VARCHAR(255)
     studSpecMA: VARCHAR(255)
     studSpecMA2: VARCHAR(255)
+    do13b: BOOLEAN
     random_points: DOUBLE
   defaults:
     random_points: 0
+    do13b: FALSE
   indexes:
     - "CREATE INDEX students1 on students (userid)"
     - "CREATE UNIQUE INDEX students2 on students (userid, semester)"
@@ -110,7 +113,10 @@ semcrit:
     subject: VARCHAR(255)
     specBA: VARCHAR(255)
     specMA: VARCHAR(255)
+    bama: VARCHAR(20)
     email: VARCHAR(255)
+    numSemester: INTEGER
+    do13b: VARCHAR(10)
     points_pair_first: VARCHAR(255)
   indexes:
     - "CREATE INDEX semcrit1 on semcrit (semid)"

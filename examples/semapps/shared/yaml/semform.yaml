@@ -68,8 +68,10 @@ fields:
   weblink:
     lang_de:
       label: Link zur Seminarwebseite
+      help: Sie können hier optional einen Weblink zur Seminarwebseite eintragen.
     lang_en:
       label: Weblink to Seminar
+      help: You can enter here a weblink to the seminar website.
     optional: TRUE
   descr:
     lang_de:
