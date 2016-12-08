@@ -5,6 +5,8 @@
 
 examples.EditSeminarApp = function() {
   library(SeminarMatching)
+  restore.point.options(display.restore.point = TRUE)
+
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   app = EditSeminarsApp(init.userid = "test", init.password="test", lang="en")
   viewApp(app)
@@ -14,9 +16,11 @@ example.create.db = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   db.dir = paste0(getwd(),"/db")
 
+
   restore.point.options(display.restore.point = TRUE)
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
+  #create.user.in.db(userid = "test", email = "sebkranz@gmail.com",password = "test",db.arg = logindb.arg)
 
   # Create Databases
   #create.login.db(db.arg = logindb.arg)
@@ -181,7 +185,7 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   lop$login$ui = lop.login.ui(lop)
   lop$smtp = smtp
 
-  changeHandler("semMainSemesterInput", function(value,...) {
+  selectChangeHandler("semMainSemesterInput", function(value,...) {
     semester = value
     load.teacher.se(semester=semester)
     show.teacher.seminars()
@@ -1037,7 +1041,7 @@ show.sem.report.ui =function(cs = se$cs,se = app$se, app=getApp()) {
 
   html = try(knit.rmd.in.temp(rmd,envir = env, fragment.only = TRUE, use.commonmark=TRUE))
   if (is(html,"try-error")) {
-    html = "No data on studet preferences for this seminar available."
+    html = "No data on student preferences for this seminar available."
   }
   dsetUI("reportUI",HTML(html))
   setUI("reportUI",HTML(html))
