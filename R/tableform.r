@@ -112,7 +112,18 @@ get.table.form.df = function(form, null.value = NULL) {
     cat("\n*********************************")
     return(null.value)
   }
-  df = as_data_frame(data.table::rbindlist(hot$data))
+
+  # We need to correct the data
+  li = lapply(hot$data, function(row) {
+    lapply(row, function(cell) {
+      if (is.null(cell)) return("")
+      if (identical(cell,"NA")) return("")
+      cell
+    })
+  })
+
+  #df = as_data_frame(data.table::rbindlist(hot$data))
+  df = as_data_frame(data.table::rbindlist(li))
   #df = hot_to_r(hot)
   colnames(df) = names(form$fields)
   df
