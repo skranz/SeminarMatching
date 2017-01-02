@@ -1,6 +1,6 @@
 examples.StudSeminarsApp = function() {
-  setwd("D:/libraries/SeminarMatching/semapps/shared")
-  restore.point.options(display.restore.point = FALSE)
+  setwd("D:/libraries/SeminarMatching/testapps/shared")
+  restore.point.options(display.restore.point = TRUE)
   app = StudSeminarsApp(init.userid = "test", init.password="test", lang="de")
   viewApp(app)
 
@@ -76,7 +76,7 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
 
   login.fun = function(app=getApp(),userid,...) {
-    app$se = refresh.stud.app.data(userid=userid)
+    app$se = refresh.stud.app.data(userid=userid,se=NULL)
     ui = tabsetPanel(
       id = "studTabsetPanel",
       tabPanel(title = app$glob$texts$studoverviewTab, value="overviewPanel", uiOutput("overviewUI")),
@@ -183,13 +183,11 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
     se$db = app$glob$semdb
     se$userid = userid
   }
+  app$se = se
   semester = get.default.semester(se=se)
   if (is.null(semester)) {
     semester = app$glob$sets$semesters[1]
   }
-  se$semester = semester
-
-  app$se = se
   se$semester = semester
   se$use_joker = app$glob$use_joker
 

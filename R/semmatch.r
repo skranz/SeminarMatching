@@ -1,8 +1,9 @@
 
 examples.perform.matching = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
+  setwd("D:/libraries/SeminarMatching/testapps/shared")
 
-  n = 270
+  n = 600
   semester = "SS17"
   delete.seminar.matching(semester=semester)
   delete.random.students(semester=semester)
@@ -69,7 +70,6 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
     semcrit = dbGet(semdb,"semcrit", list(semester=semester))
 
   semcrit = filter(semcrit, !is.na(points))
-
   semcrit$slot.pos = parse.semcrit.slots(semcrit$slots)
 
 
@@ -258,6 +258,10 @@ update.seminar.filled_slots = function(semid=se$semid, semester=se$semester, fil
 students.satisfy.semcrit = function(sc, students, studpref, conds) {
   restore.point("students.satisfy.semcrit")
 
+  sc = lapply(sc, function(cond) {
+    if (identical(cond,"NA") | any(is.na(cond))) cond=""
+    cond
+  })
   cfields = intersect(names(conds), names(sc))
   cfields = cfields[is.true(nchar(sc[cfields])>0)]
 
@@ -271,6 +275,7 @@ students.satisfy.semcrit = function(sc, students, studpref, conds) {
     cond.ok = eval(cond, students)
     ok = ok & cond.ok
   }
+  #s = cbind(select(students, studBAMA,studSubject, studSubject2),ok)
   ok
 }
 
@@ -298,9 +303,10 @@ parse.semcrit.slots = function(slots) {
   sv
 }
 
+# compute the priority based on criteria
+# for each student x slot combination
 make.seminar.slots.u = function(sem, semcrit, students, studpref, conds, base.points = rep(0, NROW(students))) {
   restore.point("make.seminar.slots.u")
-
 
   num.slots = sem$slots
   num.studs = NROW(students)
@@ -309,8 +315,6 @@ make.seminar.slots.u = function(sem, semcrit, students, studpref, conds, base.po
   slostu = expand.grid(stud=students$userid,slot=1:sem$slots)
 
   points = base.points
-
-
 
   scs = filter(semcrit, semid==sem$semid)
   if (!has.col(scs,"slot.pos")) {

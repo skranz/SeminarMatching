@@ -8,7 +8,7 @@ examples.EditSeminarApp = function() {
   restore.point.options(display.restore.point = TRUE)
 
   setwd("D:/libraries/SeminarMatching/semapps/shared")
-  app = EditSeminarsApp(init.userid = "test", init.password="test", lang="en")
+  app = EditSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="kruye", lang="en")
   viewApp(app)
 }
 
