@@ -1,9 +1,7 @@
 library(SeminarMatching)
 
-setwd("D:/libraries/SeminarMatching/semapps/admin")
+# adapt main.dir to path of shared folder on your server
 main.dir = "../shared"
-restore.point.options(display.restore.point = !TRUE)
-
-app = EditSeminarsApp(init.userid = "test", init.password="test", lang="en")
+app = EditSeminarsApp(lang="en")
 appReadyToRun(app)
 #viewApp(app)

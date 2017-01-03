@@ -1,5 +1,6 @@
 examples.AdminSeminarApp = function() {
   setwd("D:/libraries/SeminarMatching/semapps/")
+  setwd("D:/libraries/SeminarMatching/testapps/")
   restore.point.options(display.restore.point = !TRUE)
   app = AdminSeminarsApp(init.userid = "test", init.password="test", lang="en", main.dir = paste0(getwd(),"/shared"))
   viewApp(app)

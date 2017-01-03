@@ -8,7 +8,7 @@ example.seminar.match.info = function() {
 
 
 # get more detailed info about the matching for a particular seminar
-seminar.match.info = function(semester, semid, seminars=NULL, students=NULL, studpref=NULL, conds=NULL, semcrit=NULL, yaml.dir=NULL, db.dir=NULL, schema.dir=NULL, matchings=NULL) {
+seminar.match.info = function(semester, semid, seminars=NULL, students=NULL, studpref=NULL, conds=NULL, semcrit=NULL, yaml.dir=NULL, db.dir=NULL, schema.dir=NULL, matchings=NULL, semdb=NULL) {
 
   restore.point("seminar.match.info")
 

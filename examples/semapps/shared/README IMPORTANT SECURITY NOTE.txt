@@ -1,4 +1,7 @@
-SECURITY WARNING
-Do not delete global.R, ui.R and server.R in this folder. Otherwise, it is possible to access all files (including the database) in this folder from the web-browser.
+SECURITY NOTICE
 
-It may be better to put the shared directory in another directory of the server that is safer from web access.
+I would recommend not to put the shared folder as a subfolder of the shiny-server directory. If you put it under the shiny-server directory and there is no shiny app inside or above the folder all files (e.g. the user data base) can be accessed from the webbrowser!
+
+The global.R, ui.R and server.R in this folder, should prevent file access, but I would really recommend to put the share folder in a path outside the shiny-server folder.
+
+You then have to adapt the main.dir in the global.R files in all apps to the path of the shared folder on your server.

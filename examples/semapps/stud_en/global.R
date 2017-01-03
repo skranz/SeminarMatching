@@ -1,7 +1,7 @@
 library(SeminarMatching)
 
-setwd("D:/libraries/SeminarMatching/semapps/stud_en")
+# adapt main.dir to path of shared folder on your server
 main.dir = "../shared"
-app = StudSeminarsApp(init.userid = "test", init.password="test", lang="en",main.dir = main.dir)
+app = StudSeminarsApp(lang="en",main.dir = main.dir)
 appReadyToRun(app)
 #viewApp(app)
