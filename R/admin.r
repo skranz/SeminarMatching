@@ -1,5 +1,7 @@
 examples.AdminSeminarApp = function() {
+  setwd("D:/libraries/SeminarMatching/testapps/")
   setwd("D:/libraries/SeminarMatching/semapps/")
+
   setwd("D:/libraries/SeminarMatching/testapps/")
   restore.point.options(display.restore.point = !TRUE)
   app = AdminSeminarsApp(init.userid = "test", init.password="test", lang="en", main.dir = paste0(getwd(),"/shared"))
@@ -422,15 +424,14 @@ show.admin.report = function(se=app$se, app=getApp()) {
 
   report.dir = app$glob$report.dir
 
-  file = paste0(report.dir,"/matching_admin.Rmd")
-  if (!file.exists(file)) {
-    ui = p("No report file exists.")
-    setUI("semAdminReportUI",ui)
-    return()
+  if (isTRUE(se$admin$rounds_done==0)) {
+    file = paste0(report.dir,"/pre_matching_admin.Rmd")
+  } else {
+    file = paste0(report.dir,"/matching_admin.Rmd")
   }
 
-  if (se$admin$rounds_done==0) {
-    ui = p("No matching has been performed.")
+  if (!file.exists(file)) {
+    ui = p("No report file exists.")
     setUI("semAdminReportUI",ui)
     return()
   }
@@ -440,12 +441,15 @@ show.admin.report = function(se=app$se, app=getApp()) {
     rmd = remove.rmd.chunks(rmd, "init_param")
 
     round = 1
-    se$matchings = dbGet(se$db,"matchings",nlist(semester=se$semester, round))
 
-    if (NROW(se$matchings)==0) {
-      ui = p("No student has been matched.")
-      setUI("semAdminReportUI",ui)
-      return()
+    if (se$admin$rounds_done>0) {
+      se$matchings = dbGet(se$db,"matchings",nlist(semester=se$semester, round))
+
+      if (NROW(se$matchings)==0) {
+        ui = p("No student has been matched.")
+        setUI("semAdminReportUI",ui)
+        return()
+      }
     }
     #writeClipboard(rmd)
     env = as.environment(list(semester=se$semester, seminars=se$seminars, students=se$students, matchings=se$matchings, semdb=se$db, db.dir=app$glob$db.dir, round=1))
