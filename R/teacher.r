@@ -5,10 +5,10 @@
 
 examples.EditSeminarApp = function() {
   library(SeminarMatching)
-  restore.point.options(display.restore.point = TRUE)
+  restore.point.options(display.restore.point = !TRUE)
 
   setwd("D:/libraries/SeminarMatching/semapps/shared")
-  app = EditSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="kruye", lang="en")
+  app = EditSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="test", lang="en")
   viewApp(app)
 }
 
@@ -21,7 +21,6 @@ example.create.db = function() {
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
   #create.user.in.db(userid = "test", email = "sebkranz@gmail.com",password = "test",db.arg = logindb.arg)
-
   # Create Databases
   #create.login.db(db.arg = logindb.arg)
   #create.user.in.db(userid = "test", email = "sebkranz@gmail.com",password = "test",db.arg = logindb.arg)
@@ -113,8 +112,15 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   file = paste0(report.dir,"/matching_sem.Rmd")
   rmd = readLines(file,warn = FALSE)
   rmd = remove.rmd.chunks(rmd, "init_param")
-  rmd = paste0(rmd, collapse="\n\n")
-  glob$reports.rmd = list("matchin_sem"=rmd)
+  rmd1 = paste0(rmd, collapse="\n\n")
+
+  file = paste0(report.dir,"/pre_matching_sem.Rmd")
+  rmd = readLines(file,warn = FALSE)
+  rmd = remove.rmd.chunks(rmd, "init_param")
+  rmd2 = paste0(rmd, collapse="\n\n")
+
+
+  glob$reports.rmd = list("matchin_sem"=rmd,"pre_matching_sem"=rmd2)
 
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
@@ -1034,10 +1040,13 @@ show.teacher.overview = function(se=app$se, app=getApp()) {
 show.sem.report.ui =function(cs = se$cs,se = app$se, app=getApp()) {
   restore.point("show.sem.report.ui")
 
+  rounds_done = se$admin$rounds_done
   round = 1
   env = as.environment(list(semester=cs$semester, semid=cs$semid, semdb=se$db,round=1))
   parent.env(env) = environment()
-  rmd = app$glob$reports.rmd[[1]]
+
+  report = if (rounds_done==0) "pre_matching_sem" else "matching_sem"
+  rmd = app$glob$reports.rmd[[report]]
 
   html = try(knit.rmd.in.temp(rmd,envir = env, fragment.only = TRUE, use.commonmark=TRUE))
   if (is(html,"try-error")) {
