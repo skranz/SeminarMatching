@@ -1,0 +1,69 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(error = TRUE, echo=FALSE, cache=FALSE)
+library(ggplot2)
+library(SeminarMatching)
+library(dplyr)
+library(tidyr)
+library(reshape2)
+```
+
+```{r init_param, include=FALSE}
+setwd("D:/libraries/SeminarMatching/semapps/shared/reports")
+semester = "SS17"
+db.dir = paste0("../db")
+round = 1
+
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+seminars = dbGet(semdb,"seminars",nlist(semester, active=TRUE))
+students = dbGet(semdb,"students",nlist(semester))
+```
+
+```{r init_data, include=FALSE}
+seminars = filter(seminars, active==TRUE)
+studpref = dbGet(semdb,"studpref",nlist(semester))
+has.studpref = NROW(studpref)
+if (has.studpref) {
+  df = studpref %>%
+    group_by(userid) %>%
+    summarize(num_ranked = n())
+  students = left_join(students, df, by="userid") %>%
+    mutate(num_ranked = ifelse(is.na(num_ranked), 0,num_ranked))
+  
+} else {
+  students$num_ranked = 0
+}
+
+num.studs = length(unique(students$userid))
+num.sems = length(unique(seminars$semid))
+total.slots = sum(seminars$slots)
+```
+
+# No matching round has yet been performed
+
+## Active Seminars
+
+```{r}
+df = seminars %>%
+  group_by(semBAMA) %>%
+  summarize(Number_Seminars=n(), Total_Slots=sum(slots))
+df
+```
+Note: some lecturers may have split their seminar in the software into sub seminars to better allocate students to topic areas. Hence the number of seminars here may seem larger than in the official course list.
+
+## Students
+
+- In total `r num.studs` students have registered and `r sum(students$num_ranked >0)` of them have submitted seminar preferences (with_pref).
+
+```{r}
+students %>% 
+  group_by(studBAMA) %>%
+  summarize(num_students=n(), with_pref=sum(num_ranked>0))
+```
+
+A list by subject:
+```{r}
+students %>% 
+  group_by(studBAMA, studSubject) %>%
+  summarize(num_students=n(), with_pref=sum(num_ranked>0))
+```

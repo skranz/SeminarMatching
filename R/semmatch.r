@@ -1,13 +1,13 @@
 
 examples.perform.matching = function() {
-  setwd("D:/libraries/SeminarMatching/semapps/shared")
   setwd("D:/libraries/SeminarMatching/testapps/shared")
+  setwd("D:/libraries/SeminarMatching/semapps/shared")
 
   n = 600
   semester = "SS17"
   delete.seminar.matching(semester=semester)
   delete.random.students(semester=semester)
-  li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
+  #li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
   df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,insert.into.db = TRUE)
 
   df = df %>% arrange(num_ranked, semid)
@@ -70,6 +70,8 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
     semcrit = dbGet(semdb,"semcrit", list(semester=semester))
 
   semcrit = filter(semcrit, !is.na(points))
+
+  semcrit = add.num.slots.to.semcrit(semcrit=semcrit, seminars=seminars)
   semcrit$slot.pos = parse.semcrit.slots(semcrit$slots)
 
 
@@ -106,7 +108,9 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
 
   # empty seminar, which will be assigned to students who do not
   # get a seminar
-  empty.sem = matrix(runif(num.studs*num.studs),nrow=num.studs)
+  # we give negative random priorities for empty seminar
+  # to break ties
+  empty.sem = matrix(-runif(num.studs*num.studs),nrow=num.studs)
 
   # add empty seminar
   seu = rbind(seu, empty.sem)
@@ -280,6 +284,8 @@ students.satisfy.semcrit = function(sc, students, studpref, conds) {
 }
 
 parse.semcrit.slots = function(slots) {
+  restore.point("parse.semcrit.slots")
+
   slots = str.trim(slots)
   has.slots = nchar(slots)>0
 
@@ -519,4 +525,16 @@ update.seminar.filled.slots = function(semdb=NULL,semester=NULL, where=list(seme
       dbUpdate(semdb, "seminars", vals=list(filled_slots=seminars$filled_slots[i]),where = list(semid=seminars$semid[i]))
     }
   })
+}
+
+add.num.slots.to.semcrit = function(semcrit,seminars) {
+  restore.point("add.num.slots.to.semcrit")
+
+  df = select(seminars, semid, slots) %>% rename(num_slots=slots)
+
+  semcrit = left_join(semcrit, df, by="semid")
+  rows = nchar(semcrit$slots)==0 & semcrit$num_slots >0 & !is.na(semcrit$num_slots)
+  semcrit$slots[rows] = paste0("1:",semcrit$num_slots[rows])
+
+  semcrit
 }

@@ -50,7 +50,7 @@ stop.without.error()
 
 #< if !stud.exists
 
-Bevor Sie Präferenzen über Seminare angeben können, aktualisieren und speichern Sie zunächst Ihre Hintergrunddaten im Reiter `Profil`.
+Bevor Sie Präferenzen über Seminare angeben können, aktualisieren und speichern Sie zunächst Ihre Hintergrunddaten im Reiter `Ihre Daten`.
 
 #>
 

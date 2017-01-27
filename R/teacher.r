@@ -20,6 +20,8 @@ example.create.db = function() {
   restore.point.options(display.restore.point = TRUE)
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
+
+
   #create.user.in.db(userid = "test", email = "sebkranz@gmail.com",password = "test",db.arg = logindb.arg)
   # Create Databases
   #create.login.db(db.arg = logindb.arg)

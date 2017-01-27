@@ -22,7 +22,8 @@ students = dbGet(semdb,"students",nlist(semester))
 ```
 
 ```{r init_data, include=FALSE}
-df = matchings
+df = matchings %>% filter(num_ranked>0)
+
 df = mutate(df, found=ifelse(semid!=-1, "found seminar", "no seminar"))
 
 cols = c("semid",setdiff(colnames(seminars),colnames(df)))
@@ -36,15 +37,34 @@ num.sems = length(unique(df$semid))
 num.match = sum(df$semid != -1)
 num.empty = sum(df$semid == -1)
 total.slots = sum(seminars$slots)
+
+r1fi = df %>% 
+  filter(semid>-1) %>%
+  group_by(semid) %>%
+  summarize(filled_round1=n())
+
+seminars = left_join(seminars,r1fi, by="semid")
+
 ```
 
 # Matching Results for `r semester` round `r round`
+
+- Note: The report considers only students that have ranked at least 1 seminar.
 
 - We have `r num.studs` students and `r num.sems` seminars.
 
 - `r num.match` of `r total.slots` seminar slots have been filled (`r round(100*num.match / total.slots)`%) and `r num.empty` students (`r round(100*num.empty / num.studs)`%) did not get assigned a seminar.
 
 - On average a student listed `r round(mean(df$num_ranked),1)` seminars in the preference list.
+
+Filled and open seminar slots after matching round 1:
+```{r}
+seminars %>%
+  group_by(semBAMA) %>%
+  summarize(num_sems=n(), total_slots=sum(slots,na.rm=TRUE), filled=sum(filled_round1,na.rm=TRUE), open=total_slots-filled)
+
+```
+
 
 The following table shows for Bachelor and Master students, how many students found or found not a seminar.
 ```{r }
@@ -125,5 +145,14 @@ df %>%
   dcast(studSubject + mean_num_sem_ranked ~ found,value.var="n") %>%
   arrange(-`found seminar`) %>%
   replace.na(0)
+```
+
+
+# Filled slots after all matching rounds and manual assignments
+
+```{r}
+seminars %>%
+  group_by(semBAMA) %>%
+  summarize(num_sems=n(), total_slots=sum(slots), filled=sum(filled_slots), open=total_slots-filled)
 ```
 

@@ -55,4 +55,4 @@ stop.without.error()
 Die Seminarthemen für das {{semester}} werden erst am **{{stud_start_date}} freigegeben**. Ab
 diesem Termin können Sie Ihre Präferenzen über Seminare angeben im Reiter `Seminarwahl` angeben. Sie müssen Ihre **Präferenzen spätestens am Ende des {{round1_date-1}} eintragen**. Die automatisierte Seminarplatzvergabe findet dann am {{round1_date}} um 3:00 nachts statt.
 
-Sie können bereits Ihr Profil im Reiter `Profil` eingeben bzw. für dieses Semester aktualisieren.
+Sie können bereits Ihr Profil im Reiter `Ihre Daten` eingeben bzw. für dieses Semester aktualisieren.

@@ -50,26 +50,22 @@ stop.without.error()
 
 - F: How will the seminar slots be assigned?
   
-  - A: Seminar slots are assigned with the student optimal <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithm</a>. With this algorithm it is an optimal strategy for you, to state your true preferences over seminars. Your priorities over seminar slots will be randomly assigned. Lecturers can set higher priorities e.g. for students with particular fields of specialization.
+  - A: Seminar slots are assigned with the student optimal <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithm</a>. With this algorithm it is an optimal strategy for you, to state your true preferences over seminars.
 
 
 - F: How can I guarantee to get a seminar slot in some seminar?
 
-  - A: To guarantee a seminar slot, you have to add all seminars in your preference list. So far, there have always been seminars with free slots remaining. Should it be the case that all seminars are filled, we will try to increase the number of seminar slots. If you don't add all seminars to your preference list, it can be that you won't get a seminar slot. The fewer seminars you are willing to participate the higher the risk that you don't get a seminar slot.
+  - A: To guarantee a seminar slot, you have to add all seminars in your preference list. So far, there have always been seminars with free slots remaining. Should it be the case that all seminars are filled, we will try to increase the number of seminar slots. If you don't add all seminars to your preference list, it can be that you won't get a seminar slot. The fewer seminars you are willing to participate, the higher the risk that you don't get a seminar slot.
 
 - F: Can I guarantee to get a slot of one of my topped ranked seminar?
-  - A: There is no such guarantee. If more students want your topped ranked seminars than there a slots, not everybody can get a seminar slot.
+  - A: There is no such guarantee. If more students want your top-ranked seminars than there a slots, not everybody can get a seminar slot.
 
 - F: Are my chances to get my favorite seminar reduced if I add more seminars to my preference list?
 
   - A: No. A longer preference list does not reduce your probability to get a seminar at the top of your list. A longer list just increases your probability to get some seminar. 
   
 - F: Could it be strategically advantageous, e.g. to rank my second most desired seminar on position 1?
-  - A: No. Given that we use the student-optimal Gale-Shapley Algorithmn it is always beneficial to state your true preferences over seminars.
-
-- F: Wouldn't it be fair if students with some specialization have a higher chance to get a seminar in their field of specialization.
-
-  - A: If justified, lectures can give priorities to students of some specialization.
+  - A: No. Given that we use the student-optimal Gale-Shapley Algorithmn, it is always beneficial to state your true preferences over seminars.
 
 - F: When do I know the result of the seminar assignment?
 
@@ -80,11 +76,14 @@ stop.without.error()
   
 - F: What if I got a seminar slot but don't want to participate?
 
-  - A: Please only rank those seminars at which you would participate if you get a seminar slot. If you later don't take part in an assigned seminar you show fairly asocial behavior towards your fellow students whom you have taken away that seminar slots (unless there are reasons out of your reach like a illness etc). We check whether an unjustified non-appearance may lead to a formal malus, e.g. in the form of lower priorities in future seminar matchings.
+  - A: Please only rank those seminars at which you would participate if you get a seminar slot. If you get a seminar slot, but don't participate, you show fairly asocial behavior towards your fellow students, whom you have taken away that seminar slot (unless there are reasons you cannot influence, like a illness). We check whether an unjustified non-appearance may lead to a formal malus, e.g. in the form of lower priorities in future seminar matchings.
   
 - F: What if I missed the date of the official seminar matching?
 
   - A: Goal of the official seminar matching is a fair and efficient central assignment of seminar slots. That makes it neccessary that everybody submits the seminar preferences until the specified date. If the second seminar round has not yet taken place, you can still participate there and try to get one of the remaining slots. If also the second round has already been conducted, you have missed this semester's seminar assignment. 
 
 - F: How are seminar topics assigned?
-  - A: Seminar topics will be assigned after the seminar slots are assigned. Topic assignment will be performed decentralized. You either get an email or information is given on the seminar website.
+  - A: Seminar topics will be assigned after the seminar slots are assigned. Topic assignment will be performed decentralized. You either get an email, or information is given on the seminar website.
+  
+- F: Where is the log-out button?
+  - A: There is no log-out button. Simple close the window or tab, or surf to some other webpage after you have entered and saved your data.

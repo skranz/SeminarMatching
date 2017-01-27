@@ -1,9 +1,17 @@
 example.seminar.match.info = function() {
-  setwd("D:/libraries/SeminarMatching/testapps/shared")
+  setwd("D:/libraries/SeminarMatching/semapps/shared")
   semester = "SS17"
-  semid = 17
+  semid = 25
 
   df = seminar.match.info(semester = semester, semid=semid)
+
+  setwd("D:/libraries/SeminarMatching/")
+  write.csv(df, paste0("matchinfo_",semester,"_semid",semid,".csv"))
+
+  setwd("D:/libraries/SeminarMatching/semapps/shared")
+
+
+
 }
 
 
@@ -42,6 +50,8 @@ seminar.match.info = function(semester, semid, seminars=NULL, students=NULL, stu
 
   restore.point("seminar.match.info.inner")
 
+  semcrit = add.num.slots.to.semcrit(semcrit=semcrit, seminars=seminars)
+
 
   sem = filter(seminars, semid == semid_)
   sstuds = studpref %>%
@@ -55,6 +65,8 @@ seminar.match.info = function(semester, semid, seminars=NULL, students=NULL, stu
   ssemcrit = semcrit %>%
     filter(semid==semid_) %>%
     filter(!is.na(points))
+
+
 
   ssemcrit$slot.pos = parse.semcrit.slots(ssemcrit$slots)
 

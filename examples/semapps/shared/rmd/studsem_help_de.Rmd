@@ -50,7 +50,7 @@ stop.without.error()
 
 - F: Wie werden die Seminarplätze zugeteilt?
   
-  - A: Die Seminarplätze werden gemäß des studentenoptimalen <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithmus</a> zugeteilt. Es ist hierbei eine dominante Strategie Ihre wahren Präferenzen über die Seminare anzugeben. Ihre Prioritäten über Seminarplätze werden zufällig bestimmt, Dozenten können aber höhere Prioritäten z. B. für Studierender gewisser Schwerpunktfächer vergeben.
+  - A: Die Seminarplätze werden gemäß des studentenoptimalen <a href="https://en.wikipedia.org/wiki/Stable_marriage_problem" target="_blank">Gale-Shapley Algorithmus</a> zugeteilt. Es ist hierbei eine dominante Strategie Ihre wahren Präferenzen über die Seminare anzugeben.
 
 - F: Ich brauche unbedingt noch ein Seminar. Wie kann ich garantiert einen Seminarplatz erhalten?
 
@@ -67,10 +67,6 @@ stop.without.error()
 
   - A: Nein. Bei dem Studierenden-Optimalen Gale-Shapley Algorithmus ist es immer vorteilhaft ihrer Seminare gemäß ihrer wahren Präferenzen zu sortieren. Dies ist anders als, z. B. bei der Studienplatzvergabe durch die ZVS, wo es ggf. vorteilhaft sein kann, die Präferenzen strategisch falsch anzugeben. D.h. bei dem von uns verwendeten Gale-Shapley Algorithmus brauchen sie sich nicht den Kopf zerbrechen, wie hoch ihre Chancen sind jeweils einen Seminarplatz zu erhalten. Geben Sie einfach alle Seminare an, die sie bereit wären zu hören, und sortieren Sie die Seminare gemäß Ihrer Wunschreihenfolge: es ist mathematisch bewiesen, dass dies eine optimale Strategie ist.
 
-- F: Sollten nicht z. B. Studierende eines Schwerpunktfaches höhere Chancen haben einen Seminarplatz in Ihren Schwerpunkt zu erhalten?
-
-  - A: Dozenten können, soweit inhaltlich gerechtfertigt, solche Prioritäten vergeben. Dies hat aber keinen Einfluss auf die Gestaltung Ihrer Präferenzliste. Hier ist es stets optimal Ihre wahren Präferenzen über die Seminare anzugeben, unabhängig davon ob sie ggf. bei einem Seminar höhere Priorität haben.
-  
 - F: Wann sehe ich ob und welchen Seminarplatz ich erhalten habe?
 
   - A: Die Hauptrunde der Seminarzuteilung erfolgt automatisch in der Nacht des {{round1_date}}. Sie sehen hiernach ob und welchen Seminarplatz Sie erhalten haben.
@@ -92,3 +88,12 @@ stop.without.error()
 
 - F: Meine Präferenzen über die Seminare hängen aber davon ab, welche Themen ich jeweils in den Seminaren erhalten würde...
   - A: Aus logistischen Gründen, haben wir uns gegen eine gleichzeitige Zuteilung von Seminaren und Themen entschieden. Sonst müssten beispielsweise alle Studierenden ihre Präferenzen über alle Themen von allen Seminaren angeben, was sehr, sehr komplex und aufwendig wäre. Deshalb müssen Sie Ihre Präferenzen über Seminare abgeben ohne ihr später zugeteiltes Thema genau zu kennen. Dies ist aber üblich bei Seminarplatzvergaben.
+ 
+- F: Habe ich eine bessere Chance gewünschte Seminarplätze zu bekommen, wenn ich meine Präferenzen früher eintrage?
+  - A: Nein, solange Sie Ihre Präferenzen vor der Deadline der jeweiligen Vergaberunde eingeben und abspeichern, spielt der Zeitpunkt keine Rolle. Trotzdem würden wir empfehlen nicht bis zur letzten Minute zu warten, wenn dann z. B. die Präferenzen aufgrund von Internetproblemen nicht eingegeben werden könnten, wär es ärgerlich.
+
+- F: Kann ich meine Präferenzliste nochmal ändern?
+  - A: Ja, bis zur Deadline können Sie Ihre Präferenzliste noch beliebig anpassen. Bitte das Abspeichern nach Änderungen aber nicht vergessen.
+
+- F: Wo ist der Log-Out Knopf?
+  - A: Es gibt keinen Log-Out Knopf. Schließen Sie bitte einfach das Fenster oder Tab, oder surfen Sie auf eine andere Seite nachdem Sie Ihre Daten eingegeben und gespeichert haben.

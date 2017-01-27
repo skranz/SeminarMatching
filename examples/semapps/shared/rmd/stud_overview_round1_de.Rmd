@@ -49,7 +49,7 @@ stop.without.error()
 ## WiWi-Seminarvergabe, Uni Ulm {{semester}} -- Hauptrunde
 
 #< if !stud.exists
-Bevor Sie im Reiter `Seminarwahl` Präferenzen über Seminare angeben können, aktualisieren und speichern Sie zunächst Ihre Hintergrunddaten im Reiter `Profil`.
+Bevor Sie im Reiter `Seminarwahl` Präferenzen über Seminare angeben können, aktualisieren und speichern Sie zunächst Ihre Hintergrunddaten im Reiter `Ihre Daten`.
 #>
 
 Sie können **bis zum {{round1_date-1}}** im Reiter `Seminarwahl` Ihre Präferenzen über WiWi Seminare eintragen. Am {{round1_date}}, um 3:00 nachts, werden die Seminarplätze dann zentral zugeteilt. Schauen Sie dann hier nach, welchen Seminarplatz Sie erhalten haben. Sie können dann ggf. Ihre Präferenzen über die Seminarthemen angeben.
