@@ -94,6 +94,13 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
 
   # Take global random points that were drawn for
   # each student for this semester
+
+  # Invert random points in round 2
+  # to generate more equity
+  if (round == 2) {
+    students$random_points = 10 - students$random_points
+  }
+
   sem.base.points = matrix(students$random_points,num.sems,num.studs,byrow=TRUE)
   sem.base.points[is.na(sem.base.points)] = 0
 
