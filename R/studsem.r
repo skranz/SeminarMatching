@@ -2,11 +2,7 @@ examples.StudSeminarsApp = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   restore.point.options(display.restore.point = TRUE)
   app = StudSeminarsApp(init.userid = "test", init.password="test", lang="de")
-
-
-
   viewApp(app)
-
 }
 
 

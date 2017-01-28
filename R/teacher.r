@@ -8,6 +8,8 @@ examples.EditSeminarApp = function() {
   restore.point.options(display.restore.point = !TRUE)
 
   setwd("D:/libraries/SeminarMatching/semapps/shared")
+  setwd("D:/libraries/SeminarMatching/testapps/shared")
+
   app = EditSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="test", lang="en")
   viewApp(app)
 }
@@ -86,9 +88,6 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   form$sets = glob$sets
   glob$semcritform = form
 
-  form = load.and.init.form(file =paste0(yaml.dir,"/semtopicsform.yaml"),lang = lang,prefix = "semtopic_")
-  form$sets = glob$sets
-  glob$semtopicsform = form
 
   form = load.and.init.form(file =paste0(yaml.dir,"/semstudform.yaml"),lang = lang,prefix = "semstud_")
   form$sets = glob$sets
@@ -122,7 +121,7 @@ EditSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   rmd2 = paste0(rmd, collapse="\n\n")
 
 
-  glob$reports.rmd = list("matchin_sem"=rmd,"pre_matching_sem"=rmd2)
+  glob$reports.rmd = list("matching_sem"=rmd1,"pre_matching_sem"=rmd2)
 
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
@@ -261,15 +260,9 @@ teacher.main.ui = function(se, app=getApp()) {
           uiOutput("activeSemUI"),
           div(id="semHeadDiv", style="display: none",
             radioBtnGroup("seminarBtnGroup",
-              labels=c("Edit",
-                #"Priorities",
-                "Participants","Topics","Reports"),
-              values=c("editsem",
-                #"prio",
-                "stud","topics","report"),
-              panes=list(c("editsemDiv","editsemHeadDiv"),
-                #c("prioDiv","prioHeadDiv"),
-                "studDiv","topicsDiv","reportDiv")
+              labels=c("Edit","Participants","Reports"),
+              values=c("editsem","stud","report"),
+              panes=list(c("editsemDiv","editsemHeadDiv"),"studDiv","reportDiv")
             ),
             div(id="editsemHeadDiv",
               hr(style="margin: 1px;"),
@@ -277,20 +270,13 @@ teacher.main.ui = function(se, app=getApp()) {
               bsButton("delSemBtn","Delete Seminar"),
               uiOutput("editSemAlert")
             ),
-            # hidden_div(id="prioHeadDiv",
-            #   hr(style="margin: 0px; border-color: grey;"),
-            #   bsButton("savePrioBtn","Save Added Points"),
-            #   uiOutput("prioAlert")
-            # ),
 
             hr(style="margin: 0px; padding: 0px; border-color: grey;")
           )
         ),
         content = div(id="semContentDiv",
           div(id="editsemDiv",uiOutput("editsemUI")),
-#          hidden_div(id="prioDiv",uiOutput("prioUI")),
           hidden_div(id="studDiv",uiOutput("studUI")),
-          hidden_div(id="topicsDiv",uiOutput("topicsUI")),
           hidden_div(id="reportDiv",uiOutput("reportUI"))
         )
       )
@@ -407,16 +393,6 @@ load.current.seminar = function(cs=se$cs, se=app$se, app=getApp()) {
     cs$semcrit = rbind(cs$semcrit,df)
   }
 
-  # topics are currently not used
-  if (FALSE) {
-  # Load and adapt topics
-  cs$semtopic = dbGet(se$db,"semtopic",list(semid=cs$semid),schema=app$glob$schemas$semtopic)
-  if (NROW(cs$semtopic)<30) {
-    df = empty.df.from.schema(app$glob$schemas$semtopic, 30-NROW(cs$semtopic), semid=cs$semid, semester=cs$semester, size=1, userid=NA_character_)
-    cs$semtopic = rbind(cs$semtopic,df)
-  }
-  cs$semtopic$ind = 1:NROW(cs$semtopic)
-  }
   # Load participants
   cs$semstuds = load.semstuds(cs=cs,se=se)
 
@@ -463,7 +439,7 @@ load.semprio = function(cs=se$cs, se = app$se, app = getApp()) {
 
 }
 
-load.semstuds = function(semid=cs$semid,semtopic=cs$semtopic,db=se$db, cs=se$cs, se=app$se, app=getApp()) {
+load.semstuds = function(semid=cs$semid,db=se$db, cs=se$cs, se=app$se, app=getApp()) {
   restore.point("load.semstuds")
   semester=cs$semester
   if (is.null(semid)) return(NULL)
@@ -471,7 +447,6 @@ load.semstuds = function(semid=cs$semid,semtopic=cs$semtopic,db=se$db, cs=se$cs,
   sql = "
   select * from assign
   NATURAL LEFT JOIN students
-  NATURAL LEFT JOIN semtopic
   WHERE (assign.semid = :semid AND
         assign.semester = :semester)
 
@@ -494,11 +469,11 @@ can.seminar.be.deleted = function(cs=se$cs, se = app$se, app=getApp(),...) {
   if (cs.sem.num < se.sem.num) {
     return(list(ok=FALSE,msg="You cannot delete a seminar from previous semesters."))
   } else if (cs.sem.num == se.sem.num) {
-    if (isTRUE(Sys.Date() <= se$admin$round1_done_date)) {
-      return(list(ok=FALSE,msg="You cannot delete a seminar since the seminar matching has already taken place this semester."))
+    if (isTRUE(Sys.Date() >= se$admin$round1_done_date)) {
+      return(list(ok=FALSE,msg="You cannot delete the seminar since the seminar matching has already taken place this semester."))
     }
-    if (isTRUE(Sys.Date() <= se$admin$stud_start_date)) {
-      return(list(ok=FALSE,msg="You cannot delete a seminar after the seminar choice has already been activated for students. You still can deactivate the seminar, however. Then students cannot put it in their preference list anymore."))
+    if (isTRUE(Sys.Date() >= se$admin$stud_start_date)) {
+      return(list(ok=FALSE,msg="You cannot delete the seminar since the seminars are already shown to students.<br>If the seminar is not offered, do the following:<br>1. Set the number of slots to 0.<br>2. Change the seminar title to something like 'Removed Seminar'. So students know that the seminar is not offered anymore."))
     }
   }
 
@@ -527,13 +502,6 @@ delete.seminar.click=function(cs=se$cs, se = app$se, app=getApp(),...) {
 
 
   res = try(dbDelete(se$db,"seminars", list(semid=semid),log.dir = app$glob$log.dir, user=se$user))
-  if (is(res,"try-error")) {
-    dbRollback(se$db)
-    msg = paste0("Error when modifying database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert")
-    return()
-  }
-  res = try(dbDelete(se$db,"semtopic", list(semid=semid),log.dir = app$glob$log.dir, user=se$user))
   if (is(res,"try-error")) {
     dbRollback(se$db)
     msg = paste0("Error when modifying database:<br> ",as.character(res))
@@ -584,7 +552,7 @@ create.seminar.from.click=function(cs=se$cs, se = app$se, app=getApp(),...) {
 
 set.no.seminar = function(se = app$se, app=getApp()) {
   se$cs = NULL
-  dsetUI("activeSemUI", h4(paste(cs$semester, "No Seminar Selected")))
+  dsetUI("activeSemUI", h4("No Seminar Selected"))
   setHtmlHide(id=c("semHeadDiv","editSemHeadDiv","semContentDiv"))
 }
 
@@ -593,8 +561,6 @@ set.new.seminar = function(cs, se = app$se, app=getApp()) {
   prev.semid =se$cs[["semid"]]
   cs$semid = cs$seminar$semid = NA
   cs$semester = cs$seminar$semester = cs$semcrit$semester = se$semester
-  if (!is.null(cs$semtopic))
-    cs$semtopic$semester = cs$semester
 
   se$cs = cs
   dsetUI("activeSemUI", h4(paste(cs$semester, "New Seminar")))
@@ -605,7 +571,6 @@ set.new.seminar = function(cs, se = app$se, app=getApp()) {
     setHtmlShow(id="semHeadDiv")
   }
 
-  setUI("topicsUI",h4("The seminar is not yet created."))
   setUI("studUI",h4("The seminar is not yet created."))
   setUI("reportUI",h4("The seminar is not yet created."))
 }
@@ -632,7 +597,6 @@ set.current.seminar = function(seminar, se = app$se, app=getApp()) {
   }
   #show.sem.prio.ui(se=se,cs=cs, app=app)
   show.sem.stud.ui(se=se,cs=cs, app=app)
-  show.sem.topics.ui(se=se,cs=cs, app=app)
   show.sem.report.ui(se=se,cs=cs, app=app)
 
 }
@@ -651,7 +615,7 @@ show.sem.edit.ui = function(cs = se$cs,se=NULL, app=getApp(), edit=isTRUE(!is.na
   form.ui = form.ui.simple(glob$semform, values=form.vals,add.submit = FALSE)
 
 
-  topics.ui = crit.ui = NULL
+  crit.ui = NULL
 
   crit.df = table.form.default.values(glob$semcritform, data=cs$semcrit)
   se$org.crit.df = crit.df
@@ -683,6 +647,32 @@ save.sem.click = function(formValues,cs=se$cs, se=app$se, app=getApp(),...) {
   if (!sres$ok) {
     show.field.alert(msg="Could not save, since not all fields are correctly entered.",id="editSemAlert")
     return()
+  }
+
+  # Cannot deactivate a seminar once
+  # seminars are shown to students
+  if (isTRUE(Sys.Date() >= se$admin$stud_start_date)) {
+    if (isTRUE(cs$seminar$active) & (isTRUE(sres$values$active==FALSE) | isTRUE(sres$values$active=="FALSE"))) {
+      show.field.alert(msg="You cannot deactivate or delete the seminar anymore since the seminars are already shown to the students and some may have put this seminars already in their preference list.<br>If the seminar is not offered do the following:<br>1. Set the number of slots to 0.<br>2. Change the seminar title to something like 'Removed Seminar'. So students know that the seminar is not offered anymore.<br>3.Save the changes.",id="editSemAlert")
+      return()
+    }
+  }
+
+
+  # check if wrong seminar was in the fields
+  if (!is.null(cs$seminar$semid)) {
+    rows = which(se$aseminars$semname==sres$values$semname)
+    semids = setdiff(se$aseminars$semid[rows], cs$seminar$semid)
+
+    if (length(semids)>0) {
+      show.field.alert(msg=paste0("Changes not saved: Another seminar with the title '",sres$values$semname,"' already exists in the list of activated seminars. This likely happened because the web client lagged behind and the form fields were not correctly filled. Please select once more the seminar you want to change in the table on the left. Then check that the form values correspond to that seminar before you make your changes."),id="editSemAlert")
+      return()
+
+    }
+
+    sres$values$semname
+    se$seminars
+
   }
 
   # We need the NULL value to return original table
@@ -758,83 +748,6 @@ save.sem.click = function(formValues,cs=se$cs, se=app$se, app=getApp(),...) {
   }
 
 }
-
-
-
-show.sem.topics.ui = function(cs=se$cs, se=app$se, app=getApp()) {
-  restore.point("show.sem.topics.ui")
-
-
-  ui = tagList(
-    h4("Topic assignment is not yet implemented.")
-  )
-
-  setUI("topicsUI",ui)
-  dsetUI("topicsUI",ui)
-  return()
-
-  # distinguish whether students are already
-  # matched or not
-  glob=app$glob
-  # Topics
-  tdf =cs$semtopic
-  tdf = left_join(tdf, select(cs$semstuds,topic_ind, email) %>% filter(!is.na(topic_ind)),by="topic_ind")
-
-
-  top.df = table.form.default.values(glob$semtopicsform, data=tdf)
-
-  topics.ui = form.ui.handsone.table(form = glob$semtopicsform,data = top.df, stretchH="last", height="500px")
-  cs$org.top.df = top.df
-
-  ui = tagList(
-    topics.ui
-  )
-
-  setUI("topicsUI",ui)
-  dsetUI("topicsUI",ui)
-}
-
-save.sem.topics =  function(cs=se$cs, se=app$se, app=getApp(),...) {
-  glob  = app$glob
-  semid = cs$semid
-
-  top.df = get.table.form.df(glob$semtopicsform, null.value = cs$org.top.df)
-  restore.point("save.topics")
-
-  dbBegin(se$db)
-  # first delete all existing seminar topics
-  res = try(dbDelete(se$db,"semtopic", list(semid=semid),log.dir = app$glob$log.dir, user=se$user))
-  if (is(res,"try-error")) {
-    dbRollback(se$db)
-    msg = paste0("Error when updating database:<br> ",as.character(res))
-    show.field.alert(msg=msg,id="editSemAlert")
-    return()
-  }
-
-  if (!is.null(top.df)) {
-    empty = is.na(top.df$topic) | nchar(str.trim(top.df$topic))==0
-    top.df = top.df[!empty,]
-    if (NROW(top.df)>0) {
-      top.df$ind = 1:NROW(top.df)
-      top.df$semid = semid
-      top.df$semester = cs$semester
-      top.df$size = 1
-
-      res = try(dbInsert(se$db,"semtopic",top.df,mode = "insert",schema=glob$schemas$semtopic, log.dir = app$glob$log.dir, user=se$user))
-      if (is(res,"try-error")) {
-        dbRollback(se$db)
-        msg = paste0("Error when updating database:<br> ",as.character(res))
-        show.field.alert(msg=msg,id="editSemAlert")
-        return()
-      }
-    }
-  }
-
-  dbCommit(se$db)
-  show.field.alert(msg="Successfully saved.",id="editSemAlert", color=NULL)
-
-}
-
 
 show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   restore.point("show.semstud.ui")
