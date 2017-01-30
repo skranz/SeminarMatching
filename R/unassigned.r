@@ -16,7 +16,7 @@ and a.userid not in (select userid from assign where semester = semester)
   d = stupref %>% group_by(semester,email) %>%
     arrange(email,round, pos) %>%
     mutate(random_points=round(random_points,3),num_sem_ranked = length(unique(semid)), ranked_seminars=paste0(unique(semname), collapse=", ")) %>%
-    select(-semname, -pos,-userid, -name, -semid, -round, -semester)
+    select(-semname, -pos,-userid, -name, -semid, -semester)
 
   d = d[!duplicated(d$email),] %>%
     arrange(-num_sem_ranked) %>%

@@ -7,8 +7,8 @@ examples.EditSeminarApp = function() {
   library(SeminarMatching)
   restore.point.options(display.restore.point = !TRUE)
 
-  setwd("D:/libraries/SeminarMatching/semapps/shared")
   setwd("D:/libraries/SeminarMatching/testapps/shared")
+  setwd("D:/libraries/SeminarMatching/semapps/shared")
 
   app = EditSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="test", lang="en")
   viewApp(app)
@@ -22,7 +22,6 @@ example.create.db = function() {
   restore.point.options(display.restore.point = TRUE)
 
   logindb.arg = list(dbname=paste0(db.dir,"/loginDB.sqlite"),drv=SQLite())
-
 
   #create.user.in.db(userid = "test", email = "sebkranz@gmail.com",password = "test",db.arg = logindb.arg)
   # Create Databases
@@ -752,6 +751,8 @@ save.sem.click = function(formValues,cs=se$cs, se=app$se, app=getApp(),...) {
 show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   restore.point("show.semstud.ui")
 
+  round = se$admin$rounds_done+1
+
   glob = app$glob
   if (NROW(cs$semstuds)==0) {
     ui = tagList(
@@ -774,9 +775,26 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
 
   umui = NULL
   if (NROW(us.studs)>0) {
-    us.studs = select(us.studs, - num_sem_ranked,-ranked_seminars) %>% arrange(random_points)
+    us.studs = us.studs %>%
+      rename("ranked_in_round"=round) %>%
+      select( -num_sem_ranked,-ranked_seminars) %>%
+      select(email, ranked_in_round, everything()) %>%
+      arrange(ranked_in_round,random_points)
+
+    if (round==2) {
+      us.studs = us.studs %>%
+        filter(ranked_in_round==1) %>%
+        select(-ranked_in_round)
+
+    }
+
+
     umui = tagList(
-        h4(paste0("Students who ranked your seminar but did not get a slot in any seminar:")),
+        if (round==2) {
+          h4(paste0("Students who ranked your seminar in round 1 and did not get a slot in any seminar. If you want to add students on extra slots, you may want to wait until matching round 2 is finished."))
+        } else {
+          h4(paste0("Students who ranked your seminar in round 1 or in round 2 but did not get a slot in any seminar:"))
+        },
         HTML(paste0("Last updated :", us$time)),
         HTML(html.table(us.studs))
       )
