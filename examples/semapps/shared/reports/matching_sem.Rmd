@@ -13,12 +13,12 @@ setwd("D:/libraries/SeminarMatching/semapps/shared/reports")
 semester = "SS16"
 db.dir = paste0("../db")
 round = 1
-semid = 3
+semid = 16
 semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 ```
 
 ```{r init_data, include=FALSE}
-studpref = dbGet(semdb,"studpref",nlist(semester, semid))
+studpref = dbGet(semdb,"studpref",nlist(semester, semid, round))
 if (NROW(studpref)==0) {
   stop("Cannot show seminar report, since no student has yet put the seminar in its preference.",call. = FALSE)
 }
