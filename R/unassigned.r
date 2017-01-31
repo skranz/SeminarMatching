@@ -14,11 +14,13 @@ and a.userid not in (select userid from assign where semester = semester)
   stupref = dbGet(db, sql=sql, params=nlist(semester))
 
   d = stupref %>% group_by(semester,email) %>%
-    arrange(email,round, pos) %>%
+    arrange(email,pos, round) %>%
     mutate(random_points=round(random_points,3),num_sem_ranked = length(unique(semid)), ranked_seminars=paste0(unique(semname), collapse=", ")) %>%
-    select(-semname, -pos,-userid, -name, -semid, -semester)
+    ungroup %>%
+    select(-semname, -pos,-userid, -name, -semid, -semester, -round)
 
-  d = d[!duplicated(d$email),] %>%
+
+  d = d[!duplicated(d[,c("email")]),] %>%
     arrange(-num_sem_ranked) %>%
     select(num_sem_ranked, email, random_points, everything())
 

@@ -770,30 +770,46 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
 
   # Show students that did not get any slot
   us = get.unassigned(db=se$db, semester=se$admin$semester)
-  emails = unique(filter(us$prefs, semid == cs$semid)$email)
-  us.studs =us$stud[us$studs$email %in% emails,]
+
+  prefs = filter(us$prefs, semid == cs$semid)
+  if (round<=2) {
+    prefs = filter(prefs, round==1)
+  }
+  emails = unique(prefs$email)
+
+  us.studs =us$studs[us$studs$email %in% emails,]
+
 
   umui = NULL
   if (NROW(us.studs)>0) {
     us.studs = us.studs %>%
-      rename("ranked_in_round"=round) %>%
-      select( -num_sem_ranked,-ranked_seminars) %>%
-      select(email, ranked_in_round, everything()) %>%
-      arrange(ranked_in_round,random_points)
+      select(-ranked_seminars) %>%
+      arrange(random_points)
 
-    if (round==2) {
-      us.studs = us.studs %>%
-        filter(ranked_in_round==1) %>%
-        select(-ranked_in_round)
+    # add info on prefernce
+    df = left_join(us.studs, select(prefs,email, round,pos), by="email") %>%
+      group_by(email) %>%
+      summarize(rounds=paste0(round, collapse=","), ranked_as=paste0(pos,collape=","))
 
+      us.studs = left_join(us.studs, df, by="email") %>%
+        select(email,rounds, ranked_as, everything()) %>%
+        arrange(email,rounds, ranked_as, num_sem_ranked)%>%
+        rename(ranked_in_rounds=rounds)
+
+
+    if (round<=2) {
+      # num_sem_ranked is not informative
+      # since currently ranked seminars in round 2
+      # also count
+      us.studs = us.studs %>% select(-num_sem_ranked)
     }
 
 
     umui = tagList(
         if (round==2) {
-          h4(paste0("Students who ranked your seminar in round 1 and did not get a slot in any seminar. If you want to add students on extra slots, you may want to wait until matching round 2 is finished."))
+          p(paste0("Below is a list of students who ranked your seminar in round 1 and did not get a slot in any seminar. If you want to add students on extra slots, it is probably better to wait until matching round 2 is finished. If you add a student before, make sure that the student does not add seminars in round 2, since otherwise he may get another seminar and take away a slot from some student."))
         } else {
-          h4(paste0("Students who ranked your seminar in round 1 or in round 2 but did not get a slot in any seminar:"))
+          p(paste0("Below is a list of students who ranked your seminar in round 1 or in round 2 but did not get a slot in any seminar (information combines preferences from rounds 1 and 2):"))
         },
         HTML(paste0("Last updated :", us$time)),
         HTML(html.table(us.studs))
