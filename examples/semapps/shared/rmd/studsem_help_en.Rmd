@@ -87,3 +87,7 @@ stop.without.error()
   
 - F: Where is the log-out button?
   - A: There is no log-out button. Simple close the window or tab, or surf to some other webpage after you have entered and saved your data.
+  
+
+- F: In the second matching round, why have some seminars a grey background and others a white background?
+  - A: The seminars with grey background have allready filled up in round 1, the others have still open seats. Yet, best also add filled seminars in your preference list for which you would take an offered slot. The lecturer sees that you would be willing to take the seminar and may later offer you a slot if some other participant should unexpectedly drop from the seminar.

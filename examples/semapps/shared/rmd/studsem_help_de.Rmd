@@ -97,3 +97,6 @@ stop.without.error()
 
 - F: Wo ist der Log-Out Knopf?
   - A: Es gibt keinen Log-Out Knopf. Schließen Sie bitte einfach das Fenster oder Tab, oder surfen Sie auf eine andere Seite nachdem Sie Ihre Daten eingegeben und gespeichert haben.
+
+- F: Warum sind bei der zweiten Vergaberunde manche Seminare in der Liste dunkelgrau und andere weiß hinterlegt?
+  - A: Die dunkelgrauen Seminare sind in der ersten Runde bereits gefüllt wurden, die weißen Seminare haben noch Plätze. Am Besten nehmen Sie trotzdem auch die bereits gefülltem Seminare in Ihre Präferenzliste auf, an denen Sie teilnehmen würden. Sollte in einem solchen Seminar doch noch jemand abspringen (sollte idealerweise zwar nicht geschehen), sieht der Dozent, dass Sie an dem Seminar teilnehmen würden, und kann Ihnen ggf. noch einen Platz anbieten.

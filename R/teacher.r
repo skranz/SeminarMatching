@@ -5,7 +5,7 @@
 
 examples.EditSeminarApp = function() {
   library(SeminarMatching)
-  restore.point.options(display.restore.point = !TRUE)
+  restore.point.options(display.restore.point = TRUE)
 
   setwd("D:/libraries/SeminarMatching/testapps/shared")
   setwd("D:/libraries/SeminarMatching/semapps/shared")
@@ -783,13 +783,12 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   umui = NULL
   if (NROW(us.studs)>0) {
     us.studs = us.studs %>%
-      select(-ranked_seminars) %>%
-      arrange(random_points)
+      select(-ranked_seminars, -random_points)
 
     # add info on prefernce
     df = left_join(us.studs, select(prefs,email, round,pos), by="email") %>%
       group_by(email) %>%
-      summarize(rounds=paste0(round, collapse=","), ranked_as=paste0(pos,collape=","))
+      summarize(rounds=paste0(round, collapse=","), ranked_as=paste0(pos,collapse=","))
 
       us.studs = left_join(us.studs, df, by="email") %>%
         select(email,rounds, ranked_as, everything()) %>%
@@ -798,10 +797,15 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
 
 
     if (round<=2) {
-      # num_sem_ranked is not informative
+      # before matching round 2 has taken place
+      # num_sem_ranked may be misleading
       # since currently ranked seminars in round 2
       # also count
       us.studs = us.studs %>% select(-num_sem_ranked)
+    } else {
+      us.studs = us.studs %>%
+        select(email, num_sem_ranked, everything()) %>%
+        arrange(-num_sem_ranked)
     }
 
 
@@ -809,7 +813,7 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
         if (round==2) {
           p(paste0("Below is a list of students who ranked your seminar in round 1 and did not get a slot in any seminar. If you want to add students on extra slots, it is probably better to wait until matching round 2 is finished. If you add a student before, make sure that the student does not add seminars in round 2, since otherwise he may get another seminar and take away a slot from some student."))
         } else {
-          p(paste0("Below is a list of students who ranked your seminar in round 1 or in round 2 but did not get a slot in any seminar (information combines preferences from rounds 1 and 2):"))
+          p(paste0("Below is a list of students who ranked your seminar in round 1 or in round 2 but did not get a slot in any seminar. Students who have ranked a large number of seminars (num_sem_ranked) are likely students who really, really want a seminar slot this semester. If a slot opens up, e.g. because a student drops after topic assignment, you may most strongly improve welfare by inviting first students who ranked many seminars.:"))
         },
         HTML(paste0("Last updated :", us$time)),
         HTML(html.table(us.studs))
