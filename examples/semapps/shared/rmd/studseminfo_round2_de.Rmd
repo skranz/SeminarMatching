@@ -63,7 +63,7 @@ Sie können hier noch bis zum {{round2_date-1}} im Reiter `Seminarwahl` Präfere
 #>
 
 
-Wählen Sie bitte aus der Liste aller Seminare diejenigen und nur diejenigen Seminare aus, an denen Sie noch teilnehmen würden, wenn Sie einen Platz erhalten. (Grau hinterlegte Seminare wurden bereits in der Hauptvergaberunde komplett gefüllt. Sie können diese zwar in ihre Präferenzliste aufnehmen, aber dies wird keinen Effekt haben.)
+Wählen Sie bitte aus der Liste aller Seminare diejenigen und nur diejenigen Seminare aus, an denen Sie noch teilnehmen würden, wenn Sie einen Platz erhalten. (Die grau hinterlegte Seminare sind in der ersten Runde bereits gefüllt wurden. Nehmen Sie auch die grauen Seminare auf, an denen Sie teilnehmen würden. Sollte in einem solchen Seminar doch noch jemand abspringen, sieht der Dozent, dass Sie an dem Seminar teilnehmen würden, und kann Ihnen ggf. noch einen Platz anbieten. Die Chance in der automatischen Vergabe noch einen freien Platz in einem weißen Seminar zu bekommen, wird nicht dadurch beeinflusst ob und wo in Ihrer Liste sie die grauen Seminare gerankt haben.)
 
 Sortieren Sie dann die ausgewählten Seminare gemäß Ihrer Wunschreihenfolge
 (bevorzugte Seminare weiter oben) und **speichern Sie dann per Knopfdruck ihre Präferenzen**.

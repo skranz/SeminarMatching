@@ -19,6 +19,7 @@ matchings = dbGet(semdb,"matchings",nlist(semester, round))
 seminars = dbGet(semdb,"seminars",nlist(semester))
 students = dbGet(semdb,"students",nlist(semester))
 
+studpref = dbGet(semdb,"studpref", nlist(semester))
 ```
 
 ```{r init_data, include=FALSE}
@@ -44,6 +45,20 @@ r1fi = df %>%
   summarize(filled_round1=n())
 
 seminars = left_join(seminars,r1fi, by="semid")
+
+# computations for round 2
+sp1 = filter(studpref, round==1)
+sp2 = filter(studpref, round==2)
+
+found1 = filter(df, round==1, semid > -1)$userid %>%
+  unique()
+
+r2_num = length(unique(sp2$userid))
+
+
+r2_new = length(setdiff(unique(sp2$userid), unique(sp1$userid)))
+r2_extra = length(intersect(unique(sp2$userid), unique(found1)))
+
 
 ```
 
@@ -155,4 +170,11 @@ seminars %>%
   group_by(semBAMA) %>%
   summarize(num_sems=n(), total_slots=sum(slots), filled=sum(filled_slots), open=total_slots-filled)
 ```
+
+# Matching round 2
+
+- `r r2_num` students have submitted preferences in round 2.
+- `r r2_num-r2_extra` of students did not get a slot in round 1. They either forgot to participate in round 1 (`r r2_new` students) or submitted a too short preference list in round 1, and now decided to accept also other seminars (`r r2_num-r2_extra-r2_new` students). Yet, chances are much lower to get a seat in round 2.
+
+- `r r2_extra` of students already got a seminar in round 1, and probably want to take two seminars. In an ideal world without mistakes (like forgetting to participate in round 1), this would be the only reason to participate in round 2. 
 

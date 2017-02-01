@@ -61,7 +61,7 @@ If you want to participate in 2 seminars, you can enter here your preferences fo
 You did not get a seminar slot in the main matching round. You can here enter preferences for the second matching round until {{round2_date-1}}.
 #>
 
-Pick and sort the selected seminars according to your preferences (more prefered seminars on top) and **Save your preferences by pressing the button**. (Seminars with grey background have already been filled in the main round. Adding them to you preference list will have no effect.)
+Pick and sort the selected seminars according to your preferences (more prefered seminars on top) and **Save your preferences by pressing the button**. (Seminars with grey background have already been filled in the main round. Nevertheless also add the grey seminars in which you would participate in your preference list. Lecturers will later see a list of all students who have ranked their seminar and did not yet get a seat. If some student should drop out from a seminar, lecturers can offer a seminar seat to students from that list. Adding grey seminars to your preference list does not reduce your chance to get a slot from a white seminar in the automatic matching of the 2nd round, no matter at which position you rank the grey seminars.)
 
 {{actionButton("saveStudprefBtn","Save seminar preferences")}}
               

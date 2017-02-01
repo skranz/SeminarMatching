@@ -1,10 +1,10 @@
 examples.AdminSeminarApp = function() {
   setwd("D:/libraries/SeminarMatching/testapps/")
-  setwd("D:/libraries/SeminarMatching/semapps/")
 
   setwd("D:/libraries/SeminarMatching/testapps/")
+  setwd("D:/libraries/SeminarMatching/semapps/")
   restore.point.options(display.restore.point = !TRUE)
-  app = AdminSeminarsApp(init.userid = "test", init.password="test", lang="en", main.dir = paste0(getwd(),"/shared"))
+  app = AdminSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="test", lang="en", main.dir = paste0(getwd(),"/shared"))
   viewApp(app)
 
 }
@@ -452,7 +452,7 @@ show.admin.report = function(se=app$se, app=getApp()) {
       }
     }
     #writeClipboard(rmd)
-    env = as.environment(list(semester=se$semester, seminars=se$seminars, students=se$students, matchings=se$matchings, semdb=se$db, db.dir=app$glob$db.dir, round=1))
+    env = as.environment(list(semester=se$semester, seminars=se$seminars, students=se$students, matchings=se$matchings, studpref = se$studpref, semdb=se$db, db.dir=app$glob$db.dir, round=1))
     parent.env(env) = environment()
     rmd = paste0(rmd, collapse="\n\n")
     html = try(knit.rmd.in.temp(rmd,envir = env, fragment.only = TRUE, use.commonmark=TRUE))
