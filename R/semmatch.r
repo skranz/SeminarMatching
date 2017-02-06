@@ -5,10 +5,11 @@ examples.perform.matching = function() {
 
   n = 600
   semester = "SS17"
-  delete.seminar.matching(semester=semester)
-  delete.random.students(semester=semester)
+  round = 2
+  #delete.seminar.matching(semester=semester)
+  #delete.random.students(semester=semester)
   #li = draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
-  df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,insert.into.db = TRUE)
+  df = perform.matching(semester=semester,students=li$students, studpref=li$studpref,insert.into.db = TRUE, round=round)
 
   df = df %>% arrange(num_ranked, semid)
 
@@ -41,7 +42,6 @@ examples.perform.matching = function() {
 perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,students=NULL, studpref=NULL, semcrit=NULL, semdb=se[["db"]], conds=glob[["conds"]], sets=glob[["sets"]], schemas=glob$schemas, se=NULL, dirs=glob, glob=getApp()$glob, yaml.dir=dirs$yaml.dir, db.dir=dirs$db.dir, schema.dir=dirs$schema.dir, reload=FALSE, seed=NULL, insert.into.db=TRUE) {
   restore.point("perform.matching")
 
-
   if (is.null(yaml.dir)) yaml.dir = "./yaml"
   if (is.null(db.dir)) db.dir = "./db"
   if (is.null(schema.dir)) schema.dir = "./schema"
@@ -69,21 +69,28 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   if (is.null(semcrit))
     semcrit = dbGet(semdb,"semcrit", list(semester=semester))
 
+  seminars$open_slots = seminars$slots - seminars$filled_slots
+
   semcrit = filter(semcrit, !is.na(points))
 
   semcrit = add.num.slots.to.semcrit(semcrit=semcrit, seminars=seminars)
   semcrit$slot.pos = parse.semcrit.slots(semcrit$slots)
 
+  nr = studpref %>%
+    group_by(userid) %>%
+    summarize(num_ranked = n())
 
+  students = left_join(students, nr, by="userid")
+  students$num_ranked[is.na(students$num_ranked)] = 0
 
   num.studs = NROW(students)
   num.sems = NROW(seminars)
-  num.slots = sapply(1:num.sems,function(row) seminars$slots[row])
+  num.slots = sapply(1:num.sems,function(row) seminars$open_slots[row])
   total.slots = sum(num.slots)
 
   # Fixed seminar slot utilities over students coming from priorities
   seu.li = lapply(1:num.sems, function(row) {
-    fixed = make.seminar.slots.u(seminars[row,], semcrit, students, studpref, conds)
+    fixed = make.seminar.slots.u(seminars[row,], semcrit, students, studpref, conds, round=round)
     fixed
   })
 
@@ -101,10 +108,14 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
     students$random_points = 10 - students$random_points
   }
 
+  # give bonus to students who ranked a lot of seminars
+  rows = students$num_ranked >= 7
+  students$random_points[rows] = pmax(students$random_points[rows], 3+runif(sum(rows),-0.01,0.01))
+
   sem.base.points = matrix(students$random_points,num.sems,num.studs,byrow=TRUE)
   sem.base.points[is.na(sem.base.points)] = 0
 
-  sem.of.slot = unlist(lapply(1:num.sems, function(sem.pos) rep(sem.pos,seminars$slots[sem.pos])))
+  sem.of.slot = unlist(lapply(1:num.sems, function(sem.pos) rep(sem.pos,seminars$open_slots[sem.pos])))
   slot.of.slot = unlist(lapply(1:num.sems, function(sem.pos) if (num.slots[sem.pos]>0) 1:num.slots[sem.pos] else NULL))
 
   # Expand the random base points to slots
@@ -138,7 +149,7 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
 
   # transform to matrix with
   # num.stud rows and total.slots cols
-  sem.of.slot = unlist(lapply(1:num.sems, function(sem.pos) rep(sem.pos,seminars$slots[sem.pos])))
+  sem.of.slot = unlist(lapply(1:num.sems, function(sem.pos) rep(sem.pos,seminars$open_slots[sem.pos])))
   stu = sstu[,sem.of.slot]
   # add zero utility for empty seminar slots
   stu = cbind(stu, matrix(0,nrow=num.studs,ncol=num.studs))
@@ -318,16 +329,24 @@ parse.semcrit.slots = function(slots) {
 
 # compute the priority based on criteria
 # for each student x slot combination
-make.seminar.slots.u = function(sem, semcrit, students, studpref, conds, base.points = rep(0, NROW(students))) {
+make.seminar.slots.u = function(sem, semcrit, students, studpref, conds, base.points = rep(0, NROW(students)), round=1) {
   restore.point("make.seminar.slots.u")
 
-  num.slots = sem$slots
+
+
+  num.slots = sem$slots - sem$filled_slots
   num.studs = NROW(students)
   if (num.slots==0) return(NULL)
+  # no priorities in round2
+  if (round==2) {
+    mat = t(matrix(base.points,nrow=num.studs,ncol=num.slots))
+    return(mat)
+  }
 
   slostu = expand.grid(stud=students$userid,slot=1:sem$slots)
-
   points = base.points
+
+
 
   scs = filter(semcrit, semid==sem$semid)
   if (!has.col(scs,"slot.pos")) {
