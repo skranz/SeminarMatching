@@ -785,14 +785,14 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
     us.studs = us.studs %>%
       select(-ranked_seminars, -random_points)
 
-    # add info on prefernce
+    # add info on preference
     df = left_join(us.studs, select(prefs,email, round,pos), by="email") %>%
       group_by(email) %>%
       summarize(rounds=paste0(round, collapse=","), ranked_as=paste0(pos,collapse=","))
 
       us.studs = left_join(us.studs, df, by="email") %>%
-        select(email,rounds, ranked_as, everything()) %>%
-        arrange(email,rounds, ranked_as, num_sem_ranked)%>%
+        select(email,got_sems,rounds, ranked_as, everything()) %>%
+        arrange(email,got_sems,rounds, ranked_as, num_sem_ranked)%>%
         rename(ranked_in_rounds=rounds)
 
 
@@ -801,11 +801,15 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
       # num_sem_ranked may be misleading
       # since currently ranked seminars in round 2
       # also count
-      us.studs = us.studs %>% select(-num_sem_ranked)
+      us.studs = us.studs %>%
+        filter(got_sems==0) %>%
+        select(-got_sems, -num_sem_ranked)
     } else {
       us.studs = us.studs %>%
         select(email, num_sem_ranked, everything()) %>%
         arrange(-num_sem_ranked)
+      us.studs0 = filter(us.studs, got_sems==0)
+      us.studs1 = filter(us.studs, got_sems==1)
     }
 
 
@@ -816,7 +820,14 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
           p(paste0("Below is a list of students who ranked your seminar in round 1 or in round 2 but did not get a slot in any seminar. Students who have ranked a large number of seminars (num_sem_ranked) are likely students who really, really want a seminar slot this semester. If a slot opens up, e.g. because a student drops after topic assignment, you may most strongly improve welfare by inviting first students who ranked many seminars.:"))
         },
         HTML(paste0("Last updated :", us$time)),
-        HTML(html.table(us.studs))
+        HTML(html.table(us.studs0)),
+        if (NROW(us.studs1)>0) {
+          tagList(
+            p(paste0("Below is a list of students who already got a seminar in round 1 but want a 2nd seminar and ranked your seminar in round 2. You may also add students from this list if slots get free. However, you may prefer students from the list above, who did not get any seminar:")),
+            HTML(html.table(us.studs1))
+          )
+        }
+
       )
   }
 
