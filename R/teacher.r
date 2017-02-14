@@ -768,8 +768,26 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   # Choose columns
   stud.df = stud.df[,setdiff(colnames(stud.df),c("userid"))]
 
+  # Manually added or removed students
+  manual = dbGet(se$db,"manual", list(semid=cs$semid))
+  if (NROW(manual)==0) {
+    manual.ui = NULL
+  } else {
+    man = manual %>%
+      arrange(edit_time) %>%
+      mutate("action"=ifelse(added,"added","removed")) %>%
+      select(userid, action)
+    manual.ui = tagList(
+      p("Students you already have manually added or removed from the seminar"),
+      HTML(html.table(man, bg.color=ifelse(man$action=="added","white","#fcc")))
+    )
+  }
+
   # Show students that did not get any slot
   us = get.unassigned(db=se$db, semester=se$admin$semester)
+
+  # only show students that have not been removed from a seminar
+  us$studs = filter(us$studs, was_removed==0)
 
   prefs = filter(us$prefs, semid == cs$semid)
   if (round<=2) {
@@ -778,6 +796,7 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   emails = unique(prefs$email)
 
   us.studs =us$studs[us$studs$email %in% emails,]
+
 
 
   umui = NULL
@@ -842,6 +861,7 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
       )
     )),
     uiOutput("arInfo"),
+    manual.ui,
     umui
   )
   setUI("arInfo","")

@@ -251,6 +251,8 @@ show.admin.matching = function(se=app$se, app=getApp()) {
   admin = se$admin
   if (admin$rounds_done >= admin$num_rounds) {
     us = get.unassigned(db=se$db, semester=admin$semester)
+    us$studs = filter(us$studs, was_removed==0)
+
     if (NROW(us$studs)>0) {
       umui = tagList(
         br(),

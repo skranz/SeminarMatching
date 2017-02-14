@@ -2,19 +2,18 @@
 
 fetch.unassigned.students = function(db, semester, app=getApp(), no.2nd=TRUE) {
   restore.point("fetch.unassigned.students")
-  # old code
-  if (FALSE) {
-    sql =
-  '
-  select a.*, b.semid, b.pos, b.round, c.semname from students AS a, studpref AS b, seminars AS c
-  where a.semester = :semester
-  and b.userid = a.userid
-  and b.semester = a.semester
-  and b.semid = c.semid
-  and a.userid not in (select userid from assign where semester = semester)
-  '
-    stupref = dbGet(db, sql=sql, params=nlist(semester))
-  }
+
+  manual = dbGet(db, "manual", list(semester=semester))
+
+  # compute removed, but only if not manually added
+  removed = manual %>%
+    group_by(semid, userid) %>%
+    mutate(is_removed = sum(added==0) > sum(added==1)) %>%
+    group_by(userid) %>%
+    summarize(was_removed = sum(is_removed)) %>%
+    filter(was_removed>0) %>%
+    rename(email=userid)
+
 
   sql =
 '
@@ -57,6 +56,9 @@ and b.semid = c.semid
   d = d[!duplicated(d[,c("email")]),] %>%
     arrange(got_sems,-num_sem_ranked) %>%
     select(got_sems,num_sem_ranked, email, random_points, everything())
+
+  d = left_join(d,removed, by="email") %>%
+    mutate(was_removed = ifelse(is.na(was_removed),0,was_removed))
 
   app$glob$unassigned.students = list(time=Sys.time(),semester=semester, prefs=stupref, studs=d)
   invisible(app$glob$unassigned.students)
