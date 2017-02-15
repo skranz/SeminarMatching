@@ -445,7 +445,7 @@ show.admin.report = function(se=app$se, app=getApp()) {
     round = 1
 
     if (se$admin$rounds_done>0) {
-      se$matchings = dbGet(se$db,"matchings",nlist(semester=se$semester, round))
+      se$matchings = dbGet(se$db,"matchings",nlist(semester=se$semester))
 
       if (NROW(se$matchings)==0) {
         ui = p("No student has been matched.")
@@ -453,8 +453,13 @@ show.admin.report = function(se=app$se, app=getApp()) {
         return()
       }
     }
+    # manual adjustments
+    se$manual = dbGet(se$db,"manual", list(semester=se$semester))
+
+
+
     #writeClipboard(rmd)
-    env = as.environment(list(semester=se$semester, seminars=se$seminars, students=se$students, matchings=se$matchings, studpref = se$studpref, semdb=se$db, db.dir=app$glob$db.dir, round=1))
+    env = as.environment(list(semester=se$semester, seminars=se$seminars, students=se$students, matchings=se$matchings, studpref = se$studpref, manual=se$manual, semdb=se$db, db.dir=app$glob$db.dir, round=1))
     parent.env(env) = environment()
     rmd = paste0(rmd, collapse="\n\n")
     html = try(knit.rmd.in.temp(rmd,envir = env, fragment.only = TRUE, use.commonmark=TRUE))
