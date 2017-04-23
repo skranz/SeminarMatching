@@ -249,19 +249,26 @@ show.admin.matching = function(se=app$se, app=getApp()) {
 
   umui = NULL
   admin = se$admin
-  if (admin$rounds_done >= admin$num_rounds) {
-    us = get.unassigned(db=se$db, semester=admin$semester)
-    us$studs = filter(us$studs, was_removed==0)
+  if (admin$rounds_done >= admin$num_rounds & admin$num_rounds >0) {
+    us = try(get.unassigned(db=se$db, semester=admin$semester))
 
-    if (NROW(us$studs)>0) {
-      umui = tagList(
-        br(),
-        h4("Students who ranked at least 1 seminar but did not get a slot:"),
-        HTML(html.table(us$studs))
-      )
+    if (is(us, "try-error")) {
+      umui = tags$p("Error when trying to generate list of unmatched students.")
     } else {
-      h4("All students who participated got a seminar slot.")
+      us$studs = filter(us$studs, was_removed==0)
+
+      if (NROW(us$studs)>0) {
+        umui = tagList(
+          br(),
+          h4("Students who ranked at least 1 seminar but did not get a slot:"),
+          HTML(html.table(us$studs))
+        )
+      } else {
+        umui = h4("All students who participated got a seminar slot.")
+      }
+
     }
+
   }
 
   ui = fluidRow(column(offset=1, width=10,
