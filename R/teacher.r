@@ -751,7 +751,6 @@ save.sem.click = function(formValues,cs=se$cs, se=app$se, app=getApp(),...) {
 show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   restore.point("show.semstud.ui")
 
-  round = se$admin$rounds_done+1
 
   glob = app$glob
   if (NROW(cs$semstuds)==0) {
@@ -784,12 +783,22 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
   }
 
   # Show students that did not get any slot
-  us = get.unassigned(db=se$db, semester=se$admin$semester)
+  us = get.unassigned(db=se$db, semester=cs$semester)
+
+
 
   # only show students that have not been removed from a seminar
   us$studs = filter(us$studs, was_removed==0)
 
   prefs = filter(us$prefs, semid == cs$semid)
+
+  if (cs$semester != se$admin$semester) {
+    cs.admin = get.cs.admin(cs=cs)
+  } else {
+    cs.admin = se$admin
+  }
+  round = cs.admin$rounds_done+1
+
   if (round<=2) {
     prefs = filter(prefs, round==1)
   }
@@ -937,7 +946,7 @@ add.student.to.seminar = function(formValues,seminar=cs$seminar, semstuds=cs$sem
   cs$semstuds = load.semstuds(cs=cs)
 
   # update unassigned students
-  fetch.unassigned.students(db=se$db, semester=se$admin$semester)
+  fetch.unassigned.students(db=se$db, semester=cs$semester)
   # important to set dsetUI = FALSE otherwise
   # email of student to add or remove is not read correctly
   show.sem.stud.ui(se=se)
@@ -997,7 +1006,7 @@ remove.student.from.seminar = function(formValues,seminar=cs$seminar, semstuds=c
   cs$semstuds = load.semstuds(cs=cs)
 
   # update unassigned students
-  fetch.unassigned.students(db=se$db, semester=se$admin$semester)
+  fetch.unassigned.students(db=se$db, semester=cs$seminar$semester)
 
   # important to set dsetUI = FALSE otherwise
   # email of student to add or remove is not read correctly
@@ -1024,7 +1033,8 @@ show.teacher.overview = function(se=app$se, app=getApp()) {
 show.sem.report.ui =function(cs = se$cs,se = app$se, app=getApp()) {
   restore.point("show.sem.report.ui")
 
-  rounds_done = se$admin$rounds_done
+  cs.admin = get.cs.admin(cs=cs)
+  rounds_done = cs.admin$rounds_done
   round = 1
   env = as.environment(list(semester=cs$semester, semid=cs$semid, semdb=se$db,round=1))
   parent.env(env) = environment()
@@ -1057,9 +1067,10 @@ show.sem.prio.ui =function(cs = se$cs,se = app$se, app=getApp()) {
   df = df[,cols]
   html = html.table(id = "prio_table",df,sel.row = NULL, td.padding="0px 4px 0px 4px", td.margin="1px")
 
+  cs.admin = get.cs.admin(cs=cs)
   ui = tagList(
     p(HTML(paste0(
-"List of students that so far have added this seminar in their preference list (round ", se$admin$selection.round,").<br> You can add manual points and then press the button 'Save Added Points' to change your priorities over students."
+"List of students that so far have added this seminar in their preference list (round ", cs.admin$selection.round,").<br> You can add manual points and then press the button 'Save Added Points' to change your priorities over students."
     ) )),
     HTML(html),
     HTML(

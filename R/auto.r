@@ -6,6 +6,19 @@ get.semdb = function(db.dir = paste0(main.dir,"/db"), main.dir = getwd())  {
   dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 }
 
+
+get.cs.admin = function(cs, semester=cs$semester, admin=NULL,  schemas = load.and.init.schemas(paste0(schema.dir, "/semdb.yaml")), schema.dir = paste0(main.dir,"/schema"), semdb = get.semdb(main.dir=main.dir), main.dir=getwd()) {
+
+  restore.point("get.current.admin")
+  if (is.null(semester)) return(NULL)
+  admin = dbGet(semdb,"admin", nlist(semester),schema = schemas$admin)
+  if (is.null(admin)) return(NULL)
+  admin = as.list(admin)
+  init.se.admin(admin)
+
+}
+
+
 get.current.admin = function(semester=get.default.semester(db=semdb, schemas=schemas), admin=NULL,  schemas = load.and.init.schemas(paste0(schema.dir, "/semdb.yaml")), schema.dir = paste0(main.dir,"/schema"), semdb = get.semdb(main.dir=main.dir), main.dir=getwd()) {
 
   restore.point("get.current.admin")

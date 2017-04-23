@@ -3,7 +3,7 @@
 fetch.unassigned.students = function(db, semester, app=getApp(), no.2nd=TRUE) {
   restore.point("fetch.unassigned.students")
 
-  manual = dbGet(db, "manual", list(semester=semester))
+  manual = dbGet(db, "manual", list(semester=semester), empty.as.null = FALSE)
 
   # compute removed, but only if not manually added
   removed = manual %>%
@@ -23,8 +23,8 @@ and b.userid = a.userid
 and b.semester = a.semester
 and b.semid = c.semid
 '
-  astupref = dbGet(db, sql=sql, params=nlist(semester))
-  assign = dbGet(db,"assign",nlist(semester))
+  astupref = dbGet(db, sql=sql, params=nlist(semester),empty.as.null = FALSE)
+  assign = dbGet(db,"assign",nlist(semester),empty.as.null = FALSE)
   stupref = filter(astupref, !userid %in% assign$userid)
   stupref$got_sems = rep(0,NROW(stupref))
 
@@ -48,7 +48,7 @@ and b.semid = c.semid
 
   d = stupref %>% group_by(semester,email) %>%
     arrange(email,pos, round) %>%
-    mutate(random_points=round(random_points,3),num_sem_ranked = length(unique(semid)), ranked_seminars=paste0(unique(semname), collapse=", ")) %>%
+    mutate(random_points= ifelse(length(random_points)>0, round(random_points,3), random_points),num_sem_ranked = length(unique(semid)), ranked_seminars=paste0(unique(semname), collapse=", ")) %>%
     ungroup %>%
     select(-semname, -pos,-userid, -name, -semid, -semester, -round)
 
@@ -68,7 +68,8 @@ get.unassigned = function(semester, app=getApp(), update.max = 60*30, update=FAL
   restore.point("get.unassigned")
 
   us = app$glob$unassigned.students
-  if (is.null(us) | update)
+
+  if (is.null(us) | update | !isTRUE(us$semester==semester))
     return(fetch.unassigned.students(db=db, semester=semester))
   if (as.numeric(Sys.time() - us$time) > update.max | us$semester != semester) {
     return(fetch.unassigned.students(db=db, semester=semester))

@@ -1,7 +1,7 @@
 example.seminar.match.info = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   semester = "SS17"
-  semid = 25
+  semid = 16
 
   df = seminar.match.info(semester = semester, semid=semid)
 
