@@ -1,0 +1,6 @@
+library(SeminarMatching)
+setwd("/srv/shiny-server/semapps/shared")
+log.file=paste0(getwd(),"/log/auto_run.log")
+SeminarMatching::append.log(c("autorun","******"), log.file)
+run.auto.tasks()
+cat("autorun was called")

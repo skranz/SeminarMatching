@@ -72,7 +72,7 @@ stop.without.error()
   - A: The main round of the seminar matching takes place on {{round1_date}}.
   
 - F: What if I want to participate in 2 seminars?
-  - A: In the main matching round, each student gets at most one seminar slot. If you want to participate in two seminars, you can enter from {{round1_date}} to  {{round2_date-1}} your preferences for your second seminar. On {{round2_date}} the second round of seminar matching takes place.
+  - A: In the main matching round, each student gets at most one seminar slot. If you want to participate in two seminars, you can enter from {{round1_date+1}} to  {{round2_date-1}} your preferences for your second seminar. On {{round2_date}} the second round of seminar matching takes place.
   
 - F: What if I got a seminar slot but don't want to participate?
 

@@ -1,19 +1,232 @@
-## Seminar Matching (in development)
+# SeminarMatching
 
-Shiny based R package to perform centralized matching of students to seminars.
+Author: Sebastian Kranz, Ulm University
 
-- The deployed software consists of several web apps:
+## Overview
+
+This is an shiny based R package to perform centralized matching of students to seminars based on a student optimal Gale-Shapley algorithm.
+
+The software is developed and used for a centralized seminar assignment at the economics department of Ulm University. Yet, it is designed such that it can be customized also for other universities or departments. The documentation for customization is fairly poor, however.
+
+- The software consists of several web apps:
 
     + for lecturers to enter and specify seminars and see results
   
-    + for students to enter background data, rank seminars and see results
+    + for students to enter background data, preferences over seminars and see the results after the matching
   
-    + for admins to specify general parameters like the date of seminar matching and see general report.
+    + for admins to specify general parameters like the timeline including the date of the centralized matching and to see general reports.
 
-+ Students will be matched via the Gale-Shapley student optimal mechanismen.
++ Students will be matched via the Gale-Shapley student optimal mechanismn.
 + There is a random component to students' priorities, but lecturers have also the option to give priority over students, e.g. based on already heard courses, the number of semesters or fields of specialization.
 
-+ The package can relatively flexibly be adapted, via yaml parameters and markdown forms and reports. But documentation is so far very poor.
++ The software can relatively flexibly be adapted, via yaml parameters and markdown forms and reports.
+
+## Installation of a local test version
+
+If you are interested in customizing the software for your own department, it is probably best to download a local version on your own computer. Try to get it run and make the customization work. If that works you can test and deploy it on a webserver using a docker container as explained in a subsequent section.
+
+I recommend to use RStudio (https://www.rstudio.com/) for your local development.
+
+### Install R packages
+
+If you use docker on your local computer, you can install the docker image skranz/seminarmatching as explained in the server installation. You can even use RStudio via a web browser to test and modify the software inside the docker container.
+
+If you don't use docker on your local computer, you first need to install all R packages. That is a little bit tedious, since the SeminarMatching package relies on several R packages written by me that are only hosted on Github and not on CRAN. Automatic installation of dependencies hosted on Github is not as well developed, as for CRAN packages, however. Below is a script that (hopefully) installs all needed packages (and probably some more, because I was to lazy to find the minimal required set). Just try to run it in R:
+
+```r
+library(methods)
+
+# path to which you want to install
+path = .libPaths()[1]
+# shall existing packages be overwritten
+glob.overwrite = FALSE
+
+success = failed = NULL
+from.cran = function(pkg, lib = path, overwrite = glob.overwrite,...) {
+  if (!overwrite) {
+    if (require(pkg,character.only = TRUE)) {
+      cat("\npackage ",pkg," already exists.")
+      return()
+    }
+  }
+  res = try(install.packages(pkg, lib=lib))
+  if (require(pkg,character.only = TRUE)) {
+    success <<- c(success,pkg)
+  } else {
+    failed <<- c(failed,pkg)
+  }
+}
+
+from.github = function(pkg, lib = path, ref="master", overwrite = glob.overwrite,upgrade_dependencies = FALSE,...) {
+  repo = pkg
+  pkg = strsplit(pkg,"/",fixed=TRUE)[[1]]
+  pkg = pkg[length(pkg)]
+
+  if (!overwrite) {
+    if (require(pkg,character.only = TRUE)) {
+      cat("\npackage ",pkg," already exists.")
+      return()
+    }
+  }
+
+  library(devtools)
+  res = try(
+  with_libpaths(new = path,
+    install_github(repo,ref = ref,upgrade_dependencies = upgrade_dependencies,...)
+  ))
+  if (require(pkg,character.only = TRUE)) {
+    success <<- c(success,pkg)
+  } else {
+    failed <<- c(failed,pkg)
+  }
+
+}
+
+from.cran("shiny", lib=path)
+from.cran("RCPP", lib=path)
+from.cran("devtools", lib=path)
+
+from.cran("curl",lib = path)
+from.cran("openssl",lib = path)
+from.cran("roxygen2", lib=path)
+from.cran("dplyr",lib = path)
+
+from.cran("knitr",lib = path)
+from.cran("shinyjs",lib = path)
+from.cran("V8",lib = path)
+from.cran("rmarkdown", lib=path)
+
+from.cran("rJava",lib = path)
+from.cran("mailR",dep=TRUE, lib=path)
+
+from.cran("shinyBS",lib = path)
+from.cran("shinyAce",lib = path)
+
+from.cran("RColorBrewer",lib = path)
+from.cran("memoise", lib=path)
+
+from.cran("mime", lib=path)
+
+from.cran("xtable", lib=path)
+
+
+from.cran("tidyr",lib=path)
+
+
+# Install github packages
+from.github(lib=path,"rstats-db/DBI",ref = "master")
+from.github(lib=path,"rstats-db/RSQLite",ref = "master")
+
+from.github(lib=path,"skranz/restorepoint",ref = "master")
+from.github(lib=path,"skranz/stringtools",ref = "master")
+from.github(lib=path,"skranz/codeUtils",ref = "master")
+from.github(lib=path,"skranz/rmdtools",ref = "master")
+from.github(lib=path,"skranz/dplyrExtras",ref = "master")
+from.github(lib=path,"skranz/dbmisc",ref = "master")
+#from.github(lib=path,"skranz/rowmins",ref = "master")
+
+from.github(lib=path,"skranz/shinyEvents",ref = "master")
+from.github(lib=path,"skranz/shinyEventsUI",ref = "master")
+from.github(lib=path,"skranz/shinyEventsLogin",ref = "master")
+
+from.github(lib=path,"skranz/TableTree",ref = "master")
+from.github(lib=path,"skranz/YamlObjects",ref = "master")
+from.github(lib=path,"skranz/shinyPart",ref = "master")
+from.github(lib=path,"skranz/loginPart",ref = "master")
+from.github(lib=path,"skranz/SeminarMatching",ref = "master")
+```
+
+In addition you probably want to download the source code of the SeminarMatching package from this Github page as a zip folder:
+
+https://github.com/skranz/SeminarMatching/archive/master.zip 
+
+You can then also locally build this package on your computer and see more details on how it works from the source code.
+
+### Creating an example app
+
+For the sake of brevity, I will refer to all files beyond the R packages that are needed to customize and deploy a working seminar matching software as the "app".
+
+#### Copy example files
+
+The folder `/examples` in this github repository contains skeletons of an example app that can be customized.
+
+The subfolder `sem-shiny-server` contains brief files for shiny apps for the admin, teacher and students shiny apps.
+
+The subfolder `sem-shared` contains folders for the databases, database schemas, yaml specification files and different RMarkdown files that can be adapted in order to customize reports and the user interfaces.
+
+Best copy these two folders to some directory on your computer. In this guide we assume you have a Windows PC and that folder is `C:/sema`.
+
+#### Create sqlite databases
+
+The folder `sem-shared/db` will contain two SQLite databases: 
+  - loginDB.sqlite containing login credentials for students and teachers
+  - semDB.sqlite containing all other relevant data for the seminarmatching, like seminars, student informations, preference lists, or matching results.
+  
+We first have to create empty versions of these database. For this purpose adapt and run the following R code:
+
+```r
+# adapt working directory
+library(SeminarMatching)
+setwd("C:/sema/sem-shared")
+db.dir = paste0(getwd(),"/db")
+
+
+# Create loginDB.sqlite
+logindb.arg = list(dbname=file.path(db.dir,"loginDB.sqlite"),drv=SQLite())
+create.login.db(db.arg = logindb.arg)
+
+# Insert a test user (make sure to delete him before production run)
+create.user.in.db(userid = "test", email = "test",password = "test",db.arg = logindb.arg)
+
+# Create semDB
+schema.file = "./schema/semdb.yaml"
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+dbCreateSchemaTables(semdb, schema.file=schema.file,overwrite = FALSE)
+
+# add test user to adminstaff
+dbInsert(semdb, table="adminstaff",vals = list(userid="test",email="test"))
+
+```
+
+You can have now a look in the folder `sem-shared/db` and you see that the two files `loginDB.sqlite` and `semDB.sqlite` have been generated.
+
+Now install some software like SQLiteStudio (https://sqlitestudio.pl/) to examine these databases, and possible to conduct some manual entries.
+
+Note that we have generated a simple test user with id, email and password `test` to our loginDB and to the adminstaff table in semDB. The adminstaff table contains all users that are allowed to login as admin.
+
+You should **definitely remove that test user** before going to production.
+
+### Starting the admin interface
+
+Now try to open the admin web interface by running the following lines of code:
+
+```r
+main.dir = "C:/sema/sem-shared"
+app = AdminSeminarsApp(init.userid = "test", init.password="test", lang="en", main.dir = main.dir)
+viewApp(app)
+```
+
+In the panel settings you can pick a semester in which the seminars take place and set a timeline for the matching process. Pick a semester and pick some dates. 
+
+For testing, set for the moment the "Date from which on the semester will be shown as default for lecturers and students" and the "Date at which students start to see the seminars and can submit their preferences" be some dates in the past and the matching dates be some date in the future.
+
+You have to enter dates in international date format, e.g.
+
+2017-04-30
+
+for the 30th of April 2017. Then save your settings by pressing submit.
+
+Now stop the webapp (red stop button in the RStudio viewer or just close the tab in a browser) and start it again. You should know see a nice timeline for the seminar matching in the initial panel.
+
+The set of semester and many other sets like courses of study etc, can be adapted by changing the file `sets.yaml` in the folder `sem-shared/yaml`. Also the other yaml files allow customization, but leave them in the moment as they are.
+
+### Starting the teacher interface
+
+
+
+
+
+## Installation on a webserver via Docker
 
 ## Timeline of seminar matching for a semester
 

@@ -9,7 +9,7 @@ semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 seminars = dbGet(semdb,"seminars")
 
 
-file="studseminfo_round1_de.Rmd"
+file="studseminfo_pre_de.Rmd"
 
 cat.rmd.params(file)
 params = NULL
@@ -25,10 +25,14 @@ params = list(
   round1_done_date = today-1,
   stud.exists = TRUE,
   round2_date = today,
-  stud_sems = seminars,
+  has_round1_seminar = TRUE,
+  round1_seminar = seminars[1,],
   round2_done_date = today,
+  has_round2_seminar = !TRUE,
+  round2_seminar = seminars[2,],
   last_latecomer_date = today+5,
-  semester = semester
+  semester = semester,
+  studmode = "latecomer"
 )
 copy.into.env(params)
 .GlobalEnv$knit_print.Date = function(x,...) {
@@ -46,17 +50,8 @@ stop.without.error()
 
 <!-- START -->
 
+## WiWi-Seminarmatching, Ulm University {{semester}}
 
-## WiWi-Seminarmatching, Ulm University {{semester}} -- Main Round
+The seminar selection for {{semester}} starts on **{{stud_start_date}}**. From then **until  {{round1_date-1}}** you must enter your seminar preferences in the tab "Seminars". The automated matching then takes place on {{round1_date}} and you can see your results the next day.
 
-#< if !stud.exists
-Please update your personal data in the tab "Your Data" before you can state your preferences over seminars.
-#>
-
-You can enter your seminar preferences until **{{round1_date-1}}**. On the {{round1_date}}, you can see if and which seminar slot you got.
-
-#< if !is.na(round2_date)
-If you want to participate in two seminars, you can then from {{round1_date}} bis zum {{round2_date-1}} enter your preferences for the second seminar.
-#>
-
-**Don't forget to save your seminar preferences!**
+You can already update your personal data in the tab "Your Data" for this semester.

@@ -50,8 +50,9 @@ stop.without.error()
 
 <!-- START -->
 
-## WiWi-Seminarmatching, Ulm University {{semester}}
+## WiWi-Seminarvergabe, Universität Ulm {{semester}}
 
-The seminar selection for {{semester}} starts on **{{stud_start_date}}**. From then **until  {{round1_date-1}}** you must enter your seminar preferences in the tab "Seminars". The automated matching then takes place on {{round1_date}} at 3:00 in the night.
+Die Seminarthemen für das {{semester}} werden erst am **{{stud_start_date}} freigegeben**. Ab
+diesem Termin können Sie Ihre Präferenzen über Seminare angeben im Reiter `Seminarwahl` angeben. Sie müssen Ihre **Präferenzen spätestens am Ende des {{round1_date-1}} eintragen**. Die automatisierte Seminarplatzvergabe findet dann am {{round1_date}} statt und am nächsten Tag können Sie die Ergebnisse sehen.
 
-You can already update your personal data in the tab "Your Data" for this semester.
+Sie können bereits Ihr Profil im Reiter `Ihre Daten` eingeben bzw. für dieses Semester aktualisieren.

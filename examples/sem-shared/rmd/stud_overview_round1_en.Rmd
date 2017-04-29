@@ -46,16 +46,17 @@ stop.without.error()
 
 <!-- START -->
 
-## WiWi-Seminarvergabe, Uni Ulm {{semester}} -- Hauptrunde
+
+## WiWi-Seminarmatching, Ulm University {{semester}} -- Main Round
 
 #< if !stud.exists
-Bevor Sie im Reiter `Seminarwahl` Präferenzen über Seminare angeben können, aktualisieren und speichern Sie zunächst Ihre Hintergrunddaten im Reiter `Ihre Daten`.
+Please update your personal data in the tab "Your Data" before you can state your preferences over seminars.
 #>
 
-Sie können **bis zum {{round1_date-1}}** im Reiter `Seminarwahl` Ihre Präferenzen über WiWi Seminare eintragen. Am {{round1_date}}, um 3:00 nachts, werden die Seminarplätze dann zentral zugeteilt. Schauen Sie dann hier nach, welchen Seminarplatz Sie erhalten haben. Sie können dann ggf. Ihre Präferenzen über die Seminarthemen angeben.
+You can enter your seminar preferences until **{{round1_date-1}}**. On the {{round1_date}}, you can see if and which seminar slot you got.
 
 #< if !is.na(round2_date)
-Wenn Sie an zwei Seminaren teilnehmen möchten, können Sie dann vom {{round1_date}} bis zum {{round2_date-1}} Präferenzen für Ihr zweites Seminar angeben.
+If you want to participate in two seminars, you can then from {{round1_date+1}} bis zum {{round2_date-1}} enter your preferences for the second seminar.
 #>
 
-**Vergessen Sie nicht Ihre Präferenzliste zu speichern!**
+**Don't forget to save your seminar preferences!**

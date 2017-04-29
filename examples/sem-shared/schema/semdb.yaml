@@ -148,7 +148,7 @@ topicpref:
     topic_pos: INTEGER
     points: INTEGER
   indexes:
-    - "CREATE INDEX topicpref on topicpref (semester,semid,userid,topic_ind)"
+    - "CREATE INDEX topicpref1 on topicpref (semester,semid,userid,topic_ind)"
     - "CREATE INDEX topicpref2 on topicpref (semid,userid,topic_ind)"
 
 

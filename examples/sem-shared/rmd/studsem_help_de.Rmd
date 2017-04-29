@@ -54,7 +54,7 @@ stop.without.error()
 
 - F: Ich brauche unbedingt noch ein Seminar. Wie kann ich garantiert einen Seminarplatz erhalten?
 
-  - A: Sie müssen alle Seminare ihres Niveaus (Bachelor bzw. Master) in Ihre Präferenzliste aufnehmen. Es gab bislang immer noch Bachelor und Master Seminare mit freien Plätzen. Sollten tatsächlich doch mal alle Seminarplätze ausgebucht sein, werden wir versuchen, die Gesamtzahl der Seminarplätze aufzustocken. Wenn Sie nicht alle Seminare in ihre Präferenzliste aufnehmen, kann es jedoch sein, dass sie keinen Seminarplatz erhalten. Je weniger Seminare Sie bereit sind zu besuchen, desto höher ist die Gefahr keinen Seminarplatz zu erhalten. 
+  - A: Sie müssen alle Seminare ihres Niveaus (Bachelor bzw. Master) in Ihre Präferenzliste aufnehmen. Es gab bislang immer noch nach Runde 1 Bachelor und Master Seminare mit freien Plätzen. Sollten tatsächlich doch mal in Runde 1 alle Seminarplätze ausgebucht sein, werden wir versuchen, die Gesamtzahl der Seminarplätze aufzustocken. Wenn Sie nicht alle Seminare in ihre Präferenzliste aufnehmen, kann es jedoch sein, dass sie keinen Seminarplatz erhalten. Je weniger Seminare Sie bereit sind zu besuchen, desto höher ist die Gefahr keinen Seminarplatz zu erhalten.
   
 - F: Wie kann ich garantieren mein Wunschseminar zu erhalten?
   - A: Dies ist nicht möglich. Wenn mehr Studierende einen Seminarplatz in ihrem Wunschseminar wünschen, als dort Plätze angeboten werden, kann Ihnen dort kein Seminarplatz garantiert werden. Es kann genauso nicht garantiert werden, dass Sie einen Platz in einem ihrer Top 3, Top 5, Top 10 usw. Seminare erhalten. 
@@ -73,12 +73,18 @@ stop.without.error()
   
 - F: Was ist wenn ich an zwei Seminaren teilnehmen möchte?
 
-  - A: In der Hauptvergaberunde erhält jeder Studierender max. einen Seminarplatz. Falls Sie an zwei Seminaren teilnehmen möchten, können Sie vom {{round1_date}} bis zum  {{round2_date-1}} ihre Präferenzen für den zweiten Seminarplatz angeben. Am {{round2_date}} findet die zweite automatische Vergaberunde statt, in der nicht vergebene Seminarplätze vergeben werden.
+  - A: In der Hauptvergaberunde erhält jeder Studierender max. einen Seminarplatz. Falls Sie an zwei Seminaren teilnehmen möchten, können Sie vom {{round1_date+1}} bis zum  {{round2_date-1}} ihre Präferenzen für den zweiten Seminarplatz angeben. Am {{round2_date}} findet die zweite automatische Vergaberunde statt, in der nicht vergebene Seminarplätze vergeben werden.
   
 - F: Was ist wenn ich doch nicht an dem mir zugeteilten Seminar teilnehmen möchte?
 
   - A: Bitte geben Sie nur diejenigen Seminare in Ihrer Präferenzliste an, an denen Sie teilnehmen würden. Wenn Sie einen zugeteilten Seminarplatz später absagen, ist dies sehr unsoziales Verhalten gegenüber Ihren Kommillitonen, denen Sie einen Seminarplatz weggenommen haben. Wir prüfen inwiefern eine unbegründete Absage auch zu einem formalen Malus, ggf. in der Form geringerer Priorität bei zukünftiger Seminarvergabe führen kann.
-  
+ 
+- F: Ich habe keinen Seminarplatz erhalten. Gibt es Wartelisten?
+  - A: Dozenten eines Seminars sehen alle Studierenden die dieses Seminar in Runde 1 oder in Runde 2 in die Präferenzliste aufnenommen haben und noch keinen Seminarplatz erhalten haben (bzw. keinen gewünschten Platz für ein zweites Seminar erhalten haben). Sollte noch unerwarteterweise ein Studierender von einem Seminar abspringen, kann der Dozent Studierende aus dieser Liste anschreiben. D.h. wenn Sie keinen Seminarplatz bekommen haben, sind Sie automatisch auf Wartelisten für alle Seminare, die Sie in Ihrer Präferenzliste aufgenommen haben. Es gibt keine feste Reihenfolge auf den Wartelisten. Den Dozenten wird aber empfohlen, eher denjenigen Studierenden einen frei gewordenen Platz anzubieten, die viele Seminare gerankt haben (und die nicht in einem vorherigen Semester abgesprungen sind), da diese Studierenden tendenziell dringender einen Seminarplatz benötigen. (Wenn Sie dringend einen Seminarplatz brauchen, sollten Sie möglichst bereit sein, an allen oder fast allen Seminaren teilzunehmen.)
+
+- F: Warum sind bei der zweiten Vergaberunde manche Seminare in der Liste dunkelgrau und andere weiß hinterlegt?
+  - A: Die dunkelgrauen Seminare sind in der ersten Runde bereits gefüllt wurden, die weißen Seminare haben noch Plätze. Am Besten nehmen Sie trotzdem auch die bereits gefülltem Seminare in Ihre Präferenzliste auf, an denen Sie teilnehmen würden. Sollte in einem solchen Seminar doch noch jemand abspringen (sollte idealerweise zwar nicht geschehen), sieht der Dozent, dass Sie an dem Seminar teilnehmen würden, und kann Ihnen ggf. noch einen Platz anbieten.
+
 - F: Was ist wenn ich den Termin der Seminarvergabe verpasst habe und hier nicht rechtzeitig meine Präferenzliste eingetragen habe?
 
   - A: Ziel der zentralisierten Seminarvergabe ist die Seminarplätze auf faire und effiziente Art und Weise zu verteilen. Hierfür ist es allerdings notwendig, dass Sie Ihre Seminarpräferenzen bis zum Stichtag eintragen. Falls die zweite Vergaberunde noch nicht stattgefunden hat, können Sie sich hier noch für einen verbliebenen Platz bewerben. Wenn die zweite Vergaberunde auch vorbei ist, haben sie leider endgültig die Seminarplatzvergabe dieses Semester verpasst.
@@ -98,5 +104,5 @@ stop.without.error()
 - F: Wo ist der Log-Out Knopf?
   - A: Es gibt keinen Log-Out Knopf. Schließen Sie bitte einfach das Fenster oder Tab, oder surfen Sie auf eine andere Seite nachdem Sie Ihre Daten eingegeben und gespeichert haben.
 
-- F: Warum sind bei der zweiten Vergaberunde manche Seminare in der Liste dunkelgrau und andere weiß hinterlegt?
-  - A: Die dunkelgrauen Seminare sind in der ersten Runde bereits gefüllt wurden, die weißen Seminare haben noch Plätze. Am Besten nehmen Sie trotzdem auch die bereits gefülltem Seminare in Ihre Präferenzliste auf, an denen Sie teilnehmen würden. Sollte in einem solchen Seminar doch noch jemand abspringen (sollte idealerweise zwar nicht geschehen), sieht der Dozent, dass Sie an dem Seminar teilnehmen würden, und kann Ihnen ggf. noch einen Platz anbieten.
+
+

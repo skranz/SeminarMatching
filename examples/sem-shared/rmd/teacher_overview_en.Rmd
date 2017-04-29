@@ -71,18 +71,16 @@ Today is **{{today}}**. The currently active semester for the seminar matching i
 
 - {{stud_start_date}} - {{round1_date-1}}: Students must submit their preferences over seminars for the first matching round. 
 
-- {{round1_date}}: 1st round of seminar matching. The matching algorithm runs automatically at 3:00 in the morning.
+- {{round1_date}}: 1st round of seminar matching. The matching algorithm runs during that day.
 #< if today > round1_date & ! isTRUE(today >=round1_done_date)
 ** Note: The seminar matching did not take place as scheduled. The administrator  should manually run it**
 #>
 
 #< if !is.na(round2_date)
-- {{round2_date}}: 2nd round of seminar matching. The matching algorithm runs automatically at 3:00 in the morning.
+- {{round2_date}}: 2nd round of seminar matching. The matching algorithm runs during that day.
 #< if today > round2_date & ! isTRUE(today >=round2_done_date)
 ** WARNING: The seminar matching did not take place as scheduled. Please run the seminar matching manually **
 #>
 #>
-
-- **Not yet implemented** From {{round1_date}} onwards: Assigned students can submit preferences over seminar topics. Each seminar instructor can decide whether topics will be assigned by this software and can set individual deadlines for the topic assignment. 
 
 

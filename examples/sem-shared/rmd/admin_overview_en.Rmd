@@ -71,7 +71,7 @@ Today is **{{today}}**. The currently active semester for the seminar matching i
 
 - {{stud_start_date}} - {{round1_date-1}}: Students must submit their preferences over seminars for the first matching round. 
 
-- {{round1_date}}: 1st round of seminar matching. The matching algorithm is scheduled to run automatically at 3:00 in the morning.
+- {{round1_date}}: 1st round of seminar matching.
 #< if today > round1_date & ! isTRUE(today >=round1_done_date)
 ** WARNING: The seminar matching did not take place as scheduled. Please run the seminar matching manually **
 #>
@@ -80,7 +80,7 @@ The first round of seminar matching was run on {{round1_done_date}}.
 #>
 
 #< if !is.na(round2_date)
-- {{round2_date}}: 2nd round of seminar matching. The matching algorithm is scheduled to run automatically at 3:00 in the morning.
+- {{round2_date}}: 2nd round of seminar matching.
 #< if today > round2_date & ! isTRUE(today >=round2_done_date)
 ** WARNING: The seminar matching did not take place as scheduled. Please run the seminar matching manually **
 #>
@@ -89,6 +89,5 @@ The 2nd round of seminar matching was run on {{round2_done_date}}.
 #>
 
 #>
-- From {{round1_date}} onwards: Students may be able to submit preferences over seminar topics for their assigned seminars. Seminar instructors can set individual deadlines. 
-
+- From {{round2_date+1}} onwards: Lecturers see global waiting lists of unmatched students and can manually remove students (who did not show off) and add replacement students.
 

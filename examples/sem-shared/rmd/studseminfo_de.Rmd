@@ -70,7 +70,7 @@ Bevor Sie Präferenzen über Seminare angeben können, aktualisieren und speiche
 
 Sie können hier **bis zum {{round1_date-1}}** Ihre Präferenzen über WiWi Seminare eintragen.
 #< if !is.na(round2_date)
-Wenn Sie an zwei Seminaren teilnehmen möchten, können Sie dann vom {{round1_date}} bis zum {{round2_date-1}} Präferenzen für Ihr zweites Seminar angeben.
+Wenn Sie an zwei Seminaren teilnehmen möchten, können Sie dann vom {{round1_date+1}} bis zum {{round2_date-1}} Präferenzen für Ihr zweites Seminar angeben.
 #>
 
 #> end today <= round1_done_date & today >= stud_start_date

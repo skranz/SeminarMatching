@@ -15,14 +15,24 @@ db.dir = paste0("../db")
 round = 1
 
 semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
-matchings = dbGet(semdb,"matchings",nlist(semester, round))
+matchings = dbGet(semdb,"matchings",nlist(semester))
 seminars = dbGet(semdb,"seminars",nlist(semester))
 students = dbGet(semdb,"students",nlist(semester))
 
 studpref = dbGet(semdb,"studpref", nlist(semester))
+
+manual = dbGet(semdb,"manual",nlist(semester))
+
 ```
 
 ```{r init_data, include=FALSE}
+matchings1 = filter(matchings, round==1)
+
+matchings2 = filter(matchings, round==2) %>%
+  filter(num_ranked>0)
+
+matchings = matchings1
+
 df = matchings %>% filter(num_ranked>0)
 
 df = mutate(df, found=ifelse(semid!=-1, "found seminar", "no seminar"))
@@ -59,6 +69,14 @@ r2_num = length(unique(sp2$userid))
 r2_new = length(setdiff(unique(sp2$userid), unique(sp1$userid)))
 r2_extra = length(intersect(unique(sp2$userid), unique(found1)))
 
+# adapt manual
+#man = manual %>% 
+#  group_by(userid) %>%
+#  summarize(net_added = # sum(added==1)-sum(added==0)) %>%
+#  filter(net_added != 0)
+
+n_man_added = sum(manual$added==1)
+n_man_removed = sum(manual$added==0)
 
 ```
 
@@ -178,3 +196,13 @@ seminars %>%
 
 - `r r2_extra` of students already got a seminar in round 1, and probably want to take two seminars. In an ideal world without mistakes (like forgetting to participate in round 1), this would be the only reason to participate in round 2. 
 
+- In total `r sum(matchings2$semid>=0)` of the `r r2_num` students got assigned a seminar slot in round 2.
+
+# Manually added or removed students
+
+- Manually `r n_man_added` students have been added, and `r n_man_removed` students have been removed from seminars.
+
+Background:
+- Because the world is not ideal, after the matching rounds, some students may drop out from the seminar, e.g. because they were dissatisfied with their topic, and then have been removed from the seminar list.
+- Other students are added, either as replacement for dropped out students, or because of an expansion of slots due to high demand.
+- Note that the numbers below would only be correct, if all lectures insert all additions and removals in the database and if no student would is added or removed multiple times.

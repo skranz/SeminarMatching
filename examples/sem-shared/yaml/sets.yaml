@@ -37,7 +37,7 @@ studBAMA: ['Bachelor','Master']
 
 subjects:
   ['WiWi','WiMa','Finance','NUF','Wi-Physik',
-   'Wi-Chemie', 'anderes / other']
+   'Wi-Chemie','Lehramt MaWi', 'anderes / other']
 subjects2:
   ['---', 'WiWi','WiMa','Finance','NUF','Wi-Physik',
-   'Wi-Chemie','anderes / other']
+   'Wi-Chemie','Lehramt MaWi','anderes / other']

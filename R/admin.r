@@ -208,10 +208,16 @@ save.admin.form = function(values, app=getApp(), se=app$se,...) {
 show.admin.sems = function(se=app$se, app=getApp()) {
   restore.point("show.admin.sems")
 
-  se$asems = filter(se$seminars,active==TRUE) %>%
-    arrange(semBAMA,groupid,teacher,semname) %>%
-    select(semBAMA, groupid, everything())
-  df = se$asems
+  if (length(se$seminars)==0) {
+    se$asems = df = NULL
+  } else {
+    se$asems = filter(se$seminars,active==TRUE) %>%
+      arrange(semBAMA,groupid,teacher,semname) %>%
+      select(semBAMA, groupid, everything())
+    df = se$asems
+
+  }
+
 
   if (NROW(df)>0) {
     rows = 1:NROW(df)
