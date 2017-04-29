@@ -274,6 +274,15 @@ TO BE CONTINUED...
 
 ## Installation on a webserver via Docker
 
+Here is some basic information:
+
+https://github.com/skranz/SeminarMatchingDocker
+
+For a guide how to set-up an email server (needed for login handling) see this document:
+
+https://github.com/skranz/SeminarMatchingDocker/blob/master/Emails%20from%20Dockerized%20Shiny%20Apps.md
+
+
 ## Timeline of seminar matching for a semester
 
 - Adminstrator specifies all relevant dates for a given semester. This can be done quite some time ahead. The dates are saved in the `admin` database table.
