@@ -254,6 +254,22 @@ I am aware that my documentation on customization is fairly sparse here, but I h
 
 ### Starting the student interface
 
+The following code starts a german student interface (change lang="en" for an english interface)
+
+```r
+main.dir = "C:/sema/sem-shared"
+app = StudSeminarsApp(init.userid = "test", init.password="test", lang="de", main.dir = main.dir)
+viewApp(app)
+```
+
+Students must first enter background data. Similar to the seminar form for teachers, you can customize these forms by adapting the corresponding yaml files and database schema. Some fields like email, cannot be changed. Again, I note that this documentation is fairly sparse. So I guess it is trial-and-error. 
+
+After a student has entered her background data, she sees a list of all offfered seminars and can submit her preferences.
+
+The panel "Hilfe" or in the englisch version "Help", gives some details on the matching algorithm and how the seminar matching proceeds.
+
+### Running an example matching
+
 TO BE CONTINUED...
 
 ## Installation on a webserver via Docker
