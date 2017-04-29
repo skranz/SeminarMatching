@@ -222,9 +222,39 @@ The set of semester and many other sets like courses of study etc, can be adapte
 
 ### Starting the teacher interface
 
+To start the teacher interface that allows to add and modify seminars run the following code
 
+```r
+main.dir = "C:/sema/sem-shared"
+app = EditSeminarsApp(init.userid = "test", init.password="test", lang="en", main.dir = main.dir)
+viewApp(app)
+```
 
+After you login, you should get the following error message:
+```
+The user test has not been given any rights to edit seminars in any group.
+```
+Teachers will be assigned to groups (e.g. institutes). There can be several members in a a group that can edit seminars (professors, secretaries, teaching assisstants...), but each person can only be in one group. The first members of groups have to be added manually in the table `groupstaff` in semDB. You can do this manually with SQLLiteStudio or run the following code:
 
+```r
+db.dir = paste0(main.dir,"/db")
+semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+dbInsert(semdb,"groupstaff",list(userid="test",groupid="myinstitute",email="test",edit_Sem=TRUE, notify=TRUE, admin=TRUE, boss=TRUE))
+```
+Now try starting the app again and it should work.
+
+Under the panel "Group Staff" you can now add additional users with rights to edit seminars or create new users in your group. The different permission fields are explained. A user with permission "boss" can not be deleted via the app but only with direct database access. 
+In Ulm, I first manually added into the database the professors as bossess of their institute and let them later add additional users in a decentralized fashion.
+
+In the panel "Seminars", you can create a new seminar for the current semester. Try it out.
+
+The different form fields can be customized by modifying the corresponding yaml files in the folder `sem-shared/yaml`. When you change the fields, you also have to change the semDB database. For this purpose, you have to adapt the schema file `sem-shared/schema/semdb.yaml` and then recreate the database in a similar fashion as it was originally created. Note that some field names are hardcoded in the program and cannot be changed, e.g. "active" or "semname". These are fields with should be relevant for any university. So just don't change field names just for the fun of it.
+
+I am aware that my documentation on customization is fairly sparse here, but I hope a bit try and error makes this work.
+
+### Starting the student interface
+
+TO BE CONTINUED...
 
 ## Installation on a webserver via Docker
 
