@@ -290,7 +290,7 @@ round = 1 # round 1 or 2
 # delete.seminar.matching(semester=semester)
 # delete.random.students(semester=semester)
 
-draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
+draw.random.students(n=n,semester=semester,insert.into.db = TRUE, round=round)
 df = perform.matching(semester=semester,insert.into.db = TRUE, round=round)
 ```
 
@@ -304,10 +304,12 @@ In the tab "Reports" you see some info on students' preferences and the resultin
 
 Also take a look at the report admin interface. There you see some aggregate statistics about the first round of matching.
 
-
+If you like, you can also run an example matching for round 2. In round 2 only seminar slots can be assigned that are still open after round 1. The main reason for there to be a 2nd matching round is for students who want to participate in 2 seminars to 
 
 
 ## Hints for customization
+
+TO BE DONE
 
 ## Installation on a webserver via Docker
 
