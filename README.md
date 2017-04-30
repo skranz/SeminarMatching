@@ -270,7 +270,44 @@ The panel "Hilfe" or in the englisch version "Help", gives some details on the m
 
 ### Running an example matching
 
-TO BE CONTINUED...
+The following code generates some random students and then runs a matching round for test purposes.
+
+```r
+# set working directory to your shared folder
+setwd("C:/sema/sem-shared")
+
+
+n = 100 # number of random students
+
+# take the currently active semester
+# based on the dates in the admin interface
+# (some seminars should exist for that semester)
+semester = "WS1617" 
+
+round = 1 # round 1 or 2
+
+# uncomment to delete previous matching
+# delete.seminar.matching(semester=semester)
+# delete.random.students(semester=semester)
+
+draw.random.students(n=n,semester=semester,insert.into.db = TRUE)
+df = perform.matching(semester=semester,insert.into.db = TRUE, round=round)
+```
+
+Now start the student app again. You will see on the first page, whether and where the student got a seminar slot. Of course she only can get a slot, if she listed some seminars in here preference list.
+
+More interesting is the teacher app. Start it and click on some seminar.
+
+In the tab "Particpants" you see a list of students that were matched to your seminar. Below you also see a list of students that did not get any seminar slot but put your seminar in their preference list. Teachers can manually add or remove students here. Students may be removed if they don't show up when topics are assigned and students may be added to fill the opened slots.
+
+In the tab "Reports" you see some info on students' preferences and the resulting matching concerning your seminar.
+
+Also take a look at the report admin interface. There you see some aggregate statistics about the first round of matching.
+
+
+
+
+## Hints for customization
 
 ## Installation on a webserver via Docker
 
@@ -278,7 +315,7 @@ Here is some basic information:
 
 https://github.com/skranz/SeminarMatchingDocker
 
-For a guide how to set-up an email server (needed for login handling) see this document:
+For a guide how to set-up an mail transfer agent, which is needed to send emails when new users register, see this document:
 
 https://github.com/skranz/SeminarMatchingDocker/blob/master/Emails%20from%20Dockerized%20Shiny%20Apps.md
 

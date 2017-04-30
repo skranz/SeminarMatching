@@ -830,9 +830,13 @@ show.sem.stud.ui = function(cs=se$cs, se=app$se, app=getApp()) {
       # num_sem_ranked may be misleading
       # since currently ranked seminars in round 2
       # also count
+      us.studs0 = filter(us.studs, got_sems==0)
+      us.studs1 = filter(us.studs, got_sems==1)
+
       us.studs = us.studs %>%
         filter(got_sems==0) %>%
         select(-got_sems, -num_sem_ranked)
+
     } else {
       us.studs = us.studs %>%
         select(email, num_sem_ranked, everything()) %>%
