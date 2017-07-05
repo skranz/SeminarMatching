@@ -1,7 +1,4 @@
 examples.AdminSeminarApp = function() {
-  setwd("D:/libraries/SeminarMatching/testapps/")
-
-  setwd("D:/libraries/SeminarMatching/testapps/")
   setwd("D:/libraries/SeminarMatching/semapps/")
   restore.point.options(display.restore.point = !TRUE)
   app = AdminSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="test", lang="en", main.dir = paste0(getwd(),"/shared"))

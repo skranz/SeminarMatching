@@ -46,6 +46,8 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   if (is.null(db.dir)) db.dir = "./db"
   if (is.null(schema.dir)) schema.dir = "./schema"
 
+  schemas = load.and.init.schemas(file.path(schema.dir,"semdb.yaml"))
+
   if (is.null(semdb))
     semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
 
@@ -61,16 +63,17 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
   }
 
   if (is.null(seminars))
-    seminars = dbGet(semdb,"seminars", list(semester=semester))
+    seminars = dbGet(semdb,"seminars", list(semester=semester), schemas=schemas)
   if (is.null(students))
-    students = dbGet(semdb,"students", list(semester=semester))
+    students = dbGet(semdb,"students", list(semester=semester),schemas=schemas)
   if (is.null(studpref))
-    studpref = dbGet(semdb,"studpref", list(semester=semester, round=round))
+    studpref = dbGet(semdb,"studpref", list(semester=semester, round=round), schemas=schemas)
   if (is.null(semcrit))
-    semcrit = dbGet(semdb,"semcrit", list(semester=semester))
+    semcrit = dbGet(semdb,"semcrit", list(semester=semester),schemas = schemas)
 
   seminars$open_slots = seminars$slots - seminars$filled_slots
 
+  #semcrit$points = as.numeric(semcrit$points)
   semcrit = filter(semcrit, !is.na(points))
 
   semcrit = add.num.slots.to.semcrit(semcrit=semcrit, seminars=seminars)
