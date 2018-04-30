@@ -7,7 +7,7 @@ examples.EditSeminarApp = function() {
   library(SeminarMatching)
   restore.point.options(display.restore.point = TRUE)
 
-  setwd("D:/libraries/SeminarMatching/testapps/shared")
+  #setwd("D:/libraries/SeminarMatching/testapps/shared")
   setwd("D:/libraries/SeminarMatching/semapps/shared")
 
   app = EditSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="test", lang="en")
@@ -290,7 +290,24 @@ teacher.main.ui = function(se, app=getApp()) {
   ui
 }
 
+make.pseminars = function(se, semester = se$semester) {
+  restore.point("make.pseminars")
 
+  # Unactivated seminars
+  # Sort decreasingly in semester number
+  ps = filter(se$seminars, semester!=se$semester | active==FALSE)
+
+  # Only consider 3 years past
+  semester.num = get.sem.number(ps$semester)
+  if (NROW(ps)>10) {
+    keep = semester.num >= get.sem.number(se$semester)-3
+    ps = ps[keep,,drop=FALSE]
+    semester.num = semester.num[keep]
+  }
+  ord = order(-semester.num, ps$teacher, ps$semname)
+  ps=ps[ord,,drop=FALSE]
+  ps
+}
 
 load.teacher.se = function(semester=se$semester,db=app$glob$semdb, app=getApp(), se=app$se) {
   restore.point("load.teacher.se")
@@ -305,8 +322,7 @@ load.teacher.se = function(semester=se$semester,db=app$glob$semdb, app=getApp(),
 
     # Activated and unactivated seminars
     se$aseminars = filter(se$seminars, semester==se$semester, active==TRUE)
-    se$pseminars = filter(se$seminars, semester!=se$semester | active==FALSE)
-    se$pseminars=se$pseminars[-get.sem.number(se$pseminars$semester),]
+    se$pseminars=make.pseminars(se)
   }
 
   se$admin = get.current.admin(semester=se$semester)
@@ -1107,8 +1123,7 @@ load.teacher.se = function(semester=se$semester,db=app$glob$semdb, app=getApp(),
 
     # Activated and unactivated seminars
     se$aseminars = filter(se$seminars, semester==se$semester, active==TRUE)
-    se$pseminars = filter(se$seminars, semester!=se$semester | active==FALSE)
-    se$pseminars=se$pseminars[-get.sem.number(se$pseminars$semester),]
+    se$pseminars = make.pseminars(se)
   }
 
   se$admin = get.current.admin(semester=se$semester)
