@@ -561,6 +561,7 @@ set.new.seminar = function(cs, se = app$se, app=getApp()) {
   prev.semid =se$cs[["semid"]]
   cs$semid = cs$seminar$semid = NA
   cs$semester = cs$seminar$semester = cs$semcrit$semester = se$semester
+  cs$seminar$filled_slots = 0
 
   se$cs = cs
   dsetUI("activeSemUI", h4(paste(cs$semester, "New Seminar")))
