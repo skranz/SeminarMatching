@@ -1,3 +1,7 @@
+year =function (x) {
+  as.POSIXlt(x)$year + 1900L
+}
+
 has.col = function(df, col) {
   col %in% names(df)
 }

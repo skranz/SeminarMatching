@@ -5,7 +5,7 @@ Version: 0.1
 Date: 2015-05-22
 Author: Sebastian Kranz
 Maintainer: Sebastian Kranz <sebastian.kranz@uni-ulm.de>
-Description: Shiny App for Seminar Assignment (not yet working)
+Description: Shiny App for Seminar Assignment used in my department.
 License: GPL >= 2.0
 LazyData: TRUE
 Depends: matchingR, stringtools, restorepoint, dplyr, codeUtils,

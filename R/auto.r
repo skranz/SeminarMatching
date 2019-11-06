@@ -1,9 +1,14 @@
 # Function will be called at night each day and performs
 # automatic actions like running a seminar matchings if it is due
 
-get.semdb = function(db.dir = paste0(main.dir,"/db"), main.dir = getwd())  {
+get.semdb = function(db.dir = paste0(main.dir,"/db"), main.dir = getwd(), schema.dir = paste0(main.dir,"/schema"))  {
   restore.point("get.semdb")
-  dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+  semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
+  schemas = try(load.and.init.schemas(paste0(schema.dir, "/semdb.yaml")))
+  if (!is(schemas,"try-error")) {
+    semdb = set.db.schema(semdb, schemas = schemas)
+  }
+  semdb
 }
 
 

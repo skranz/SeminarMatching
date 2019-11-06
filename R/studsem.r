@@ -1,12 +1,13 @@
 examples.StudSeminarsApp = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   restore.point.options(display.restore.point = TRUE)
-  app = StudSeminarsApp(init.userid = "test", init.password="test", lang="de")
+  app = StudSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="umulz", lang="de",smtp = list(from = "seminars@email.de",host.name = "localhost"), pure.random.order.prob = 0)
+
   viewApp(app)
 }
 
 
-StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), rmd.dir = paste0(main.dir,"/rmd"), main.dir=getwd(),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, smtp=NULL, lang="en", userid.label="Userid (Email)", password.label = "Password") {
+StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(main.dir,"/schema"), yaml.dir =  paste0(main.dir,"/yaml"), rmd.dir = paste0(main.dir,"/rmd"), main.dir=getwd(),   init.userid="", init.password="", app.title="Uni Ulm WiWi Seminar Selection", app.url = "http://localhost", email.domain = "uni-ulm.de", check.email.fun=NULL, email.text.fun=default.email.text.fun, use.db=TRUE, main.header=NULL, smtp=NULL, lang="en", userid.label="Userid (Email)", password.label = "Password", stud.log.file = paste0("studlog_", year(Sys.Date()),".txt"), pure.random.order.prob = 0.5) {
   restore.point("StudSeminarsApp")
 
   library(loginPart)
@@ -16,6 +17,9 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
   app = eventsApp()
 
   glob = app$glob
+
+  glob$stud.log.file = stud.log.file
+  glob$pure.random.order.prob = pure.random.order.prob
 
   glob$schemas = load.and.init.schemas(paste0(schema.dir, "/semdb.yaml"))
   glob$semdb = dbConnect(dbname=paste0(db.dir,"/semDB.sqlite"), drv = SQLite())
@@ -129,6 +133,20 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     )
   )
 
+  js = '
+  $(document).on("mousedown","#allSemTable a",function(){
+  var td = $(this).closest("td");
+  var row = $(td).data("row");
+  Shiny.onInputChange("seminarLinkClick", {eventId: "seminarLinkClick", id: "seminarLinkClick", value: row, table: "allSem", nonce: Math.random()});
+});
+  $(document).on("mousedown","#selSemTable a",function(){
+  var td = $(this).closest("td");
+  var row = $(td).data("row");
+  Shiny.onInputChange("seminarLinkClick", {eventId: "seminarLinkClick", id: "seminarLinkClick", value: row, table: "selSem", nonce: Math.random()});
+});
+  '
+  shinyEvents::eventHandler(eventId="seminarLinkClick",fun = stud.seminar.link.click, jscript = js)
+
   app$lop = lop
   app
 }
@@ -169,6 +187,7 @@ load.student.from.db = function(userid=se$userid, semester=NULL, app=getApp(), s
     stud$random_points = runif(1,0,10)
   }
 
+  c(stud$random_points, se$random_seed)
   se$stud.exists = FALSE
   se$stud = stud
   return(stud)
@@ -229,30 +248,6 @@ refresh.stud.app.data = function(userid=se$userid, se=NULL, app=getApp()) {
   }
 
   semids = se$stud_sems$semid
-
-  # ignore topics (not yet implemented)
-  if (FALSE) {
-  se$semtopics = lapply(semids, function(semid) {
-    df = dbGet(se$db,"semtopic", nlist(semester,semid))
-    df$topic_pos = rep(NA, NROW(df))
-    df
-  })
-  names(se$semtopics) = as.character(semids)
-
-  se$topicprefs = lapply(semids, function(semid) {
-    dbGet(se$db,"topicpref", nlist(semester,semid,userid))
-  })
-  names(se$topicprefs) = as.character(semids)
-
-  se$seltopics = lapply(seq_along(semids), function(i) {
-    tp = se$topicprefs[[i]]
-    st = se$semtopics[[i]]
-    df = st[match(tp$semid, st$semid),]
-    df$topic_pos = tp$topic_pos
-    df
-  })
-  names(se$seltopics) = as.character(semids)
-  }
 
   se
 }
@@ -399,6 +394,9 @@ compute.sem.df = function(se=app$se, app=getApp(), opts=app$opts) {
   studpref = se$studpref[se$studpref$round==round,,drop=FALSE]
 
   sems = se$seminars
+  sems = sort.shown.seminars(se=se,seminars=sems,random.prob = app$glob$pure.random.order.prob)
+
+
   cols = c("semid",intersect(unique(c("weblink", opts$selSemCols,opts$allSemCols)),colnames(sems)),"filled")
   sem.df = sems[,cols]
 
@@ -554,6 +552,8 @@ updown.click = function(app=getApp(),value,row,up=TRUE,se=app$se,...) {
   restore.point("updown.click")
   cat("updown.click")
 
+  semid = sel.df$semid[row]
+  old.pos = row
   new.pos = row + 1.5 - 3*up
   sel.df$pos[row] = new.pos
   sel.df = sel.df[order(sel.df$pos),]
@@ -562,6 +562,13 @@ updown.click = function(app=getApp(),value,row,up=TRUE,se=app$se,...) {
   se$sel.df = sel.df
   show.selsem.table(sel.df, sel.row=new.row)
   show.field.alert(msg=app$glob$texts$rankingNotYetSaved,id="studSemAlert")
+
+  if (up>0) {
+    write.stud.log("rank_up", list(semid=semid, old_pos=old.pos))
+  } else {
+    write.stud.log("rank_down", list(semid=semid, old_pos=old.pos))
+  }
+
 }
 
 add.seminar.click = function(row, app=getApp(),se=app$se,...) {
@@ -577,6 +584,10 @@ add.seminar.click = function(row, app=getApp(),se=app$se,...) {
   show.selsem.table(se=se,sel.row = NROW(se$sel.df))
   show.sem.table(se=se)
   show.field.alert(msg=app$glob$texts$rankingNotYetSaved,id="studSemAlert",color = "red")
+
+  semid = se$sem.df$semid[row]
+  write.stud.log("add_sem", list(semid=semid, pos=NROW(se$sel.df)))
+
 }
 
 remove.seminar.click = function(pos,app=getApp(),se=app$se,...) {
@@ -587,9 +598,12 @@ remove.seminar.click = function(pos,app=getApp(),se=app$se,...) {
   sel.df = se$sel.df
   #
   row = sel.df$row[pos]
+
   sel.df = sel.df[-pos,]
   rows = sel.df$pos > pos
   sel.df$pos[rows] = sel.df$pos[rows]-1
+
+  semid = sem.df$semid[row]
   sem.df$selected[row] = FALSE
   se$sem.df = sem.df
   se$sel.df = sel.df
@@ -597,6 +611,8 @@ remove.seminar.click = function(pos,app=getApp(),se=app$se,...) {
   show.selsem.table(se=se,sel.row = NULL)
   show.sem.table(se=se)
   show.field.alert(msg=app$glob$texts$rankingNotYetSaved,id="studSemAlert",color = "red")
+
+  write.stud.log("remove_sem", list(semid=se$sem.df$semid[row], pos=pos))
 }
 
 
@@ -635,9 +651,15 @@ save.studpref = function(app=getApp(), se=app$se,...) {
     sel.df = arrange(se$sel.df,pos)
     studpref = data_frame(semid=se$sem.df$semid[sel.df$row], userid=se$userid,semester=se$semester, pos=sel.df$pos, joker=sel.df$joker, round=se$round)
     dbInsert(se$db, "studpref",studpref, schema=app$glob$schemas$studpref)
+
+    write.stud.log("save_prefs", list(semid=studpref$semid, pos=studpref$pos))
+  } else {
+    write.stud.log("save_empty_prefs")
   }
   dbCommit(se$db)
   show.field.alert(msg=check$msg,id="studSemAlert",color="black")
+
+
 }
 
 max.date = function(vals) {
@@ -829,6 +851,7 @@ remove.topic.click = function(row,semid,app=getApp(),se=app$se,...) {
 
   show.sel.topics.table(semid=semid)
   show.all.topics.table(semid=semid)
+  write.stud.log("remove_topic", list(semid=semid))
 
 }
 
@@ -842,3 +865,32 @@ show.stud.help.ui = function(se=app$se, app=getApp()) {
   setUI("studhelpUI",content)
 }
 
+stud.seminar.link.click = function(value, table, ..., app=getApp()) {
+  args = list(...)
+  se = app[["se"]]
+  restore.point("stud.seminar.link.click")
+  cat("\nLink was clicked!")
+  row = value
+
+  try({
+    if (table == "allSem") {
+      semid = se$sem.df$semid[row]
+      write.stud.log("open_link", list(semid=semid, table="all", row=row))
+    } else if (table == "selSem") {
+      semid = se$sel.df$semid[row]
+      write.stud.log("open_link", list(semid=semid, table="sel", row=row))
+    }
+  })
+
+}
+
+write.stud.log = function(action, x, app=getApp()) {
+  se = app[["se"]]
+  file = app$glob$stud.log.file
+  json = toJSON(c(list(action=action, time=Sys.time(), userid=se$stud$userid,semester=se$semester, round=se$round),x))
+  try({
+    con = file(file,"at")
+    writeLines(json,con)
+    close(con)
+  })
+}
