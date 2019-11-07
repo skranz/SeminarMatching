@@ -95,6 +95,7 @@ StudSeminarsApp = function(db.dir = paste0(main.dir,"/db"), schema.dir = paste0(
     show.stud.sem.ui()
     show.stud.topics.ui()
     show.stud.help.ui()
+    write.stud.log("login")
   }
 
   if (is.null(check.email.fun)) {
@@ -883,7 +884,7 @@ stud.seminar.link.click = function(value, table, ..., app=getApp()) {
 
 }
 
-write.stud.log = function(action, x, app=getApp()) {
+write.stud.log = function(action, x=NULL, app=getApp()) {
   se = app[["se"]]
   file = app$glob$stud.log.file
   json = toJSON(c(list(action=action, time=Sys.time(), userid=se$stud$userid,semester=se$semester, round=se$round),x))
