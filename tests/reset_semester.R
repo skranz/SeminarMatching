@@ -4,7 +4,7 @@ examples.make.test.semester = function() {
 }
 
 
-reset.semester = function(semester = get.default.semester(db=semdb, schemas = get.db.schema(semdb)), rounds=0, reset.random=FALSE, main.dir = getwd(), semdb = get.semdb(main.dir=main.dir)) {
+reset.semester = function(semester = get.default.semester(db=semdb, schemas = get.db.schema(semdb)), rounds=0, reset.random=FALSE, main.dir = getwd(), semdb = get.semdb(main.dir=main.dir, set.schema=TRUE)) {
   restore.point("reset.semester")
   setwd(main.dir)
 
