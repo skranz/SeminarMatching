@@ -869,7 +869,6 @@ stud.seminar.link.click = function(value, table, ..., app=getApp()) {
   args = list(...)
   se = app[["se"]]
   restore.point("stud.seminar.link.click")
-  cat("\nLink was clicked!")
   row = value
 
   try({
