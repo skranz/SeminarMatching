@@ -16,6 +16,7 @@ example.seminar.match.info = function() {
 
 
 student.match.info = function(semester, userid, semdb) {
+  userid = "useridhere"
   upref = filter(studpref, userid=={{userid}})
   dat = left_join(upref, seminars, by="semid")
 
