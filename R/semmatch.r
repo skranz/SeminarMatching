@@ -111,7 +111,13 @@ perform.matching = function(round=1,semester=se[["semester"]],seminars=NULL,stud
     students$random_points = 10 - students$random_points
   }
 
-  # give bonus to students who ranked a lot of seminars
+  # give bonus to students who ranked relatively many seminars
+  rows = students$num_ranked >= 4
+  students$random_points[rows] = pmax(students$random_points[rows], 1+runif(sum(rows),-0.01,0.01))
+  rows = students$num_ranked >= 5
+  students$random_points[rows] = pmax(students$random_points[rows], 2+runif(sum(rows),-0.01,0.01))
+  rows = students$num_ranked >= 6
+  students$random_points[rows] = pmax(students$random_points[rows], 2.5+runif(sum(rows),-0.01,0.01))
   rows = students$num_ranked >= 7
   students$random_points[rows] = pmax(students$random_points[rows], 3+runif(sum(rows),-0.01,0.01))
 

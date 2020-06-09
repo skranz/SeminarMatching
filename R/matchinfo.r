@@ -1,6 +1,6 @@
 example.seminar.match.info = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
-  semester = "SS17"
+  semester = "SS20"
   semid = 16
 
   df = seminar.match.info(semester = semester, semid=semid)
@@ -14,6 +14,13 @@ example.seminar.match.info = function() {
 
 }
 
+
+student.match.info = function(semester, userid, semdb) {
+  upref = filter(studpref, userid=={{userid}})
+  dat = left_join(upref, seminars, by="semid")
+
+
+}
 
 # get more detailed info about the matching for a particular seminar
 seminar.match.info = function(semester, semid, seminars=NULL, students=NULL, studpref=NULL, conds=NULL, semcrit=NULL, yaml.dir=NULL, db.dir=NULL, schema.dir=NULL, matchings=NULL, semdb=NULL) {

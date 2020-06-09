@@ -1,7 +1,7 @@
 examples.StudSeminarsApp = function() {
   setwd("D:/libraries/SeminarMatching/semapps/shared")
   restore.point.options(display.restore.point = TRUE)
-  app = StudSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="umulz", lang="de",smtp = list(from = "seminars@email.de",host.name = "localhost"), pure.random.order.prob = 0)
+  app = StudSeminarsApp(init.userid = "sebastian.kranz@uni-ulm.de", init.password="umulz", lang="en",smtp = list(from = "seminars@email.de",host.name = "localhost"), pure.random.order.prob = 1)
 
   viewApp(app)
 }
@@ -176,6 +176,7 @@ load.student.from.db = function(userid=se$userid, semester=NULL, app=getApp(), s
 
   if (is.na(stud$random_points))
     stud$random_points=5
+
   if (isTRUE(app$opts$random_points_negative_autocor)) {
     # give a bonus if last time random points were below 5
     if (stud$random_points < 5) {

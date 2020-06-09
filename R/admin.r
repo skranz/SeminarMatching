@@ -135,7 +135,7 @@ load.admin.data.from.db = function(semester=get.default.semester(se=se), app=get
 
   admin = dbGet(se$db,"admin", nlist(semester),schema = app$glob$schemas$admin)
 
-  if (is.null(admin)) {
+  if (NROW(admin)==0) {
     admin = empty.row.from.schema(.schema = app$glob$schemas$admin, semester=semester)
   }
   admin = as.list(admin)

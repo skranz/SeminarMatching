@@ -1,10 +1,11 @@
 examples.make.test.semester = function() {
+  library(SeminarMatching)
   setwd("D:/libraries/SeminarMatching/semapps/shared")
-  reset.semester(semester = "WS1920", rounds=1, reset.random=FALSE)
+  reset.semester(semester = "SS20", rounds=0, reset.random=TRUE)
 }
 
 
-reset.semester = function(semester = get.default.semester(db=semdb, schemas = get.db.schema(semdb)), rounds=0, reset.random=FALSE, main.dir = getwd(), semdb = get.semdb(main.dir=main.dir, set.schema=TRUE)) {
+reset.semester = function(semester = get.default.semester(db=semdb, schemas = get.db.schema(semdb)), rounds=0, reset.random=FALSE, main.dir = getwd(), semdb = get.semdb(main.dir=main.dir)) {
   restore.point("reset.semester")
   setwd(main.dir)
 
